@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 (2026-11-03)
+
+- The index builds with a `sqlite3` that has `trusted_schema` off (macOS 15's), which refused the triggers that
+  keep the full-text table in step. 0.1.0 was tagged but never released.
+
 ## 0.1.0 (2026-11-03)
 
 The first public release.
