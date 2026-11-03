@@ -36,6 +36,12 @@
                   (str d))
     :else (str "CAST(X'" (hex (str v)) "' AS TEXT)")))
 
+(def ^:private trust
+  "The index's triggers keep the full-text table in step with its rows. A sqlite3 built with trusted_schema off
+  (macOS 15's) refuses triggers that write to a virtual table, so each connection turns it on: the index is this
+  CLI's own file, never one from elsewhere."
+  "PRAGMA trusted_schema = ON;\n")
+
 (defn- param-lines [params]
   (apply str (map (fn [[k v]] (str ".parameter set :" (name k) " \"" (literal v) "\"\n")) params)))
 
@@ -46,7 +52,7 @@
   ([path sql] (run! path sql {}))
   ([path sql params]
    (let [{:keys [exit out err]} (try
-                                  (process/sh {:in (str (param-lines params) sql "\n")} sqlite3 "-bail" "-json"
+                                  (process/sh {:in (str trust (param-lines params) sql "\n")} sqlite3 "-bail" "-json"
                                               (str path))
                                   (catch java.io.IOException _
                                     (out/fail! "no-sqlite" (str sqlite3 " isn't there")
