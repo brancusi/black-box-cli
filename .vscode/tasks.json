@@ -1,0 +1,49 @@
+{
+  // The checks from the shell, as VS Code tasks (Terminal → Run Task; cmd+shift+b runs all three). These are the
+  // truth before a commit, not the REPL's state.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "bb test",
+      "type": "shell",
+      "command": "bb test",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "bb lint",
+      "type": "shell",
+      "command": "bb lint",
+      "problemMatcher": {
+        "owner": "clj-kondo",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+):(\\d+): (error|warning|info): (.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    },
+    { "label": "bb fmt", "type": "shell", "command": "bb fmt", "problemMatcher": [] },
+    { "label": "bb fmt fix", "type": "shell", "command": "bb fmt fix", "problemMatcher": [] },
+    { "label": "bb golden", "type": "shell", "command": "bb golden", "problemMatcher": [] },
+    {
+      "label": "checks (test, lint, fmt)",
+      "dependsOn": ["bb test", "bb lint", "bb fmt"],
+      "dependsOrder": "sequence",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      // A REPL outside Calva, for agents or a terminal; Calva's connect sequence picks it up.
+      "label": "bb nrepl",
+      "type": "shell",
+      "command": "bb nrepl",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

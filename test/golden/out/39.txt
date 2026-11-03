@@ -1,0 +1,5 @@
+count: 0
+total: 0
+result: no EDLs yet
+help[1]:
+  Run `blackbox edl new <cutlist|->` to make one

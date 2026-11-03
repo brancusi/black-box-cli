@@ -1,0 +1,48 @@
+{
+ "title": "Marble, the quote",
+ "clips": 4,
+ "length": "0:35.5",
+ "files": 2,
+ "warnings": [
+  "clip 3 (line 5): no proxy, left out of the rough cut (cut.edl keeps it for Resolve)",
+  "clip 4 (line 6): no proxy, left out of the rough cut (cut.edl keeps it for Resolve)"
+ ],
+ "written": "nothing (--dry-run)",
+ "cut": [
+  {
+   "n": 1,
+   "file": "C5274.MP4",
+   "in": "0:00.0",
+   "out": "0:22.2",
+   "length": 22.2,
+   "text": "Think you should go for your bag. It's safer. You know?"
+  },
+  {
+   "n": 2,
+   "file": "C5274.MP4",
+   "in": "0:20.0",
+   "out": "0:26.6",
+   "length": 6.6,
+   "text": "It's safer. You know? We use this to make a marble sculpture."
+  },
+  {
+   "n": 3,
+   "file": "DJI_01.WAV",
+   "in": "0:05.0",
+   "out": "0:09.5",
+   "length": 4.5,
+   "text": "Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno,… (+9 chars, --full)"
+  },
+  {
+   "n": 4,
+   "file": "DJI_01.WAV",
+   "in": "0:08.8",
+   "out": "0:11.0",
+   "length": 2.2,
+   "text": "We use this marble every day."
+  }
+ ],
+ "help": [
+  "Run the same without --dry-run to write the EDL"
+ ]
+}

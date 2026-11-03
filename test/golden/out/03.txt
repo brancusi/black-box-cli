@@ -1,0 +1,42 @@
+{
+ "index": "<local>/search/transcripts.sqlite",
+ "transcripts": "deepgram-nova-3-multi",
+ "added": 0,
+ "changed": 0,
+ "unchanged": 4,
+ "removed": 0,
+ "skipped": 1,
+ "lines_added": 0,
+ "frames": {
+  "added": 0,
+  "changed": 0,
+  "unchanged": 3,
+  "removed": 0,
+  "skipped": 0,
+  "total": 7
+ },
+ "people": {
+  "snapshot": "20261020T100000Z",
+  "at": "<now>",
+  "people": 3,
+  "names": 6
+ },
+ "prints": {
+  "added": 0,
+  "changed": 0,
+  "unchanged": 6,
+  "removed": 0,
+  "skipped": 0,
+  "voices": 3,
+  "faces": 4
+ },
+ "sync": {
+  "days": 1,
+  "pairs": 1,
+  "skipped": 0
+ },
+ "help": [
+  "Skipped files are online-only or not transcripts; make media_meta available offline in Finder",
+  "Run `blackbox` for what the index holds"
+ ]
+}

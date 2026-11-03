@@ -1,0 +1,3 @@
+;; For bbin, which loads black-box-cli as a :local/root or git dependency. Everything it uses comes with Babashka;
+;; the tasks and the REPL are in bb.edn.
+{:paths ["src" "skills"]}

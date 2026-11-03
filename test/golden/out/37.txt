@@ -1,0 +1,11 @@
+title: J
+clips: 2
+length: "0:03.8"
+files: 1
+warnings: none
+written: nothing (--dry-run)
+cut[2]{n,file,in,out,length,text}:
+  1,C5274.MP4,"0:00.0","0:02.3",2.3,Think you should go for your bag.
+  2,C5274.MP4,"0:01.0","0:02.5",1.5,for your bag.
+help[1]:
+  Run the same without --dry-run to write the EDL

@@ -1,0 +1,13 @@
+query: marble
+match: any word
+scope: everything
+transcripts: deepgram-nova-3-multi
+count: 2
+total: 2
+files: 2
+hits[2]{id,file,day,at,end,speaker,text,rel,tc,seconds,proxy,person}:
+  2npshqu5.2,DJI_01.WAV,2026-09-16,"0:09.0","0:10.8",null,We use this marble every day.,media/2026/09/16/audio/DJI_01.WAV,"00:00:09:00",9,null,null
+  r54qb74c.3,C5274.MP4,2026-09-16,"0:22.2","0:24.6",S1,We use this to make a marble sculpture.,media/2026/09/16/src/fx3/C5274.MP4,"03:07:13:12",22.2,<meta>/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4,Mara Vento
+help[2]:
+  Run `blackbox line 2npshqu5.2` to see a line in context
+  Add `--fields id,file,day,at,speaker,text,tc,proxy` for timecode and proxy

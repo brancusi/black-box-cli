@@ -1,0 +1,6 @@
+scope: 2025-01
+count: 0
+total: 0
+result: 0 files with transcripts in scope
+help[1]:
+  Run `blackbox` to see which months are indexed

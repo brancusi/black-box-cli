@@ -1,0 +1,83 @@
+{
+ "schema": "media-mgmt.cut/1",
+ "made_at": "<now>",
+ "idea": "Marble, the quote",
+ "scope": "everything (deepgram-nova-3-multi)",
+ "title": "Marble, the quote",
+ "notes": "assembled from a cut list by `blackbox edl new`",
+ "warnings": [
+  "clip 3 (line 5): no proxy, left out of the rough cut (cut.edl keeps it for Resolve)",
+  "clip 4 (line 6): no proxy, left out of the rough cut (cut.edl keeps it for Resolve)"
+ ],
+ "run": {
+  "mode": "cut list",
+  "cutlist": "title: Marble, the quote\n# the quote, then the drill\nr54qb74c.1..r54qb74c.2  # why we use it\nC5274.MP4 0:20-0:26.6 # the safer line\n09/16/audio/DJI_01.WAV 5-9.5\n2npshqu5.2\n"
+ },
+ "length_s": 35.55,
+ "clips": [
+  {
+   "source_name": "C5274.MP4",
+   "source_path": "/nowhere/media/2026/09/16/src/fx3/C5274.MP4",
+   "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "rel": "media/2026/09/16/src/fx3/C5274.MP4",
+   "play_path": "<meta>/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4",
+   "proxy": true,
+   "start": 0.0,
+   "end": 22.2,
+   "source_in": "03:06:51:08",
+   "source_out": "03:07:13:12",
+   "text": "Think you should go for your bag. It's safer. You know?",
+   "why": "why we use it",
+   "from": "r54qb74c.1",
+   "to": "r54qb74c.2"
+  },
+  {
+   "source_name": "C5274.MP4",
+   "source_path": "/nowhere/media/2026/09/16/src/fx3/C5274.MP4",
+   "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "rel": "media/2026/09/16/src/fx3/C5274.MP4",
+   "play_path": "<meta>/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4",
+   "proxy": true,
+   "start": 20.0,
+   "end": 26.6,
+   "source_in": "03:07:11:08",
+   "source_out": "03:07:17:22",
+   "text": "It's safer. You know? We use this to make a marble sculpture.",
+   "why": "the safer line",
+   "from": null,
+   "to": null
+  },
+  {
+   "source_name": "DJI_01.WAV",
+   "source_path": "/nowhere/media/2026/09/16/audio/DJI_01.WAV",
+   "source_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "rel": "media/2026/09/16/audio/DJI_01.WAV",
+   "play_path": null,
+   "proxy": false,
+   "start": 5.0,
+   "end": 9.5,
+   "source_in": "00:00:05:00",
+   "source_out": "00:00:09:12",
+   "text": "Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno, in We use",
+   "why": "",
+   "from": null,
+   "to": null
+  },
+  {
+   "source_name": "DJI_01.WAV",
+   "source_path": "/nowhere/media/2026/09/16/audio/DJI_01.WAV",
+   "source_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "rel": "media/2026/09/16/audio/DJI_01.WAV",
+   "play_path": null,
+   "proxy": false,
+   "start": 8.75,
+   "end": 11.0,
+   "source_in": "00:00:08:18",
+   "source_out": "00:00:11:00",
+   "text": "We use this marble every day.",
+   "why": "",
+   "from": "2npshqu5.2",
+   "to": "2npshqu5.2"
+  }
+ ]
+}

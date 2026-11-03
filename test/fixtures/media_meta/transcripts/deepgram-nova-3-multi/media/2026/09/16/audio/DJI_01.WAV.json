@@ -1,0 +1,244 @@
+{
+ "schema": "media-mgmt.transcript/1",
+ "source": {
+  "path": "/nowhere/media/2026/09/16/audio/DJI_01.WAV",
+  "name": "DJI_01.WAV",
+  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "size": 1,
+  "duration": 1497
+ },
+ "producer": {
+  "engine": "deepgram/1",
+  "label": "deepgram-nova-3-multi"
+ },
+ "language": "multi",
+ "clock": {
+  "kind": "elapsed",
+  "start_timecode": null,
+  "rate": null,
+  "time_of_day_start_s": null
+ },
+ "cues": [
+  {
+   "start": 5.0,
+   "end": 15.45,
+   "text": "Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno, in ogni lavoro che facciamo qui, dalla mattina alla sera, senza mai fermarci, perché è il più bello del mondo intero.",
+   "speaker": null,
+   "words": [
+    {
+     "w": "Il",
+     "start": 5.0,
+     "end": 5.25
+    },
+    {
+     "w": "marmo",
+     "start": 5.3,
+     "end": 5.55
+    },
+    {
+     "w": "di",
+     "start": 5.6,
+     "end": 5.85
+    },
+    {
+     "w": "Carrara",
+     "start": 5.9,
+     "end": 6.15
+    },
+    {
+     "w": "è",
+     "start": 6.2,
+     "end": 6.45
+    },
+    {
+     "w": "il",
+     "start": 6.5,
+     "end": 6.75
+    },
+    {
+     "w": "migliore,",
+     "start": 6.8,
+     "end": 7.05
+    },
+    {
+     "w": "\"davvero\":",
+     "start": 7.1,
+     "end": 7.35
+    },
+    {
+     "w": "lo",
+     "start": 7.4,
+     "end": 7.65
+    },
+    {
+     "w": "usiamo",
+     "start": 7.7,
+     "end": 7.95
+    },
+    {
+     "w": "da",
+     "start": 8.0,
+     "end": 8.25
+    },
+    {
+     "w": "sempre,",
+     "start": 8.3,
+     "end": 8.55
+    },
+    {
+     "w": "ogni",
+     "start": 8.6,
+     "end": 8.85
+    },
+    {
+     "w": "giorno,",
+     "start": 8.9,
+     "end": 9.15
+    },
+    {
+     "w": "in",
+     "start": 9.2,
+     "end": 9.45
+    },
+    {
+     "w": "ogni",
+     "start": 9.5,
+     "end": 9.75
+    },
+    {
+     "w": "lavoro",
+     "start": 9.8,
+     "end": 10.05
+    },
+    {
+     "w": "che",
+     "start": 10.1,
+     "end": 10.35
+    },
+    {
+     "w": "facciamo",
+     "start": 10.4,
+     "end": 10.65
+    },
+    {
+     "w": "qui,",
+     "start": 10.7,
+     "end": 10.95
+    },
+    {
+     "w": "dalla",
+     "start": 11.0,
+     "end": 11.25
+    },
+    {
+     "w": "mattina",
+     "start": 11.3,
+     "end": 11.55
+    },
+    {
+     "w": "alla",
+     "start": 11.6,
+     "end": 11.85
+    },
+    {
+     "w": "sera,",
+     "start": 11.9,
+     "end": 12.15
+    },
+    {
+     "w": "senza",
+     "start": 12.2,
+     "end": 12.45
+    },
+    {
+     "w": "mai",
+     "start": 12.5,
+     "end": 12.75
+    },
+    {
+     "w": "fermarci,",
+     "start": 12.8,
+     "end": 13.05
+    },
+    {
+     "w": "perché",
+     "start": 13.1,
+     "end": 13.35
+    },
+    {
+     "w": "è",
+     "start": 13.4,
+     "end": 13.65
+    },
+    {
+     "w": "il",
+     "start": 13.7,
+     "end": 13.95
+    },
+    {
+     "w": "più",
+     "start": 14.0,
+     "end": 14.25
+    },
+    {
+     "w": "bello",
+     "start": 14.3,
+     "end": 14.55
+    },
+    {
+     "w": "del",
+     "start": 14.6,
+     "end": 14.85
+    },
+    {
+     "w": "mondo",
+     "start": 14.9,
+     "end": 15.15
+    },
+    {
+     "w": "intero.",
+     "start": 15.2,
+     "end": 15.45
+    }
+   ]
+  },
+  {
+   "start": 9.0,
+   "end": 10.75,
+   "text": "We use this marble every day.",
+   "speaker": null,
+   "words": [
+    {
+     "w": "We",
+     "start": 9.0,
+     "end": 9.25
+    },
+    {
+     "w": "use",
+     "start": 9.3,
+     "end": 9.55
+    },
+    {
+     "w": "this",
+     "start": 9.6,
+     "end": 9.85
+    },
+    {
+     "w": "marble",
+     "start": 9.9,
+     "end": 10.15
+    },
+    {
+     "w": "every",
+     "start": 10.2,
+     "end": 10.45
+    },
+    {
+     "w": "day.",
+     "start": 10.5,
+     "end": 10.75
+    }
+   ]
+  }
+ ]
+}

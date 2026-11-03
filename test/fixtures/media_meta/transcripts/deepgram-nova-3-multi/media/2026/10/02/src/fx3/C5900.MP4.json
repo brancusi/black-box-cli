@@ -1,0 +1,51 @@
+{
+ "schema": "media-mgmt.transcript/1",
+ "source": {
+  "path": "/nowhere/media/2026/10/02/src/fx3/C5900.MP4",
+  "name": "C5900.MP4",
+  "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "size": 1,
+  "duration": 60.0
+ },
+ "producer": {
+  "engine": "deepgram/1",
+  "label": "deepgram-nova-3-multi"
+ },
+ "language": "multi",
+ "clock": {
+  "kind": "elapsed",
+  "start_timecode": null,
+  "rate": null,
+  "time_of_day_start_s": null
+ },
+ "cues": [
+  {
+   "start": 1.0,
+   "end": 2.15,
+   "text": "Lunch at the lagoon.",
+   "speaker": "S1",
+   "words": [
+    {
+     "w": "Lunch",
+     "start": 1.0,
+     "end": 1.25
+    },
+    {
+     "w": "at",
+     "start": 1.3,
+     "end": 1.55
+    },
+    {
+     "w": "the",
+     "start": 1.6,
+     "end": 1.85
+    },
+    {
+     "w": "lagoon.",
+     "start": 1.9,
+     "end": 2.15
+    }
+   ]
+  }
+ ]
+}

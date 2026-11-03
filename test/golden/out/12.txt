@@ -1,0 +1,12 @@
+query: lagoon day
+match: any word
+scope: 2026-10-02
+transcripts: deepgram-nova-3-multi
+count: 1
+total: 1
+files: 1
+hits[1]{id,file,at,text}:
+  pm4c24b5.1,C5900.MP4,"0:01.0",Lunch at the lagoon.
+help[2]:
+  Run `blackbox line pm4c24b5.1` to see a line in context
+  Add `--fields id,file,day,at,speaker,text,tc,proxy` for timecode and proxy

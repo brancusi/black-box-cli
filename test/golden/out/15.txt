@@ -1,0 +1,12 @@
+query: "\"hammer drill\""
+match: any word
+scope: everything
+transcripts: deepgram-nova-3-multi
+count: 1
+total: 1
+files: 1
+hits[1]{id,file,at,text}:
+  r54qb74c.4,C5274.MP4,"0:26.7",To the hammer drill.
+help[2]:
+  Run `blackbox line r54qb74c.4` to see a line in context
+  Add `--fields id,file,day,at,speaker,text,tc,proxy` for timecode and proxy

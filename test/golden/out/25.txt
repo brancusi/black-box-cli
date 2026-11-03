@@ -1,0 +1,16 @@
+file:
+  name: DJI_01.WAV
+  rel: media/2026/09/16/audio/DJI_01.WAV
+  day: 2026-09-16
+  length: "24:57.0"
+  start_tc: null
+  language: multi
+  proxy: null
+  transcripts: deepgram-nova-3-multi
+count: 1
+total: 2
+lines[1]{id,at,speaker,text}:
+  2npshqu5.1,"0:05.0",null,"Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno, in ogni lavoro che facciamo qui, dalla mattina alla sera, senza mai fermarci, pe… (+37 chars, --full)"
+help[2]:
+  Run `blackbox transcript DJI_01.WAV --full` for all 2 lines
+  Run `blackbox line <id>` for a line in context, with its timecode and proxy

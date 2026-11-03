@@ -1,0 +1,24 @@
+title: "Marble, the quote"
+clips: 4
+length: "0:35.5"
+files: 2
+warnings[2]:
+  - "clip 3 (line 5): no proxy, left out of the rough cut (cut.edl keeps it for Resolve)"
+  - "clip 4 (line 6): no proxy, left out of the rough cut (cut.edl keeps it for Resolve)"
+id: <stamp>-marble-the-quote
+folder: <local>/cuts/<stamp>-marble-the-quote
+made:
+  mpv: cut.mpv.edl
+  resolve: cut.edl (CMX3600)
+  subtitles: cut.srt
+  page: cut.html
+  record: cut.json
+cut[4]{n,file,in,out,length,text}:
+  1,C5274.MP4,"0:00.0","0:22.2",22.2,Think you should go for your bag. It's safer. You know?
+  2,C5274.MP4,"0:20.0","0:26.6",6.6,It's safer. You know? We use this to make a marble sculpture.
+  3,DJI_01.WAV,"0:05.0","0:09.5",4.5,"Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno,… (+9 chars, --full)"
+  4,DJI_01.WAV,"0:08.8","0:11.0",2.2,We use this marble every day.
+help[3]:
+  Run `mpv --autofit=70% --force-window=immediate --keep-open=yes --sub-file="<local>/cuts/<stamp>-marble-the-quote/cut.srt" "<local>/cuts/<stamp>-marble-the-quote/cut.mpv.edl"` to watch it
+  Import <local>/cuts/<stamp>-marble-the-quote/cut.edl in Resolve (File → Import → Timeline)
+  Run `blackbox edl show <stamp>-marble-the-quote` to see it again

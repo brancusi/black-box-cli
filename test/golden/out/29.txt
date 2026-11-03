@@ -1,0 +1,6 @@
+error:
+  code: not-found
+  message: no transcript for 'nothing' (deepgram-nova-3-multi)
+help[2]:
+  Run `blackbox footage` to list the files
+  Run `blackbox search <words>` to find a file

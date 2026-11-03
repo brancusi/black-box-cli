@@ -1,0 +1,5 @@
+error:
+  code: not-found
+  message: no EDL matching 'nothing'
+help[1]:
+  Run `blackbox edl list` for ids

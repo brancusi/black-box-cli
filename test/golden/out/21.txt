@@ -1,0 +1,25 @@
+line:
+  id: 2npshqu5.1
+  file: DJI_01.WAV
+  day: 2026-09-16
+  at: "0:05.0"
+  end: "0:15.4"
+  speaker: null
+  text: "Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno, in ogni lavoro che facciamo qui, dalla mattina alla sera, senza mai fermarci, perché è il più bello del mondo intero."
+  rel: media/2026/09/16/audio/DJI_01.WAV
+  tc: "00:00:05:00"
+  seconds: 5
+  proxy: null
+  person: null
+  tc_out: "00:00:15:10"
+file:
+  name: DJI_01.WAV
+  rel: media/2026/09/16/audio/DJI_01.WAV
+  length: "24:57.0"
+  proxy: null
+context[2]{id,at,speaker,text,this}:
+  2npshqu5.1,"0:05.0",null,"Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno, in ogni lavoro che facciamo qui, dalla mattina alla sera, senza mai fermarci, pe… (+37 chars, --full)",true
+  2npshqu5.2,"0:09.0",null,We use this marble every day.,false
+help[2]:
+  Run `echo '2npshqu5.1..2npshqu5.2' | blackbox edl new - --title <title>` to make these lines an EDL
+  Run `blackbox transcript DJI_01.WAV --day 2026-09-16` for the whole file

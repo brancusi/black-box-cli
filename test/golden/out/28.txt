@@ -1,0 +1,15 @@
+file:
+  name: C5900.MP4
+  rel: media/2026/10/03/src/a7s/C5900.MP4
+  day: 2026-10-03
+  length: "1:00.0"
+  start_tc: null
+  language: multi
+  proxy: null
+  transcripts: deepgram-nova-3-multi
+count: 1
+total: 1
+lines[1]{id,at,speaker,text}:
+  luyk4sl6.1,"0:00.5",S1,"Another C5900, a different day."
+help[1]:
+  Run `blackbox line <id>` for a line in context, with its timecode and proxy

@@ -1,0 +1,12 @@
+query: marble
+match: any word
+scope: video only
+transcripts: deepgram-nova-3-multi
+count: 1
+total: 1
+files: 1
+hits[1]{id,file,at,text}:
+  r54qb74c.3,C5274.MP4,"0:22.2",We use this to make a marble sculpture.
+help[2]:
+  Run `blackbox line r54qb74c.3` to see a line in context
+  Add `--fields id,file,day,at,speaker,text,tc,proxy` for timecode and proxy

@@ -1,0 +1,5 @@
+error:
+  code: bad-id
+  message: 'x1' isn't a line id (like k7f3q2ab.41)
+help[1]:
+  Run `blackbox search <words>` to find line ids

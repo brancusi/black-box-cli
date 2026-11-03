@@ -1,0 +1,18 @@
+id: <stamp>-marble-the-quote
+title: "Marble, the quote"
+made: "<now>"
+length: "0:35.5"
+folder: <local>/cuts/<stamp>-marble-the-quote
+files[5]: cut.edl,cut.html,cut.json,cut.mpv.edl,cut.srt
+warnings[2]:
+  - "clip 3 (line 5): no proxy, left out of the rough cut (cut.edl keeps it for Resolve)"
+  - "clip 4 (line 6): no proxy, left out of the rough cut (cut.edl keeps it for Resolve)"
+count: 4
+cut[4]{n,file,in,out,length,text}:
+  1,C5274.MP4,"03:06:51:08","03:07:13:12",22.2,Think you should go for your bag. It's safer. You know?
+  2,C5274.MP4,"03:07:11:08","03:07:17:22",6.6,It's safer. You know? We use this to make a marble sculpture.
+  3,DJI_01.WAV,"00:00:05:00","00:00:09:12",4.5,"Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno,… (+9 chars, --full)"
+  4,DJI_01.WAV,"00:00:08:18","00:00:11:00",2.2,We use this marble every day.
+help[2]:
+  Run `mpv --autofit=70% --force-window=immediate --keep-open=yes --sub-file="<local>/cuts/<stamp>-marble-the-quote/cut.srt" "<local>/cuts/<stamp>-marble-the-quote/cut.mpv.edl"` to watch it
+  Run `open "<local>/cuts/<stamp>-marble-the-quote/cut.html"` for the cut as a page

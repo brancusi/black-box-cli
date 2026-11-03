@@ -1,0 +1,12 @@
+query: marmo
+match: any word
+scope: everything
+transcripts: deepgram-nova-3-multi
+count: 1
+total: 1
+files: 1
+hits[1]{id,file,day,at,end,speaker,text,tc,proxy,seconds,rel}:
+  2npshqu5.1,DJI_01.WAV,2026-09-16,"0:05.0","0:15.4",null,"Il marmo di Carrara è il migliore, \"davvero\": lo usiamo da sempre, ogni giorno, in ogni lavoro che facciamo qui, dalla mattina alla sera, senza mai fermarci, pe… (+37 chars, --full)","00:00:05:00",null,5,media/2026/09/16/audio/DJI_01.WAV
+help[2]:
+  Run `blackbox line 2npshqu5.1` to see a line in context
+  Add `--fields id,file,day,at,speaker,text,tc,proxy` for timecode and proxy

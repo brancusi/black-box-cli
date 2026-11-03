@@ -1,0 +1,6 @@
+count: 1
+total: 1
+edls[1]{id,title,clips,length,made,folder}:
+  <stamp>-marble-the-quote,"Marble, the quote",4,"0:35.5","<now>",<local>/cuts/<stamp>-marble-the-quote
+help[1]:
+  Run `blackbox edl show <id>` for its clips and files

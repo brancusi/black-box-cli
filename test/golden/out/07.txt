@@ -1,0 +1,13 @@
+query: marble
+match: any word
+scope: everything
+transcripts: deepgram-nova-3-multi
+count: 1
+total: 2
+files: 2
+hits[1]{id,file,at,text}:
+  2npshqu5.2,DJI_01.WAV,"0:09.0",We use this marble every day.
+help[3]:
+  Run `blackbox line 2npshqu5.2` to see a line in context
+  Run `blackbox search marble --limit 2` for more
+  Add `--fields id,file,day,at,speaker,text,tc,proxy` for timecode and proxy

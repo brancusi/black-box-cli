@@ -1,0 +1,12 @@
+scope: everything
+count: 4
+total: 4
+hours: 0.46
+files[4]{file,day,length,lines}:
+  DJI_01.WAV,2026-09-16,"24:57.0",2
+  C5274.MP4,2026-09-16,"0:32.5",4
+  C5900.MP4,2026-10-02,"1:00.0",1
+  C5900.MP4,2026-10-03,"1:00.0",1
+help[2]:
+  Run `blackbox transcript <file>` to read one
+  Run `blackbox search <words> --day YYYY-MM-DD` to search one day

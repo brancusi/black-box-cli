@@ -1,0 +1,18 @@
+file:
+  name: C5274.MP4
+  rel: media/2026/09/16/src/fx3/C5274.MP4
+  day: 2026-09-16
+  length: "0:32.5"
+  start_tc: "03:06:51:08"
+  language: multi
+  proxy: <meta>/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4
+  transcripts: deepgram-nova-3-multi
+count: 4
+total: 4
+lines[4]{id,at,speaker,text}:
+  r54qb74c.1,"0:00.0",S1,Think you should go for your bag.
+  r54qb74c.2,"0:20.8",S1,It's safer. You know?
+  r54qb74c.3,"0:22.2",S1,We use this to make a marble sculpture.
+  r54qb74c.4,"0:26.7",S1,To the hammer drill.
+help[1]:
+  Run `blackbox line <id>` for a line in context, with its timecode and proxy

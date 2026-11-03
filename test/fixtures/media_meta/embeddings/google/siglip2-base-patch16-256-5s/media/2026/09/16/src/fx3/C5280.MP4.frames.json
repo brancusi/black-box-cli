@@ -1,0 +1,68 @@
+{
+ "schema": "media-mgmt.embeddings/1",
+ "source": {
+  "rel": "media/2026/09/16/src/fx3/C5280.MP4",
+  "name": "C5280.MP4",
+  "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "duration": 8.0,
+  "start_timecode": "03:20:00:00",
+  "rate": "24000/1001"
+ },
+ "proxy": {
+  "rel": "media/2026/09/16/src/fx3/C5280.MP4.proxy.mp4",
+  "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "size": 18,
+  "start_time": 0.0,
+  "rate": 23.976023976023978,
+  "duration": 8.0,
+  "width": 640,
+  "height": 360,
+  "rotation": 0,
+  "codec": "h264"
+ },
+ "producer": {
+  "tool": "black-box",
+  "version": "0.0.0",
+  "label": "google/siglip2-base-patch16-256-5s",
+  "model": {
+   "repo": "google/siglip2-base-patch16-256",
+   "revision": "0000000000000000000000000000000000000000",
+   "dim": 4,
+   "runtime": "coreml",
+   "precision": {
+    "image": "float32",
+    "text": "float16"
+   },
+   "manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "frames": {
+   "interval_s": 5.0,
+   "size": [
+    256,
+    256
+   ],
+   "selection": "first of each window",
+   "decoder": "avfoundation",
+   "scale": "squash",
+   "decoded": 2
+  }
+ },
+ "made_at": "2026-10-23T00:00:00.000Z",
+ "dim": 4,
+ "dtype": "float16",
+ "items": [
+  {
+   "n": 1,
+   "t": 0.0,
+   "pts": 0.0,
+   "frame": 0
+  },
+  {
+   "n": 2,
+   "t": 5.005,
+   "pts": 5.005,
+   "frame": 120
+  }
+ ],
+ "vectors": "zThmOgAAAAAAAAAAADwAAA=="
+}

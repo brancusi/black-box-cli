@@ -1,0 +1,43 @@
+{
+ "query": "marble",
+ "match": "any word",
+ "scope": "everything",
+ "transcripts": "deepgram-nova-3-multi",
+ "count": 2,
+ "total": 2,
+ "files": 2,
+ "hits": [
+  {
+   "id": "2npshqu5.2",
+   "file": "DJI_01.WAV",
+   "day": "2026-09-16",
+   "at": "0:09.0",
+   "end": "0:10.8",
+   "speaker": null,
+   "text": "We use this marble every day.",
+   "rel": "media/2026/09/16/audio/DJI_01.WAV",
+   "tc": "00:00:09:00",
+   "seconds": 9.0,
+   "proxy": null,
+   "person": null
+  },
+  {
+   "id": "r54qb74c.3",
+   "file": "C5274.MP4",
+   "day": "2026-09-16",
+   "at": "0:22.2",
+   "end": "0:24.6",
+   "speaker": "S1",
+   "text": "We use this to make a marble sculpture.",
+   "rel": "media/2026/09/16/src/fx3/C5274.MP4",
+   "tc": "03:07:13:12",
+   "seconds": 22.2,
+   "proxy": "<meta>/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4",
+   "person": "Mara Vento"
+  }
+ ],
+ "help": [
+  "Run `blackbox line 2npshqu5.2` to see a line in context",
+  "Add `--fields id,file,day,at,speaker,text,tc,proxy` for timecode and proxy"
+ ]
+}

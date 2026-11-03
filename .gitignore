@@ -1,0 +1,15 @@
+.DS_Store
+.cpcache/
+.clj-kondo/.cache/
+.lsp/.cache/
+.nrepl-port
+.calva/
+.clj-kondo/inline-configs/
+# Never commit anything from a real media_meta: indexes, cuts, frames, transcripts.
+*.sqlite
+cuts/
+*.frames.json
+!test/fixtures/**
+
+# bb dist
+target/

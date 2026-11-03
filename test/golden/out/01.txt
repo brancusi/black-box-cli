@@ -1,0 +1,5 @@
+error:
+  code: no-index
+  message: no search index at <local>/search/transcripts.sqlite
+help[1]:
+  Run `blackbox index` to build it from the transcripts

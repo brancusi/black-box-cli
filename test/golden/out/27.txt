@@ -1,0 +1,5 @@
+error:
+  code: ambiguous
+  message: "2 files match 'C5900.MP4': media/2026/10/02/src/fx3/C5900.MP4, media/2026/10/03/src/a7s/C5900.MP4"
+help[1]:
+  Use more of the path, e.g. `09/16/src/fx3/C5274.MP4`, or add --day YYYY-MM-DD

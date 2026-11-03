@@ -1,0 +1,42 @@
+{:paths ["src" "skills"]
+ ;; bbin install . --as blackbox puts this checkout on your PATH (on a Mac without Black Box's bundled copy).
+ :bbin/bin {blackbox {:main-opts ["-m" "black-box-cli.main"]}}
+ :tasks {dist {:doc "The release file: target/blackbox-cli.jar (src and skills/ inside; `bb blackbox-cli.jar` runs it) and its .sha256. bb dist vX.Y.Z also checks the tag against the version."
+               :requires ([babashka.fs :as fs]
+                          [clojure.string :as str])
+               :task (let [tag (first *command-line-args*)
+                           version (second (re-find (re-pattern "def version \"([^\"]+)\"") (slurp "src/black_box_cli/version.clj")))]
+                       (when (and tag (not= tag (str "v" version)))
+                         (throw (ex-info (str "tag " tag " but version.clj says " version) {})))
+                       (fs/create-dirs "target")
+                       (fs/delete-if-exists "target/blackbox-cli.jar")
+                       (shell "bb uberjar target/blackbox-cli.jar -m black-box-cli.main")
+                       (let [said (str/trim (:out (shell {:out :string} "bb target/blackbox-cli.jar --version")))]
+                         (when (not= said version)
+                           (throw (ex-info (str "the jar says " said ", not " version) {}))))
+                       (spit "target/blackbox-cli.jar.sha256"
+                             (:out (shell {:out :string :dir "target"} "shasum -a 256 blackbox-cli.jar")))
+                       (println "target/blackbox-cli.jar" version))}
+         test {:doc "Runs every test against the fixture media_meta in test/fixtures. Never reads real media."
+               :extra-paths ["test"]
+               :requires ([black-box-cli.test-runner :as runner])
+               :task (runner/run *command-line-args*)}
+         golden {:doc "Runs test/golden/steps.json and says which steps already print what the old CLI printed."
+                 :extra-paths ["test"]
+                 :requires ([black-box-cli.golden :as golden])
+                 :task (golden/report! *command-line-args*)}
+         nrepl {:doc "The REPL, with dev/ and test/ on the classpath: bb nrepl [port]. Writes .nrepl-port. Calva's jack-in runs it."
+                :extra-paths ["dev" "test"]
+                :requires ([babashka.fs :as fs]
+                           [babashka.nrepl.server :as nrepl])
+                :task (let [port (or (some-> (first *command-line-args*) parse-long) 0)
+                            ;; Prints "Started nREPL server at 127.0.0.1:<port>", which is what Calva waits for.
+                            server (nrepl/start-server! {:host "127.0.0.1" :port port})]
+                        (require (symbol "user") :reload)
+                        (spit ".nrepl-port" (:port server))
+                        (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (fs/delete-if-exists ".nrepl-port"))))
+                        (deref (promise)))}
+         lint {:doc "clj-kondo over src, test and dev."
+               :task (shell "clj-kondo --lint src test dev")}
+         fmt {:doc "cljfmt check (fmt fix to rewrite)."
+              :task (shell (str "cljfmt " (or (first *command-line-args*) "check") " src test dev bb.edn"))}}}

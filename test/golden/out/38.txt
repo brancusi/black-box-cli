@@ -1,0 +1,12 @@
+error:
+  code: invalid-cutlist
+  message: 5 problems in the cut list; nothing was written
+  problems[5]:
+    - "line 3: 'nonsense here' isn't a clip (a line id, id..id, or <file> <in>-<out>)"
+    - "clip 1 (line 1): no line zzzzzzzz.9 in the index"
+    - "clip 2 (line 2): 2npshqu5.1 and r54qb74c.3 are in different files"
+    - "clip 3 (line 4): out 20 isn't after in 30"
+    - "clip 4 (line 5): 2 files match 'C5900.MP4': media/2026/10/02/src/fx3/C5900.MP4, media/2026/10/03/src/a7s/C5900.MP4"
+help[2]:
+  Fix them and run it again
+  Run `blackbox edl new --help` for the cut list format

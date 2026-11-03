@@ -1,0 +1,39 @@
+{
+ "line": {
+  "id": "r54qb74c.1",
+  "file": "C5274.MP4",
+  "day": "2026-09-16",
+  "at": "0:00.0",
+  "end": "0:02.0",
+  "speaker": "S1",
+  "text": "Think you should go for your bag.",
+  "tc": "03:06:51:08",
+  "tc_out": "03:06:53:09"
+ },
+ "file": {
+  "name": "C5274.MP4",
+  "rel": "media/2026/09/16/src/fx3/C5274.MP4",
+  "length": "0:32.5",
+  "proxy": "<meta>/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4"
+ },
+ "context": [
+  {
+   "id": "r54qb74c.1",
+   "at": "0:00.0",
+   "speaker": "S1",
+   "text": "Think you should go for your bag.",
+   "this": true
+  },
+  {
+   "id": "r54qb74c.2",
+   "at": "0:20.8",
+   "speaker": "S1",
+   "text": "It's safer. You know?",
+   "this": false
+  }
+ ],
+ "help": [
+  "Run `echo 'r54qb74c.1..r54qb74c.2' | blackbox edl new - --title <title>` to make these lines an EDL",
+  "Run `blackbox transcript C5274.MP4 --day 2026-09-16` for the whole file"
+ ]
+}

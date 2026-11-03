@@ -1,0 +1,6 @@
+error:
+  code: usage
+  message: unknown flag --bogus for `blackbox search`
+help[2]:
+  Valid flags for `blackbox search`: --all, --limit <n>, --person <name>, --every-device, --month <YYYY-MM>, --day <YYYY-MM-DD>, --path <text>, --video, --transcripts <version>, --format <toon|json|edn>, --fields <a,b>, --full (--help always allowed)
+  Run `blackbox search --help` for the options

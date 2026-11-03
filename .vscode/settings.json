@@ -1,0 +1,70 @@
+{
+  // Opening the folder jacks in: `bb nrepl` (dev/ and test/ on the classpath), then (dev). If a REPL is already
+  // running (.nrepl-port exists, say an agent's or one from a terminal), Calva connects to it instead. Either way
+  // people and agents share one REPL through .nrepl-port.
+  "calva.autoStartRepl": true,
+  "calva.autoConnectRepl": true,
+  "calva.replConnectSequences": [
+    {
+      // The default: a free port, written to .nrepl-port.
+      "name": "black-box-cli (jack in)",
+      "projectType": "babashka",
+      "projectRootPath": ["."],
+      "autoSelectForJackIn": true,
+      "customJackInCommandLine": "bb nrepl JACK-IN-NREPL-PORT",
+      "nReplPortFile": [".nrepl-port"],
+      "cljsType": "none",
+      "afterPrimaryReplConnectedCode": ["(dev)"]
+    },
+    {
+      // A fixed port, for a tool that wants to know it in advance.
+      "name": "black-box-cli (jack in on port 1667)",
+      "projectType": "babashka",
+      "projectRootPath": ["."],
+      "customJackInCommandLine": "bb nrepl 1667",
+      "nReplPortFile": [".nrepl-port"],
+      "cljsType": "none",
+      "afterPrimaryReplConnectedCode": ["(dev)"]
+    },
+    {
+      // Jack in, then run the tests and the goldens: a quick health check of the checkout.
+      "name": "black-box-cli (jack in and test)",
+      "projectType": "babashka",
+      "projectRootPath": ["."],
+      "customJackInCommandLine": "bb nrepl JACK-IN-NREPL-PORT",
+      "nReplPortFile": [".nrepl-port"],
+      "cljsType": "none",
+      "afterPrimaryReplConnectedCode": ["(dev)", "(tests)", "(goldens)"]
+    },
+    {
+      // Connect to a REPL started elsewhere (`bb nrepl` in a terminal, or an agent's).
+      "name": "black-box-cli (connect)",
+      "projectType": "babashka",
+      "projectRootPath": ["."],
+      "autoSelectForConnect": true,
+      "nReplPortFile": [".nrepl-port"],
+      "cljsType": "none",
+      "afterPrimaryReplConnectedCode": ["(dev)"]
+    }
+  ],
+  // ctrl+alt+c f, from any file under src/ or test/, opens dev/fiddle.clj.
+  "calva.fiddleFilePaths": [
+    { "source": ["src"], "fiddle": ["dev", "fiddle.clj"] },
+    { "source": ["test"], "fiddle": ["dev", "fiddle.clj"] }
+  ],
+  // ctrl+alt+space, then the key:
+  //   l reloads src, t runs every test, n the tests of the file you're in, g the goldens,
+  //   h prints the home view, c runs the selected arguments as a command line (select "search" "marble").
+  "calva.customREPLCommandSnippets": [
+    { "name": "black-box-cli: reload", "key": "l", "ns": "dev", "snippet": "(reload)" },
+    { "name": "black-box-cli: run the tests", "key": "t", "ns": "dev", "snippet": "(tests)" },
+    { "name": "black-box-cli: this namespace's tests", "key": "n", "ns": "dev", "snippet": "(tests '$ns)" },
+    { "name": "black-box-cli: goldens", "key": "g", "ns": "dev", "snippet": "(goldens)" },
+    { "name": "black-box-cli: home view", "key": "h", "ns": "dev", "snippet": "(show)" },
+    { "name": "black-box-cli: run the selection", "key": "c", "ns": "dev", "snippet": "(show $selection)" }
+  ],
+  // Results pretty-printed at the width the code is written to.
+  "calva.prettyPrintingOptions": { "enabled": true, "printEngine": "pprint", "width": 120 },
+  // Format with clojure-lsp's cljfmt, the same rules `bb fmt` checks.
+  "calva.fmt.configPath": "CLOJURE-LSP"
+}

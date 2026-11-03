@@ -1,0 +1,496 @@
+{
+ "about": "Run in order against test/fixtures/media_meta with one empty --local folder. Outputs are normalised: <local>, <meta>, ~, <stamp>- (a cut folder's UTC stamp) and <now>; in cut.mpv.edl, %<len>% is the byte length of the path that follows it.",
+ "cutlist_folder_files": "cut/ holds the files step 40 wrote",
+ "steps": [
+  {
+   "n": 1,
+   "argv": [
+    "search",
+    "marble"
+   ],
+   "stdin": null,
+   "exit": 1,
+   "out": "out/01.txt"
+  },
+  {
+   "n": 2,
+   "argv": [
+    "index"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/02.txt"
+  },
+  {
+   "n": 3,
+   "argv": [
+    "index",
+    "--format",
+    "json"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/03.txt"
+  },
+  {
+   "n": 4,
+   "argv": [],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/04.txt"
+  },
+  {
+   "n": 5,
+   "argv": [
+    "search",
+    "marble"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/05.txt"
+  },
+  {
+   "n": 6,
+   "argv": [
+    "search",
+    "marble",
+    "sculpture",
+    "--all"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/06.txt"
+  },
+  {
+   "n": 7,
+   "argv": [
+    "search",
+    "marble",
+    "--limit",
+    "1"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/07.txt"
+  },
+  {
+   "n": 8,
+   "argv": [
+    "search",
+    "marble",
+    "--fields",
+    "all"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/08.txt"
+  },
+  {
+   "n": 9,
+   "argv": [
+    "search",
+    "marble",
+    "--full",
+    "--format",
+    "json"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/09.txt"
+  },
+  {
+   "n": 10,
+   "argv": [
+    "search",
+    "marmo",
+    "--fields",
+    "id,file,day,at,end,speaker,text,tc,proxy,seconds,rel"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/10.txt"
+  },
+  {
+   "n": 11,
+   "argv": [
+    "search",
+    "marble",
+    "--month",
+    "2026-10"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/11.txt"
+  },
+  {
+   "n": 12,
+   "argv": [
+    "search",
+    "lagoon",
+    "day",
+    "--day",
+    "2026-10-02"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/12.txt"
+  },
+  {
+   "n": 13,
+   "argv": [
+    "search",
+    "marble",
+    "--path",
+    "src/fx3"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/13.txt"
+  },
+  {
+   "n": 14,
+   "argv": [
+    "search",
+    "marble",
+    "--video"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/14.txt"
+  },
+  {
+   "n": 15,
+   "argv": [
+    "search",
+    "\"hammer drill\""
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/15.txt"
+  },
+  {
+   "n": 16,
+   "argv": [
+    "search",
+    "zzz"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/16.txt"
+  },
+  {
+   "n": 17,
+   "argv": [
+    "search",
+    "marble",
+    "--fields",
+    "nope"
+   ],
+   "stdin": null,
+   "exit": 1,
+   "out": "out/17.txt"
+  },
+  {
+   "n": 18,
+   "argv": [
+    "search",
+    "x",
+    "--bogus"
+   ],
+   "stdin": null,
+   "exit": 2,
+   "out": "out/18.txt"
+  },
+  {
+   "n": 19,
+   "argv": [
+    "line",
+    "r54qb74c.1"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/19.txt"
+  },
+  {
+   "n": 20,
+   "argv": [
+    "line",
+    "r54qb74c.1",
+    "--context",
+    "1",
+    "--format",
+    "json"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/20.txt"
+  },
+  {
+   "n": 21,
+   "argv": [
+    "line",
+    "2npshqu5.1",
+    "--fields",
+    "all"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/21.txt"
+  },
+  {
+   "n": 22,
+   "argv": [
+    "line",
+    "zzzzzzzz.9"
+   ],
+   "stdin": null,
+   "exit": 1,
+   "out": "out/22.txt"
+  },
+  {
+   "n": 23,
+   "argv": [
+    "line",
+    "x1"
+   ],
+   "stdin": null,
+   "exit": 1,
+   "out": "out/23.txt"
+  },
+  {
+   "n": 24,
+   "argv": [
+    "transcript",
+    "C5274.MP4"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/24.txt"
+  },
+  {
+   "n": 25,
+   "argv": [
+    "transcript",
+    "DJI_01.WAV",
+    "--limit",
+    "1"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/25.txt"
+  },
+  {
+   "n": 26,
+   "argv": [
+    "transcript",
+    "DJI",
+    "--full"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/26.txt"
+  },
+  {
+   "n": 27,
+   "argv": [
+    "transcript",
+    "C5900.MP4"
+   ],
+   "stdin": null,
+   "exit": 1,
+   "out": "out/27.txt"
+  },
+  {
+   "n": 28,
+   "argv": [
+    "transcript",
+    "C5900.MP4",
+    "--day",
+    "2026-10-03"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/28.txt"
+  },
+  {
+   "n": 29,
+   "argv": [
+    "transcript",
+    "nothing"
+   ],
+   "stdin": null,
+   "exit": 1,
+   "out": "out/29.txt"
+  },
+  {
+   "n": 30,
+   "argv": [
+    "footage"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/30.txt"
+  },
+  {
+   "n": 31,
+   "argv": [
+    "footage",
+    "--video",
+    "--fields",
+    "all"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/31.txt"
+  },
+  {
+   "n": 32,
+   "argv": [
+    "footage",
+    "--month",
+    "2026-10",
+    "--limit",
+    "1"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/32.txt"
+  },
+  {
+   "n": 33,
+   "argv": [
+    "footage",
+    "--month",
+    "2025-01"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/33.txt"
+  },
+  {
+   "n": 34,
+   "argv": [
+    "footage",
+    "--format",
+    "json"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/34.txt"
+  },
+  {
+   "n": 35,
+   "argv": [
+    "edl",
+    "new",
+    "-",
+    "--dry-run"
+   ],
+   "stdin": "title: Marble, the quote\n# the quote, then the drill\nr54qb74c.1..r54qb74c.2  # why we use it\nC5274.MP4 0:20-0:26.6 # the safer line\n09/16/audio/DJI_01.WAV 5-9.5\n2npshqu5.2\n",
+   "exit": 0,
+   "out": "out/35.txt"
+  },
+  {
+   "n": 36,
+   "argv": [
+    "edl",
+    "new",
+    "-",
+    "--dry-run",
+    "--format",
+    "json"
+   ],
+   "stdin": "title: Marble, the quote\n# the quote, then the drill\nr54qb74c.1..r54qb74c.2  # why we use it\nC5274.MP4 0:20-0:26.6 # the safer line\n09/16/audio/DJI_01.WAV 5-9.5\n2npshqu5.2\n",
+   "exit": 0,
+   "out": "out/36.txt"
+  },
+  {
+   "n": 37,
+   "argv": [
+    "edl",
+    "new",
+    "-",
+    "--dry-run"
+   ],
+   "stdin": "{\"title\": \"J\", \"clips\": [{\"from\": \"r54qb74c.1\"}, {\"file\": \"C5274.MP4\", \"in\": 1, \"out\": 2.5, \"note\": \"n\"}]}",
+   "exit": 0,
+   "out": "out/37.txt"
+  },
+  {
+   "n": 38,
+   "argv": [
+    "edl",
+    "new",
+    "-"
+   ],
+   "stdin": "r54qb74c.1..zzzzzzzz.9\n2npshqu5.1..r54qb74c.3\nnonsense here\nC5274.MP4 30-20\nC5900.MP4 1-2\n",
+   "exit": 1,
+   "out": "out/38.txt"
+  },
+  {
+   "n": 39,
+   "argv": [
+    "edl",
+    "list"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/39.txt"
+  },
+  {
+   "n": 40,
+   "argv": [
+    "edl",
+    "new",
+    "-"
+   ],
+   "stdin": "title: Marble, the quote\n# the quote, then the drill\nr54qb74c.1..r54qb74c.2  # why we use it\nC5274.MP4 0:20-0:26.6 # the safer line\n09/16/audio/DJI_01.WAV 5-9.5\n2npshqu5.2\n",
+   "exit": 0,
+   "out": "out/40.txt"
+  },
+  {
+   "n": 41,
+   "argv": [
+    "edl",
+    "list"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/41.txt"
+  },
+  {
+   "n": 42,
+   "argv": [
+    "edl",
+    "list",
+    "--fields",
+    "all"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/42.txt"
+  },
+  {
+   "n": 43,
+   "argv": [
+    "edl",
+    "show",
+    "marble"
+   ],
+   "stdin": null,
+   "exit": 0,
+   "out": "out/43.txt"
+  },
+  {
+   "n": 44,
+   "argv": [
+    "edl",
+    "show",
+    "nothing"
+   ],
+   "stdin": null,
+   "exit": 1,
+   "out": "out/44.txt"
+  }
+ ]
+}

@@ -1,0 +1,3 @@
+{:source-paths #{"src" "test" "dev"}
+ ;; The REPL namespaces are called from the REPL, not from code.
+ :linters {:clojure-lsp/unused-public-var {:exclude #{dev fiddle user}}}}

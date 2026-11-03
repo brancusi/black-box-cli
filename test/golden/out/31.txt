@@ -1,0 +1,11 @@
+scope: video only
+count: 3
+total: 3
+hours: 0.04
+files[3]{file,day,length,lines,speakers,rel,start_tc,language}:
+  C5274.MP4,2026-09-16,"0:32.5",4,1,media/2026/09/16/src/fx3/C5274.MP4,"03:06:51:08",multi
+  C5900.MP4,2026-10-02,"1:00.0",1,1,media/2026/10/02/src/fx3/C5900.MP4,null,multi
+  C5900.MP4,2026-10-03,"1:00.0",1,1,media/2026/10/03/src/a7s/C5900.MP4,null,multi
+help[2]:
+  Run `blackbox transcript <file>` to read one
+  Run `blackbox search <words> --day YYYY-MM-DD` to search one day

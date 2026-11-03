@@ -1,0 +1,36 @@
+{
+ "scope": "everything",
+ "count": 4,
+ "total": 4,
+ "hours": 0.46,
+ "files": [
+  {
+   "file": "DJI_01.WAV",
+   "day": "2026-09-16",
+   "length": "24:57.0",
+   "lines": 2
+  },
+  {
+   "file": "C5274.MP4",
+   "day": "2026-09-16",
+   "length": "0:32.5",
+   "lines": 4
+  },
+  {
+   "file": "C5900.MP4",
+   "day": "2026-10-02",
+   "length": "1:00.0",
+   "lines": 1
+  },
+  {
+   "file": "C5900.MP4",
+   "day": "2026-10-03",
+   "length": "1:00.0",
+   "lines": 1
+  }
+ ],
+ "help": [
+  "Run `blackbox transcript <file>` to read one",
+  "Run `blackbox search <words> --day YYYY-MM-DD` to search one day"
+ ]
+}

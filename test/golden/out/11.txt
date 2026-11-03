@@ -1,0 +1,10 @@
+query: marble
+match: any word
+scope: 2026-10
+transcripts: deepgram-nova-3-multi
+count: 0
+total: 0
+result: 0 lines match
+help[2]:
+  Try fewer or other words, Italian ones too (any word matches unless --all)
+  Run `blackbox footage` to see which months are indexed

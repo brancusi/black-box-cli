@@ -1,0 +1,5 @@
+error:
+  code: not-found
+  message: no line zzzzzzzz.9 in the index
+help[1]:
+  Run `blackbox search <words>` for line ids
