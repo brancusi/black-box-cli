@@ -118,6 +118,9 @@ checks (`cmd+shift+b` runs test, lint and fmt).
   `vX.Y.Z`, push with the tag. The release workflow runs the checks, builds `blackbox-cli.jar` with `bb dist
   vX.Y.Z` and attaches it and its `.sha256` to the GitHub release, where Black Box's release script fetches it:
   `https://github.com/brancusi/black-box-cli/releases/download/vX.Y.Z/blackbox-cli.jar`.
+- **After a release:** send Black Box's agent the version and the jar's SHA-256 (from the release's `.sha256`).
+  Black Box pins both in its next build, and editors get the new CLI when that Black Box updates. A Black Box
+  release build won't run without a pinned CLI.
 
 ## Working with Black Box
 
