@@ -22,7 +22,7 @@
         exit (binding [*out* w
                        *in* (clojure.lang.LineNumberingPushbackReader. (StringReader. (or (:stdin opts) "")))]
                (main/run {:args args
-                          :env (merge {"BLACKBOX_BIN" "~/.local/bin/blackbox"} (:env opts))
+                          :env (merge {"BLACKBOX_BIN" "~/.local/bin/blackbox" "BLACKBOX_REFRESH" "never"} (:env opts))
                           :home (or (:home opts) (str (fs/create-temp-dir {:prefix "bbcli-home-"})))}))]
     {:exit exit :out (str w)}))
 

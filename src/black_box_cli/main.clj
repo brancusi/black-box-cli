@@ -11,6 +11,7 @@
    [black-box-cli.meta :as meta]
    [black-box-cli.out :as out]
    [black-box-cli.setup :as setup]
+   [black-box-cli.status :as status]
    [black-box-cli.stills :as stills]
    [black-box-cli.version :as version]
    [black-box-cli.who :as who]
@@ -28,7 +29,8 @@
   (str "blackbox " version/version ": " description "
 
   blackbox                       what the index holds, where media_meta is, recent cuts
-  blackbox index [--rebuild]     build this Mac's index from media_meta
+  blackbox index [--rebuild]     build this Mac's index from media_meta (commands keep it up to date)
+  blackbox status                the index's health: when it was built, what's new in media_meta, what's online-only
   blackbox search <words…>       what was said (--all --month --day --path --video --limit)
   blackbox line <id>             one line in context
   blackbox transcript <file>     a file's lines
@@ -80,8 +82,14 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
   (out/home-path (or (get env "BLACKBOX_BIN") (System/getProperty "babashka.file") "blackbox") home))
 
 (defn- home-view [ctx fmt]
-  (let [{:keys [index months]} (archive/home-index ctx)
-        m (meta/locate ctx)
+  (let [m (meta/locate ctx)
+        ctx (assoc ctx :meta m)
+        {:keys [index months]} (archive/home-index ctx)
+        index (if months
+                (let [{:keys [health record]} (status/state ctx)]
+                  (apply array-map (concat (mapcat identity index)
+                                           [:indexed (or (:at record) "unknown (before 0.1.3)") :health health])))
+                index)
         meta-line (if m (out/home-path m (:home ctx)) "not found")
         no-meta "Pass --meta <the media_meta folder>, or make Dropbox's media_meta available on this Mac"]
     (if-not months
@@ -107,7 +115,8 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
 
 (def ^:private handlers
   "The built commands, by their words."
-  {["index"] archive/index-cmd
+  {["index"] status/index-cmd
+   ["status"] status/status-cmd
    ["search"] archive/search-cmd
    ["line"] archive/line-cmd
    ["transcript"] archive/transcript-cmd
@@ -126,6 +135,11 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["people"] who/people-cmd
    ["whose"] who/whose-cmd
    ["setup" "agent"] setup/agent-cmd})
+
+(def ^:private reads-index
+  "The commands that read the index, which bring it up to date first (status/refresh!)."
+  #{["search"] ["line"] ["transcript"] ["footage"] ["edl" "new"] ["frame"] ["still" "new"] ["look"] ["like"]
+    ["shots"] ["people"] ["whose"]})
 
 (defn- meta!
   "media_meta for a command that reads it, or error.code no-meta."
@@ -163,6 +177,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
           help (do (out/text! (flags/help-text spec)) 0)
           :else (let [ctx (assoc ctx :opts opts :args args)
                       ctx (assoc ctx :meta (if (= ["index"] (:path spec)) (meta! ctx) (meta/locate ctx)))
+                      _ (when (reads-index (:path spec)) (status/refresh! ctx))
                       [m help] (handler ctx)]
                   (out/emit! m help fmt)
                   0)))

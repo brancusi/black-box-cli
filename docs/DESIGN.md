@@ -14,13 +14,14 @@ writes is [CONTRACT.md](CONTRACT.md).
 - Cut folders are outputs, written once each, never overwritten. They are the only thing the CLI makes that a
   rebuild can't reproduce, and they're throwaway by nature (rough cuts).
 - No config file, no daemon, no login, no network. Flags and environment variables only (`BLACKBOX_META`,
-  `BLACKBOX_FORMAT`, `BLACKBOX_APP`, `BLACKBOX_TOOLS`, `BLACKBOX_BIN`, `BLACKBOX_PLAYER`).
+  `BLACKBOX_FORMAT`, `BLACKBOX_APP`, `BLACKBOX_TOOLS`, `BLACKBOX_BIN`, `BLACKBOX_PLAYER`, `BLACKBOX_REFRESH`).
 
 ## Commands
 
 ```
 blackbox                                  home view: bin, description, what the cache holds, recent cuts, help
-blackbox index [--rebuild]                build or refresh the cache from media_meta
+blackbox index [--rebuild] [--progress]   build or refresh the cache from media_meta (commands also do it)
+blackbox status                           the cache's health, last build, what's pending or online-only
 blackbox search <words…> [--all] [--person NAME] [--month YYYY-MM] [--day YYYY-MM-DD] [--path P] [--video] [--limit N]
 blackbox line <id> [--context N]          one line in context: file, timecode, proxy
 blackbox transcript <file> [--limit N]    a file's lines
@@ -80,6 +81,11 @@ CHANGELOG.md.
     prompt; the CLI reads one version (`gemini-3.1-pro/v1`), whole, whenever the folder's list of files changes,
     into `shots.sqlite` with a full-text table. A shot id (`<clip>.s<n>`) is a cut list clip: its best moment, or
     the whole shot; the file's transcript gives the timecode.
+
+12. **The cache keeps itself up to date.** A command that reads it first updates it when media_meta has changed
+    since the last build (a `find -cnewer` over the sources, checked at most once a minute), so an agent never
+    searches yesterday's index without knowing. Each build is recorded beside the index; `status` reads the
+    record and media_meta and says the cache's health, for people, agents and Black Box's window alike.
 
 ## Not this repo's
 

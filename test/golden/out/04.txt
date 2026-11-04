@@ -6,6 +6,8 @@ index:
   files: 4
   lines: 8
   hours: 0.5
+  indexed: "<now>"
+  health: ok
 media_meta: <meta>
 months[2]{month,files,hours,lines}:
   2026-10,2,0,2

@@ -225,7 +225,7 @@ INSERT INTO meta VALUES ('schema_version', :schema), ('sqlite_version', sqlite_v
 (defn build!
   "Brings the index at `index-path` up to date with the transcripts of `version` under `meta`, or builds it from
   scratch when `rebuild` (or when its schema or SQLite differ). Returns the counts."
-  [{:keys [meta index-path version rebuild]}]
+  [{:keys [meta index-path version rebuild progress]}]
   (let [tree (fs/path meta "transcripts" version)]
     (when-not (fs/directory? tree)
       (out/fail! "no-transcripts" (str "no transcripts of version " version ": " tree " is not a folder")
@@ -241,11 +241,15 @@ INSERT INTO meta VALUES ('schema_version', :schema), ('sqlite_version', sqlite_v
                           (db/query tmp "SELECT id, rel, json_size, json_mtime, json_sha256 FROM transcripts
                                          WHERE version = :v;" {:v version}))
               offline (dataless tree)
+              files (walk tree)
+              total (count files)
               res (reduce
                    (fn [res {:keys [path rel-path file-name]}]
                      (let [rel (subs rel-path 0 (- (count rel-path) 5))
                            prev (known rel)
                            res (update res :seen conj rel)]
+                       (when (and progress (zero? (mod (count (:seen res)) 250)))
+                         (progress {:stage "transcripts" :done (count (:seen res)) :total total}))
                        (cond
                          (not (transcript-name? file-name)) (update res :skipped inc)
 
@@ -272,7 +276,7 @@ INSERT INTO meta VALUES ('schema_version', :schema), ('sqlite_version', sqlite_v
                                                   :json_mtime (/ (.toMillis (fs/last-modified-time path)) 1000.0))))
                                (update res :skipped inc)))))))
                    {:added 0 :changed 0 :unchanged 0 :removed 0 :skipped 0 :lines_added 0 :seen #{} :rows []}
-                   (walk tree))
+                   files)
               gone (remove (:seen res) (keys known))
               drop-ids (vec (concat (remove nil? (:drop res)) (map (comp :id known) gone)))]
           (when (seq drop-ids)

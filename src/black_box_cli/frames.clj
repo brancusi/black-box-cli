@@ -235,7 +235,7 @@ INSERT INTO meta VALUES ('schema_version', :schema), ('sqlite_version', sqlite_v
 (defn build!
   "Brings the picture index beside `index-path` up to date with media_meta's frames files, or builds it from scratch
   when `rebuild`. Returns the counts, or nil when media_meta has no published embeddings folder."
-  [{:keys [meta index-path rebuild]}]
+  [{:keys [meta index-path rebuild progress]}]
   (let [root (fs/path meta "embeddings")
         tree (fs/path root label)
         {:keys [db] :as p} (paths index-path)]
@@ -248,11 +248,15 @@ INSERT INTO meta VALUES ('schema_version', :schema), ('sqlite_version', sqlite_v
           (let [known (into {} (map (juxt :rel identity))
                             (db/query tmp "SELECT id, rel, json_size, json_mtime, json_sha256 FROM frame_files;"))
                 offline (dataless tree)
+                files (walk tree)
+                total (count files)
                 res (reduce
                      (fn [res {:keys [path rel]}]
                        (let [prev (known rel)
                              mtime (/ (.toMillis (fs/last-modified-time path)) 1000.0)
                              res (update res :seen conj rel)]
+                         (when (and progress (zero? (mod (count (:seen res)) 250)))
+                           (progress {:stage "frames" :done (count (:seen res)) :total total}))
                          (cond
                            (and prev (= (:json_size prev) (fs/size path)) (== (:json_mtime prev) mtime))
                            (update res :unchanged inc)
@@ -277,7 +281,7 @@ INSERT INTO meta VALUES ('schema_version', :schema), ('sqlite_version', sqlite_v
                                                                        :json_mtime mtime)))))
                                  (update res :skipped inc)))))))
                      {:added 0 :changed 0 :unchanged 0 :removed 0 :skipped 0 :seen #{} :rows [] :drop []}
-                     (walk tree))
+                     files)
                 gone (remove (:seen res) (keys known))
                 drop-ids (vec (concat (remove nil? (:drop res)) (map (comp :id known) gone)))]
             (when (seq drop-ids)

@@ -53,9 +53,22 @@
   "Every command: its words, the phase that built it, a summary, arguments, flags and examples."
   [{:path ["index"] :phase 2
     :summary "build this Mac's index from media_meta: transcripts, frames, people, sync and shot logs"
-    :flags (into [{:flag "--rebuild" :doc "build it from scratch instead of updating it"} version-flag]
+    :flags (into [{:flag "--rebuild" :doc "build it from scratch instead of updating it"}
+                  {:flag "--progress" :doc "progress as JSON lines on stderr, for an app to show"}
+                  version-flag]
                  (output-flags false))
-    :examples ["blackbox index" "blackbox index --rebuild" "blackbox index --format json"]}
+    :examples ["blackbox index" "blackbox index --rebuild" "blackbox index --format json"
+               "blackbox index --progress --format json"]
+    :about (str "Commands that read the index bring it up to date themselves when media_meta has changed (checked at\n"
+                "most once a minute; BLACKBOX_REFRESH=never turns that off). `index` does it now, waiting for a build\n"
+                "another command has started.\n")}
+   {:path ["status"] :phase 13
+    :summary "the index's health: when it was last built, what media_meta has that it hasn't read, what's online-only"
+    :flags (into [version-flag] (output-flags false))
+    :examples ["blackbox status" "blackbox status --format json"]
+    :about (str "health: ok, stale (media_meta has new or changed files; the next command reads them), incomplete\n"
+                "(Dropbox keeps some files online-only), broken (run `blackbox index --rebuild`), not built, or\n"
+                "no media_meta. Each source (transcripts, frames, people, prints, sync, shots) has its own state.\n")}
    {:path ["search"] :phase 2
     :summary "find what was said (full text, accents and case ignored); any word matches unless --all"
     :args [{:arg "terms" :many true :doc "words, or a quoted phrase"}]

@@ -3,6 +3,7 @@
   the output, errors on stdout as error: {code, message, problems?}. Nothing else in the CLI prints."
   (:require
    [black-box-cli.toon :as toon]
+   [cheshire.core :as json]
    [clojure.pprint :as pprint]
    [clojure.string :as str]))
 
@@ -51,6 +52,14 @@
   [s]
   (print s)
   (flush))
+
+(defn progress!
+  "One line of progress on stderr, as JSON (`index --progress`, for Black Box to show): stdout keeps the one
+  answer."
+  [m]
+  (binding [*out* *err*]
+    (println (json/generate-string m))
+    (flush)))
 
 (defn fail!
   "Stops the command: an error of `code` (a string such as \"no-meta\"), exit 1, or exit 2 when `code` is

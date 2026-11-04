@@ -25,8 +25,18 @@ command line to fix (the valid flags are listed).
 
 ## Start
 
-`blackbox` alone shows what's indexed (months, hours, files), where `media_meta` is and the latest cuts. If the
-index is empty or old, run `blackbox index` first (seconds; it reads what Dropbox has synced into `media_meta`).
+`blackbox` alone shows what's indexed (months, hours, files), where `media_meta` is, the latest cuts, when the
+index was last built (`indexed`) and its `health`. You don't need to run `blackbox index`: every command brings the
+index up to date first when Dropbox has brought new files into `media_meta` (a few seconds; the first build on a
+Mac takes a minute or two). Black Box may also keep it up to date itself.
+
+`blackbox status` says more: each source (transcripts, frames, people, prints, sync, shots), what it holds, and
+how many files are `pending` (new, not read yet) or `offline`. If `health` is:
+
+- `incomplete`: some files in `media_meta` are online-only in Dropbox, so searches miss them. Tell the user to
+  right-click `media_meta` in Finder → Make Available Offline.
+- `broken`: run `blackbox index --rebuild`.
+- `not built` or `stale`: run `blackbox index` (or just search: it builds first).
 
 ## Find what was said
 

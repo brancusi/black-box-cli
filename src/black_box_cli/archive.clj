@@ -1,15 +1,13 @@
 (ns black-box-cli.archive
-  "The commands over what was said: `index`, `search`, `line`, `transcript` and `footage`, and what the home view
+  "The commands over what was said: `search`, `line`, `transcript` and `footage`, and what the home view
   shows of the index. Each builds plain data for `out`; the queries run in this Mac's index (black-box-cli.index)."
   (:require
    [babashka.fs :as fs]
    [black-box-cli.db :as db]
-   [black-box-cli.frames :as frames]
    [black-box-cli.ids :as ids]
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
    [black-box-cli.people :as people]
-   [black-box-cli.prints :as prints]
    [black-box-cli.shots :as shots]
    [black-box-cli.sync :as sync]
    [black-box-cli.tc :as tc]
@@ -92,44 +90,6 @@
 
 (def ^:private fields-hint
   "Add `--fields id,file,day,at,speaker,text,tc,proxy` for timecode and proxy")
-
-;; ------------------------------------------------------------------------------------------------ index
-
-(defn index-cmd
-  "`blackbox index [--rebuild]`."
-  [{:keys [meta home opts] :as ctx}]
-  (let [path (:index (index/paths ctx))
-        res (index/build! {:meta meta :index-path path :version (version-of opts) :rebuild (:rebuild opts)})
-        pics (frames/build! {:meta meta :index-path path :rebuild (:rebuild opts)})
-        names (people/build! {:meta meta :index-path path :rebuild (:rebuild opts)})
-        voices (prints/build! {:meta meta :index-path path :rebuild (:rebuild opts)})
-        synced (sync/build! {:meta meta :index-path path :rebuild (:rebuild opts)})
-        logged (shots/build! {:meta meta :index-path path :rebuild (:rebuild opts)})]
-    [(array-map :index (out/home-path path home)
-                :transcripts (version-of opts)
-                :added (:added res)
-                :changed (:changed res)
-                :unchanged (:unchanged res)
-                :removed (:removed res)
-                :skipped (:skipped res)
-                :lines_added (:lines_added res)
-                :frames (if pics
-                          (array-map :added (:added pics)
-                                     :changed (:changed pics)
-                                     :unchanged (:unchanged pics)
-                                     :removed (:removed pics)
-                                     :skipped (:skipped pics)
-                                     :total (:frames pics))
-                          "none: media_meta has no embeddings folder")
-                :people (or names "none: media_meta has no people folder")
-                :prints (or voices "none: media_meta has no prints folder")
-                :sync (or synced "none: media_meta has no sync folder")
-                :shots (or logged "none: media_meta has no shots folder"))
-     (cond-> []
-       (or (pos? (:skipped res)) (pos? (:skipped pics 0)) (pos? (:skipped voices 0)) (pos? (:skipped synced 0))
-           (pos? (:skipped logged 0)))
-       (conj "Skipped files are online-only or not transcripts; make media_meta available offline in Finder")
-       true (conj "Run `blackbox` for what the index holds"))]))
 
 ;; ------------------------------------------------------------------------------------------------ home
 

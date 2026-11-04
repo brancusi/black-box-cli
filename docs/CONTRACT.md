@@ -72,6 +72,7 @@ Black Box); image vectors are float32-exact before storage.
 | What | Where (docs/DESIGN.md, decision 3) | Rule |
 |---|---|---|
 | The index (cache) | `<local>/search/transcripts.sqlite`; beside it the frames, names (`people.sqlite`), prints (`prints.sqlite`) and their vectors files, the sync map (`sync.sqlite`) and the shot logs (`shots.sqlite`) | rebuilt from `media_meta`; replaced only by rename of a new one |
+| The last build's record | `<local>/search/indexed.json`: `{schema: "black-box-cli.indexed/1", at, took_s, cli, result}` (`result` is what `index` printed); `.index.lock` beside it while a build runs (the builder's process id) | replaced by rename; the lock is removed after, and taken over when its process has gone |
 | Cuts | `<local>/cuts/<UTC stamp>-<slug>/`: `cut.mpv.edl`, `cut.edl`, `cut.srt`, `cut.json`, `cut.html`; `build.json` once `edl build` has sent it | a new folder each time, files created new |
 | Frames for `frame` | a temp folder | never in `media_meta` |
 | Stills (`still new`) | `<local>/stills/<UTC stamp>-<look>/`: `request.json`, then the stills Black Box brings back (`<name>.jpg`, `<name>.tif`); copies in the `--out` folder when one is named | a new folder each request, files created new; Black Box writes the stills; copies never over a file |
@@ -82,6 +83,30 @@ By default the index is in `~/Library/Caches/black-box-cli/` and cuts in `~/Libr
 Support/black-box-cli/cuts/` (docs/DESIGN.md, decision 3); `--local <folder>` puts both under that folder. Black Box's old
 cuts folder (`~/Library/Application Support/Media Utilities/media-mgmt/cuts`) is read by `edl list` and `edl
 show`, never written.
+
+### Keeping the index up to date, and its state
+
+A command that reads the index brings it up to date first: it builds it when it's missing (or has no record), and
+when the record is over a minute old and any file under the sources it reads has a later change time (`find
+-cnewer`) than the record, it updates it. A refresh another process is doing isn't waited for; `blackbox index`
+waits for it, then builds. `BLACKBOX_REFRESH=never` turns refreshing off (for an app that runs `index` itself).
+
+`blackbox status --format json` is the state for an app to show:
+
+```json
+{"health": "ok", "index": "~/Library/Caches/black-box-cli/search/transcripts.sqlite",
+ "indexed_at": "2026-11-04T10:00:00Z", "age": "3 min ago", "took_s": 5.4, "by": "0.1.3",
+ "media_meta": "~/…/media_meta", "pending": 0, "offline": 0,
+ "sources": [{"source": "transcripts", "state": "ok", "holds": "2226 files", "pending": 0, "offline": 0}, …],
+ "help": ["…"]}
+```
+
+`health` is `no media_meta`, `not built`, `broken` (the index can't be read or is another schema: `index
+--rebuild`), `stale` (files pending, or no record), `incomplete` (files Dropbox keeps online-only, which the index
+can't read), or `ok`, in that order. A source's `state` is `none` (Black Box hasn't published it), `unknown` (no
+record), `stale`, `incomplete` or `ok`; `holds` is in words. `blackbox index --progress` writes JSON lines on
+stderr: `{"stage", "state": "start"|"done"}` for each of transcripts, frames, people, prints, sync and shots, and
+`{"stage", "done", "total"}` every 250 files of transcripts and frames.
 
 ### `cut.json`
 
