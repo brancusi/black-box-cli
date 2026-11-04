@@ -51,7 +51,7 @@ Line ids look like `k7f3q2ab.41`: the clip, then the line. They're the same on e
 
 One moment is often heard on several devices: a camera and the recorders on people's collars. Once Black Box
 has synced them, `search` shows such a moment once, with the same line on the other devices in `also`
-(`--every-device` lists each). A `check` means the devices' transcripts name different speakers: look before
+(`--every-device` lists each; `--fields id,text,also,check` always works). A `check` means the devices' transcripts name different speakers: look before
 putting the words in someone's mouth.
 
 ## Who: people by voice and face
@@ -80,7 +80,8 @@ when the user needs certainty.
   (the app) turns the words into the search; the first `look` on a Mac may download its model once (0.9 GB).
 - `blackbox like k7f3q2ab.f12` — frames that look like one you found, from other clips.
 - `blackbox frame k7f3q2ab.f12` — that frame as a JPEG; read the file to see it yourself. `frame` also takes a
-  line id (the picture where it starts) or a file with `--at 1:23.5`.
+  line id (the picture where it starts), a shot id or a file with `--at 1:23.5`. A recorder has no picture: for
+  its lines `frame` shows a camera heard with it (`picture` says which), or says `audio-only` when none was.
 - `--open` writes a page of the frames and opens it in the user's browser (`--html` writes it only and prints
   a quoted `open "…"` line).
 

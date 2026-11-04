@@ -113,6 +113,24 @@
          (assoc p :path proxy :start a :camera (last (str/split (:camera_rel p) #"/"))
                 :face (face-on-screen? index-path @person (:camera_rel p) a b)))))))
 
+(defn audio-only?
+  "Whether the proxy at `path` has sound and no picture (a recorder's), by ffprobe beside ffmpeg; nil without ffmpeg."
+  [env path]
+  (when-let [ffmpeg (tools/find-tool env "ffmpeg")]
+    (let [k (streams ffmpeg (str path))]
+      (and (contains? k "audio") (not (contains? k "video"))))))
+
+(defn camera-picture
+  "The picture for moment `t` of a file without one of its own (`rel`, `sha256`), by the rough cut's rule: a camera
+  heard with it, the speaker of line `from` on screen first. {:path :start :camera :camera_rel ...}, or nil when no
+  camera with a proxy was heard with it then."
+  [{:keys [env index-path meta]} {:keys [rel sha256 t from]}]
+  (when-let [ffmpeg (tools/find-tool env "ffmpeg")]
+    (let [kinds (memoize #(streams ffmpeg %))
+          has-video #(and (fs/exists? %) (not (tools/online-only? %)) (contains? (kinds %) "video"))]
+      (picture-for {:index-path index-path :meta meta :has-video has-video}
+                   {:rel rel :sha256 sha256 :start t :length 0.0 :from from}))))
+
 ;; ------------------------------------------------------------------------------------------------ ffmpeg
 
 (defn ffmpeg-args

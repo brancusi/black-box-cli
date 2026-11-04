@@ -28,7 +28,7 @@ blackbox transcript <file> [--limit N]    a file's lines
 blackbox footage [--person NAME] [--month …] [--day …] [--video]
 blackbox edl new <cutlist|-> [--title T] [--dry-run] [--play]
 blackbox edl list | edl show <id> [--play] | edl build <id>
-blackbox frame <file|line id|frame id> [--at T]   a JPEG from the proxy (ffmpeg)
+blackbox frame <file|line id|frame id|shot id> [--at T]   a JPEG from the proxy (ffmpeg)
 blackbox look <words…> | like <frame id> [--open|--html]   picture search
 blackbox shots [words…] [--camera M] [--framing F] [--clean] [--file F] [--per-clip N]   the shot logs
 blackbox people | whose <line id|face id> | like <line id|face id>   names, voices and faces

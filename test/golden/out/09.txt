@@ -19,7 +19,9 @@
    "tc": "00:00:09:00",
    "seconds": 9.0,
    "proxy": null,
-   "person": null
+   "person": null,
+   "also": null,
+   "check": null
   },
   {
    "id": "r54qb74c.3",
@@ -33,7 +35,9 @@
    "tc": "03:07:13:12",
    "seconds": 22.2,
    "proxy": "<meta>/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4",
-   "person": "Mara Vento"
+   "person": "Mara Vento",
+   "also": null,
+   "check": null
   }
  ],
  "help": [

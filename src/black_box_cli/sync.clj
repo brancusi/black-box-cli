@@ -119,12 +119,12 @@ COMMIT;")
               {:rel rel :sha sha256})))
 
 (defn pairs-among
-  "The pairs whose camera and recorder are both among `rels`, or [] without a sync map."
+  "The pairs whose recorder is among `rels` (with any camera: two recorders heard with one camera are one moment
+  even when the camera's line isn't among them), or [] without a sync map."
   [index-path rels]
   (if (or (not (available? index-path)) (< (count (distinct rels)) 2))
     []
-    (db/query (path index-path) "SELECT * FROM pairs WHERE camera_rel IN (SELECT value FROM json_each(:rels))
-                                 AND recorder_rel IN (SELECT value FROM json_each(:rels));"
+    (db/query (path index-path) "SELECT * FROM pairs WHERE recorder_rel IN (SELECT value FROM json_each(:rels));"
               {:rels (json/generate-string (distinct rels))})))
 
 (defn recorder-time

@@ -15,6 +15,7 @@
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
    [black-box-cli.picture :as picture]
+   [black-box-cli.preview :as preview]
    [black-box-cli.shots :as shots]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
@@ -117,17 +118,35 @@
         _ (when (and (not= :file kind) (:at opts))
             (out/fail! "usage" "--at is for a file; a line, frame or shot id has its own time"
                        {:help ["Run `blackbox frame <file> --at <time>` for any moment of a file"]}))
-        {:keys [id t seek rel clip name file] :as target} (target ctx path opts what)
+        {:keys [id t seek rel clip name file sha256] :as target} (target ctx path opts what)
         proxy (or (if file (frame-proxy meta file) (archive/proxy-of meta rel))
                   (out/fail! "no-proxy" (str "no proxy for " rel " in media_meta")
                              {:help ["Proxies come from the Mac mini; a clip without one has no pictures here"]}))
-        jpeg (picture/jpeg! {:env env :cache (:frames (index/paths ctx)) :clip clip :proxy proxy :t (or seek t)
-                             :width (:width opts)})
+        ;; A recorder has no picture: show a camera heard with it, as the rough cut does.
+        cam (when (and (not file) (preview/audio-only? env proxy))
+              (or (preview/camera-picture {:env env :index-path path :meta meta}
+                                          {:rel rel :sha256 sha256 :t t :from (when (= :line kind) id)})
+                  (out/fail! "audio-only" (str name " is sound only (a recorder) and no camera was heard with it at "
+                                               (tc/hms t))
+                             {:help [(if (= :line kind)
+                                       (str "Run `echo '" id "' | blackbox edl new - --title <title> --play` to hear it")
+                                       (str "Run `blackbox transcript " name "` for what was said"))]})))
+        [pic-rel pic-t pic-clip pic-proxy]
+        (if cam
+          (let [ct (tc/round-to (:start cam) 3)]
+            [(:camera_rel cam) ct (or (:clip (transcript-of path (:camera_rel cam))) (subs (:camera_sha256 cam) 0 8))
+             (:path cam)])
+          [rel t clip proxy])
+        jpeg (picture/jpeg! {:env env :cache (:frames (index/paths ctx)) :clip pic-clip :proxy pic-proxy
+                             :t (if cam pic-t (or seek t)) :width (:width opts)})
         changed? (and file (:proxy_size file) (not= (:proxy_size file) (fs/size proxy)))
-        faces (who/faces-at path rel t)
-        shot (shots/at path rel t)]
+        faces (who/faces-at path pic-rel pic-t)
+        shot (shots/at path pic-rel pic-t)]
     [(apply array-map (concat (when id [:id id])
-                              [:file name :rel rel :at (tc/hms t) :tc (:tc target) :jpeg (out/home-path jpeg home)]
+                              [:file name :rel rel :at (tc/hms t) :tc (:tc target)]
+                              (when cam [:picture (array-map :camera (:camera cam) :rel pic-rel :at (tc/hms pic-t)
+                                                             :why "a recorder has no picture: a camera heard with it")])
+                              [:jpeg (out/home-path jpeg home)]
                               (when faces [:faces (if (seq faces) faces "no face on screen")])
                               (when shot [:shot (shots/brief shot)])
                               (when changed?

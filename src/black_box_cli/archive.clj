@@ -138,7 +138,9 @@
   (str/join (if all " AND " " OR ") (map #(str "\"" (str/replace % "\"" "\"\"") "\"") terms)))
 
 ;; One moment heard on several devices (the sync map, docs/CONTRACT.md): a camera's line and a recorder's are one
-;; moment when the sync map lines their starts up within `moment-s` and they share half or more of their words.
+;; moment when the sync map lines their starts up within `moment-s` and they share half or more of their words. Two
+;; recorders' lines are one moment the same way through a camera both were heard with, whether or not the camera's
+;; own line is among the hits.
 
 (def ^:private moment-s
   "Seconds apart two devices' lines may start, once the sync map lines them up, and still be one moment."
@@ -152,28 +154,53 @@
   (let [x (word-set a) y (word-set b) all (count (into x y))]
     (and (pos? all) (>= (* 2 (count (filter x y))) all))))
 
+(defn- in-overlap?
+  "Whether camera time `t` is within pair `p`'s overlap, give or take `moment-s`."
+  [p t]
+  (<= (- (:o0 p) moment-s) t (+ (:o1 p) moment-s)))
+
+(defn- camera-and-recorder?
+  "Whether `cam` is a camera's line and `rec` a recorder's of one moment by pair `p` (one of `rec`'s pairs)."
+  [p cam rec]
+  (and (= (:rel cam) (:camera_rel p)) (= (:source_sha256 cam) (:camera_sha256 p))
+       (in-overlap? p (:start cam))
+       (<= (abs (- (sync/recorder-time p (:start cam)) (:start rec))) moment-s)))
+
+(defn- two-recorders?
+  "Whether recorder lines `a` and `b` are one moment by pairs `p` (one of `a`'s) and `q` (one of `b`'s) with the same
+  camera: `a`'s start on the camera's clock is `b`'s on its own."
+  [p q a b]
+  (and (= (:camera_rel p) (:camera_rel q)) (= (:camera_sha256 p) (:camera_sha256 q))
+       (let [t (sync/camera-time p (:start a))]
+         (and (in-overlap? p t) (in-overlap? q t)
+              (<= (abs (- (sync/recorder-time q t) (:start b))) moment-s)))))
+
 (defn- one-moment?
-  "Whether lines `a` and `b` (rows with :rel :source_sha256 :start :text) are one moment by `pairs`."
-  [pairs a b]
-  (and (alike? (:text a) (:text b))
-       (boolean
-        (some (fn [[cam rec]]
-                (some (fn [p] (and (= (:rel cam) (:camera_rel p)) (= (:source_sha256 cam) (:camera_sha256 p))
-                                   (= (:rel rec) (:recorder_rel p)) (= (:source_sha256 rec) (:recorder_sha256 p))
-                                   (<= (- (:o0 p) moment-s) (:start cam) (+ (:o1 p) moment-s))
-                                   (<= (abs (- (sync/recorder-time p (:start cam)) (:start rec))) moment-s)))
-                      pairs))
-              [[a b] [b a]]))))
+  "Whether lines `a` and `b` (rows with :rel :source_sha256 :start :text) are one moment, by `by-recorder` (the
+  sync map's pairs by [recorder rel, sha256])."
+  [by-recorder a b]
+  (let [pairs-of #(by-recorder [(:rel %) (:source_sha256 %)])]
+    (and (alike? (:text a) (:text b))
+         (boolean
+          (or (some #(camera-and-recorder? % a b) (pairs-of b))
+              (some #(camera-and-recorder? % b a) (pairs-of a))
+              (some (fn [p] (some #(two-recorders? p % a b) (pairs-of b))) (pairs-of a)))))))
 
 (defn- moments
-  "`rows` in rank order, grouped by moment: [[first-ranked & the same moment on other devices] …]."
+  "`rows` in rank order, grouped by moment: [[first-ranked & the same moment on other devices] …]. A line that is
+  one moment with lines of several groups joins them into one, so the grouping doesn't depend on the rank order."
   [pairs rows]
-  (reduce (fn [groups r]
-            (if-let [i (first (keep-indexed (fn [i g] (when (some #(one-moment? pairs % r) g) i)) groups))]
-              (update groups i conj r)
-              (conj groups [r])))
-          []
-          rows))
+  (let [by-recorder (group-by (juxt :recorder_rel :recorder_sha256) pairs)
+        rank (zipmap rows (range))]
+    (reduce (fn [groups r]
+              (let [hit (set (keep-indexed (fn [i g] (when (some #(one-moment? by-recorder % r) g) i)) groups))]
+                (if (empty? hit)
+                  (conj groups [r])
+                  (let [i (apply min hit)
+                        joined (vec (sort-by rank (conj (into [] (mapcat groups) (sort hit)) r)))]
+                    (into [] (keep-indexed (fn [j g] (cond (= j i) joined (hit j) nil :else g))) groups)))))
+            []
+            rows)))
 
 (defn search-cmd
   "`blackbox search <words…>`."
@@ -210,18 +237,18 @@
             groups (if (seq pairs) (moments pairs rows) (mapv vector rows))
             grouped (boolean (some next groups))
             person-of #(get (:voices ctx) [(:rel %) (:version %) (:json_sha256 %) (:speaker %)])
+            ;; also and check are always fields, so --fields can name them; shown by default when anything grouped.
             hits (mapv (fn [[r & others]]
                          (let [row (line-row ctx r (:full opts))
                                names (distinct (keep person-of (cons r others)))]
-                           (if grouped
-                             (out/pick (apply array-map
-                                              (concat (mapcat identity row)
-                                                      [:also (not-empty (str/join ", " (map :id others)))
-                                                       :check (when (next names)
-                                                                (str "devices name different speakers: "
-                                                                     (str/join ", " names)))]))
-                                       [:id :file :at :text :also :check] opts)
-                             (out/pick row [:id :file :at :text] opts))))
+                           (out/pick (apply array-map
+                                            (concat (mapcat identity row)
+                                                    [:also (not-empty (str/join ", " (map :id others)))
+                                                     :check (when (next names)
+                                                              (str "devices name different speakers: "
+                                                                   (str/join ", " names)))]))
+                                     (if grouped [:id :file :at :text :also :check] [:id :file :at :text])
+                                     opts)))
                        groups)
             limit (:limit opts)]
         [(apply array-map (concat (mapcat identity head)

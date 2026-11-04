@@ -141,3 +141,25 @@
     (is (= 90.0931 (/ (Math/round (* 1e4 (sync/recorder-time pair 2000.0))) 1e4))
         "the drift counts from the start of the overlap")
     (is (= 5.0 (sync/recorder-time {:offset_s -13.2 :drift_ppm nil :o0 13.2} 18.2)))))
+
+(deftest frame-on-a-recorder-shows-a-camera
+  (when ffmpeg
+    (let [meta (meta-with-media)
+          local (str (fs/create-temp-dir {:prefix "bbcli-local-"}))
+          home (str (fs/create-temp-dir {:prefix "bbcli-home-"}))
+          run (fn [& args]
+                (read-string (:out (s/cli* {:home home :env system-env}
+                                           (concat ["--meta" meta "--local" local "--format" "edn"] args)))))]
+      (run "index")
+      (testing "a recorder's line: the picture of the camera heard with it (recorder 5.0 s is camera 18.2 s)"
+        (let [edn (run "frame" "2npshqu5.1")]
+          (is (= {:camera "C5274.MP4" :rel "media/2026/09/16/src/fx3/C5274.MP4" :at "0:18.2"
+                  :why "a recorder has no picture: a camera heard with it"}
+                 (:picture edn)))
+          (is (= ["2npshqu5.1" "DJI_01.WAV" "0:05.0"] ((juxt :id :file :at) edn)))
+          (is (fs/exists? (str/replace (:jpeg edn) #"^<local>" local)))
+          (is (= "r54qb74c.s1" (-> edn :shot :id)) "the camera's shot at that moment")))
+      (testing "a moment no camera heard says so"
+        (let [edn (run "frame" "09/16/audio/DJI_01.WAV" "--at" "25")]
+          (is (= "audio-only" (-> edn :error :code)))
+          (is (str/includes? (-> edn :error :message) "DJI_01.WAV is sound only")))))))

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.4 (2026-11-04)
+
+- `frame` on a recorder's line (or a recorder file with `--at`) shows the picture of a camera heard with it, chosen
+  as the rough cut chooses it (the speaker's face on screen first); `picture` says which camera and when. With no
+  camera heard then, it says so (`audio-only`) instead of failing in ffmpeg.
+- `search` groups the same moment on two recorders through a camera both were heard with, also when the camera's
+  line isn't among the hits, and a line that is one moment with lines in two groups joins them, so the grouping no
+  longer depends on the order of the hits.
+- `also` and `check` are always fields of `search`'s hits (empty when nothing is grouped), so `--fields also` never
+  fails. Goldens 08, 09 and 17 changed.
+
 ## 0.1.3 (2026-11-04)
 
 - The index keeps itself up to date: a command that reads it first builds it when it's missing, or reads what's new

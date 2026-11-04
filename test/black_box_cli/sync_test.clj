@@ -4,6 +4,7 @@
   `also` and a `check` when the devices name different speakers."
   (:require
    [babashka.fs :as fs]
+   [black-box-cli.archive :as archive]
    [black-box-cli.frames :as frames]
    [black-box-cli.support :as s]
    [cheshire.core :as json]
@@ -66,3 +67,60 @@
         (is (every? #(not (contains? % :also)) hits))))
     (testing "lines that only happen to be near each other stay apart"
       (is (= 2 (:count (run "search" "safer" "sculpture")))))))
+
+(defn- two-recorders-one-camera
+  "`one-moment-on-two-devices` with a second recorder, DJI_02.WAV, heard with the same camera (offset −12.2 s), whose
+  second line says the same as the first recorder's at the same moment (camera 22.2 s is its 10.0 s)."
+  []
+  (let [meta (one-moment-on-two-devices)
+        doc (-> (json/parse-string (slurp (str (fs/path meta recorder-json))) true)
+                (assoc-in [:source :path] "/nowhere/media/2026/09/16/audio/DJI_02.WAV")
+                (assoc-in [:source :name] "DJI_02.WAV")
+                (assoc-in [:source :sha256] (apply str (repeat 64 "c")))
+                (assoc-in [:cues 1 :start] 10.0)
+                (assoc-in [:cues 1 :end] 11.75))
+        _ (spit (str (fs/path meta (str/replace recorder-json "DJI_01" "DJI_02"))) (json/generate-string doc))
+        day (str (fs/path meta "sync/2026/09/16.20261030T120000Z.sync.jsonl"))
+        [head pair & more] (str/split-lines (slurp day))
+        pair2 (-> (json/parse-string pair true)
+                  (assoc-in [:recorder :rel] "media/2026/09/16/audio/DJI_02.WAV")
+                  (assoc-in [:recorder :sha256] (apply str (repeat 64 "c")))
+                  (assoc :offset_s -12.2))]
+    (spit (str (fs/path meta "sync/2026/09/16.20261031T120000Z.sync.jsonl"))
+          (str/join "\n" (concat [(str/replace head "\"pairs\": 1" "\"pairs\": 2") pair (json/generate-string pair2)]
+                                 more [""])))
+    meta))
+
+(deftest two-recorders-heard-with-one-camera-are-one-hit
+  (let [run (runner (two-recorders-one-camera))]
+    (testing "without the camera's line among the hits"
+      (let [{:keys [count hits]} (run "search" "marble" "sculpture" "--all" "--path" "audio")]
+        (is (= 1 count))
+        (is (contains? (set [(:id (first hits)) (:also (first hits))]) "2npshqu5.2"))
+        (is (re-matches #"[a-z2-7]{8}\.2" (str (:also (first hits)))) "one other line, the other recorder's")
+        (is (not= (:id (first hits)) (:also (first hits))))))
+    (testing "with it: all three are one moment"
+      (let [{:keys [count hits]} (run "search" "marble" "sculpture" "--all")]
+        (is (= 1 count))
+        (is (= 2 (clojure.core/count (str/split (:also (first hits)) #", "))))))))
+
+(deftest also-and-check-are-always-fields
+  (let [run (runner s/fixture-meta)
+        {:keys [hits]} (run "search" "marble" "--fields" "id,also,check")]
+    (is (seq hits))
+    (is (every? #(= [:id :also :check] (keys %)) hits))
+    (is (every? #(nil? (:also %)) hits) "nothing grouped")))
+
+(deftest a-line-joining-two-groups-merges-them
+  (let [cam {:rel "c.MP4" :source_sha256 "c" :start 100.0 :text "you see, in marble, you see, horse." :id "cam"}
+        a {:rel "a.WAV" :source_sha256 "a" :start 10.0 :text "so you see, the marble, you see, a marble horse."
+           :id "a"}
+        b {:rel "b.WAV" :source_sha256 "b" :start 20.0 :text "so you said, you see, in marble, you see, marble house."
+           :id "b"}
+        pair (fn [rec off] {:camera_rel "c.MP4" :camera_sha256 "c" :recorder_rel (:rel rec) :recorder_sha256 (:rel rec)
+                            :offset_s off :drift_ppm nil :o0 0.0 :o1 500.0})
+        pairs [(assoc (pair a -90.0) :recorder_sha256 "a") (assoc (pair b -80.0) :recorder_sha256 "b")]
+        moments #'archive/moments]
+    (is (= [["a" "b" "cam"]] (mapv #(mapv :id %) (moments pairs [a b cam])))
+        "the two recorders' words differ too much on their own; the camera's line joins them")
+    (is (= [["cam" "a" "b"]] (mapv #(mapv :id %) (moments pairs [cam a b]))))))
