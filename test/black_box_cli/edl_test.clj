@@ -32,7 +32,7 @@
   (is (= [{:n 0 :kind :lines :a "r54qb74c.1" :b "r54qb74c.1" :note "" :text "Think"}]
          (:items (cutlist/parse "{\"title\": \"J\", \"clips\": [{\"from\": \"r54qb74c.1\", \"text\": \"Think\"}]}"))))
   (testing "problems name their line; old row ids aren't line ids"
-    (is (= ["line 1: 'c12345' isn't a clip (a line id, id..id, or <file> <in>-<out>)"]
+    (is (= ["line 1: 'c12345' isn't a clip (a line id, id..id, a shot id, or <file> <in>-<out>)"]
            (:problems (cutlist/parse "c12345\n"))))
     (is (= ["no clips"] (:problems (cutlist/parse "title: only\n"))))
     (is (str/starts-with? (first (:problems (cutlist/parse "{\"clips\": [{\"file\": \"x\"}]}")))

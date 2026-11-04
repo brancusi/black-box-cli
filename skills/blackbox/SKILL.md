@@ -1,6 +1,6 @@
 ---
 name: blackbox
-description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, and who is heard or seen — and make rough cuts that open straight away in mpv, then EDLs for DaVinci Resolve. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip, to show or play something, to read a transcript, or to make selects, a rough cut or an EDL.
+description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, and who is heard or seen — and make rough cuts that open straight away in mpv, then EDLs for DaVinci Resolve. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip, to show or play something, to read a transcript, or to make selects, a rough cut or an EDL.
 ---
 <!-- Installed by `blackbox setup agent` and replaced when it runs again. Delete this line to keep your own edits. -->
 
@@ -15,7 +15,7 @@ command line to fix (the valid flags are listed).
 
 - **Dropbox `media_meta`** (`blackbox` alone prints where): transcripts, proxies (small copies of every clip;
   `line` and `search --fields all` print each clip's `proxy`), frame embeddings (picture search), and the names
-  and voice and face prints (people). It's read-only: never write there.
+  and voice and face prints (people), and the shot logs. It's read-only: never write there.
 - **This Mac's index and frames:** `~/Library/Caches/black-box-cli/` (a cache: `blackbox index` rebuilds it).
   **Cuts:** `~/Library/Application Support/black-box-cli/cuts/`.
 - **The originals are on the NAS** (`source_path`, `/Volumes/…`, `/VideoSource/…`). Never open, read, probe
@@ -76,6 +76,25 @@ when the user needs certainty.
 
 Frame ids look like `k7f3q2ab.f12`: the clip, then the frame.
 
+## What happens in a shot: the shot logs
+
+Black Box logs every clip's shots on the mini: where each shot starts and ends (a new one only at a hard cut),
+its framing (wide, medium, close), the camera's move (static, handheld, pan, tilt, follow…), what happens in a
+sentence, its best few seconds and why, and issues (shake, focus, flat log look…), plus a summary and tags for
+the clip. Use them for b-roll, cutaways and picking the usable moment of a take.
+
+- `blackbox shots hands carving stone --framing close` — words match what happens, why a moment is best, the
+  issues and the clip's summary and tags. Filters work with or without words: `--camera pan`, `--framing wide`
+  (repeatable), `--clean` (no issues logged), `--file C5274.MP4`, `--day`, `--month`, `--path`.
+- `blackbox shots --file C5274.MP4` lists one file's shots in order, with the clip's summary.
+- `line`, `frame` and `look` show the shot a moment is in (its camera move and action), so a hit from what was
+  said or from the picture tells you what the camera was doing.
+- `blackbox frame k7f3q2ab.s3` is the middle of a shot's best moment as a JPEG: look before you cut it.
+- In a cut list, a shot id plays its best moment (`k7f3q2ab.s3`) or the whole shot (`k7f3q2ab.s3 whole`).
+
+Shot ids look like `k7f3q2ab.s3`: the clip, then the shot. The logs are a model's reading of the proxy: check a
+shot's frame before relying on its description, and say "logged as" rather than stating it as fact.
+
 ## Stills to publish: from the originals, full size and graded
 
 `frame` is for looking: it comes from the proxy (960×540 at most), ungraded. For a picture to publish (a website,
@@ -117,6 +136,7 @@ ask you to open it. One moment is a one-clip cut.
    k7f3q2ab.41..k7f3q2ab.43  # a run of lines from one file (ids from search)
    C5274.MP4 0:26.5-0:30  # a file (name or part of its path) from in to out
    m2xq7rja.7
+   sqlknzuz.s2  # a shot's best moment (ids from shots); `sqlknzuz.s2 whole` for all of it
    ```
 2. `blackbox edl new - --dry-run` (cut list on stdin) to check it; every problem is listed and nothing is
    written.

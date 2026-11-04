@@ -10,6 +10,7 @@
    [black-box-cli.out :as out]
    [black-box-cli.people :as people]
    [black-box-cli.prints :as prints]
+   [black-box-cli.shots :as shots]
    [black-box-cli.sync :as sync]
    [black-box-cli.tc :as tc]
    [cheshire.core :as json]
@@ -102,7 +103,8 @@
         pics (frames/build! {:meta meta :index-path path :rebuild (:rebuild opts)})
         names (people/build! {:meta meta :index-path path :rebuild (:rebuild opts)})
         voices (prints/build! {:meta meta :index-path path :rebuild (:rebuild opts)})
-        synced (sync/build! {:meta meta :index-path path :rebuild (:rebuild opts)})]
+        synced (sync/build! {:meta meta :index-path path :rebuild (:rebuild opts)})
+        logged (shots/build! {:meta meta :index-path path :rebuild (:rebuild opts)})]
     [(array-map :index (out/home-path path home)
                 :transcripts (version-of opts)
                 :added (:added res)
@@ -121,9 +123,11 @@
                           "none: media_meta has no embeddings folder")
                 :people (or names "none: media_meta has no people folder")
                 :prints (or voices "none: media_meta has no prints folder")
-                :sync (or synced "none: media_meta has no sync folder"))
+                :sync (or synced "none: media_meta has no sync folder")
+                :shots (or logged "none: media_meta has no shots folder"))
      (cond-> []
-       (or (pos? (:skipped res)) (pos? (:skipped pics 0)) (pos? (:skipped voices 0)) (pos? (:skipped synced 0)))
+       (or (pos? (:skipped res)) (pos? (:skipped pics 0)) (pos? (:skipped voices 0)) (pos? (:skipped synced 0))
+           (pos? (:skipped logged 0)))
        (conj "Skipped files are online-only or not transcripts; make media_meta available offline in Finder")
        true (conj "Run `blackbox` for what the index holds"))]))
 
@@ -168,7 +172,9 @@
   " AND (t.rel || char(31) || t.version || char(31) || t.json_sha256 || char(31) || c.speaker)
         IN (SELECT value FROM json_each(:who))")
 
-(defn- fts-query [terms all]
+(defn fts-query
+  "`terms` as an FTS5 query, each quoted: any of them, or all when `all`."
+  [terms all]
   (str/join (if all " AND " " OR ") (map #(str "\"" (str/replace % "\"" "\"\"") "\"") terms)))
 
 ;; One moment heard on several devices (the sync map, docs/CONTRACT.md): a camera's line and a recorder's are one
@@ -284,21 +290,27 @@
                                     WHERE c.transcript_id = :t AND c.n BETWEEN :a AND :b ORDER BY c.n;")
                          {:t (:transcript_id r) :a (- (:n r) context) :b (+ (:n r) context)})
         row (line-row (assoc ctx :voices (people/voice-names path)) r true)
-        row (apply array-map (concat (mapcat identity row) [:tc_out (tc/source-tc r (:end r))]))]
-    [(array-map :line (out/pick row [:id :file :day :at :end :speaker :text :tc :tc_out] opts)
-                :file (array-map :name (:source_name r)
-                                 :rel (:rel r)
-                                 :length (tc/hms (:duration r))
-                                 :proxy (proxy-of meta (:rel r)))
-                :context (mapv (fn [x] (array-map :id (:id x)
-                                                  :at (tc/hms (:start x))
-                                                  :speaker (:speaker x)
-                                                  :text (out/cut (:text x) (:full opts))
-                                                  :this (= (:id x) (:id r))))
-                               around))
-     [(str "Run `echo '" (:id (first around)) ".." (:id (last around))
-           "' | blackbox edl new - --title <title>` to make these lines an EDL")
-      (str "Run `blackbox transcript " (:source_name r) " --day " (day-of (:rel r)) "` for the whole file")]]))
+        row (apply array-map (concat (mapcat identity row) [:tc_out (tc/source-tc r (:end r))]))
+        shot (shots/at path (:rel r) (:start r))]
+    [(apply array-map
+            (concat
+             [:line (out/pick row [:id :file :day :at :end :speaker :text :tc :tc_out] opts)
+              :file (array-map :name (:source_name r)
+                               :rel (:rel r)
+                               :length (tc/hms (:duration r))
+                               :proxy (proxy-of meta (:rel r)))]
+             (when shot [:shot (shots/brief shot)])
+             [:context (mapv (fn [x] (array-map :id (:id x)
+                                                :at (tc/hms (:start x))
+                                                :speaker (:speaker x)
+                                                :text (out/cut (:text x) (:full opts))
+                                                :this (= (:id x) (:id r))))
+                             around)]))
+     (cond-> [(str "Run `echo '" (:id (first around)) ".." (:id (last around))
+                   "' | blackbox edl new - --title <title>` to make these lines an EDL")
+              (str "Run `blackbox transcript " (:source_name r) " --day " (day-of (:rel r)) "` for the whole file")]
+       shot (conj (str "Run `blackbox shots --file " (:source_name r) " --day " (day-of (:rel r))
+                       "` for the file's shots")))]))
 
 ;; ------------------------------------------------------------------------------------------------ transcript
 

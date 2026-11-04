@@ -16,10 +16,12 @@
   k7f3q2ab.41..k7f3q2ab.45          a run of lines from one file
   C5274.MP4 0:21.9-0:26.6           a file (name or part of its path) from in to out (s, m:ss or h:mm:ss)
   09/16/src/fx3/C5274.MP4 21.9-26.6 # wide of the kiln
+  k7f3q2ab.s3                       a shot's best moment (ids from `blackbox shots`)
+  k7f3q2ab.s3 whole                 the whole shot
 
-Line clips get 0.25 s handles and in/out from the words' own times; file clips are cut exactly where you say.
+Line clips get 0.25 s handles and in/out from the words' own times; file and shot clips are cut exactly.
 JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\": \"k7f3q2ab.43\", \"note\": …},
-{\"file\": …, \"in\": …, \"out\": …}]}. A line clip's \"text\", when given, must still be what its lines say.
+{\"file\": …, \"in\": …, \"out\": …}, {\"shot\": \"k7f3q2ab.s3\", \"whole\": false}]}. A line clip's \"text\", when given, must still be what its lines say.
 ")
 
 (defn quoted
@@ -45,6 +47,8 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
 
 (def ^:private lines-re (re-pattern (str "(" id-part ")(?:\\s*(?:\\.\\.|-|–)\\s*(" id-part "))?")))
 
+(def ^:private shot-re #"([A-Za-z2-7]{8}\.[sS][0-9]+)(?:\s+(whole))?")
+
 (def ^:private file-re #"(.+?)\s+([\d:.]+)\s*(?:-|–|\.\.)\s*([\d:.]+)")
 
 (defn- text-item
@@ -59,9 +63,12 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
           [:title (str/trim (subs line 6))]
           (if-let [[_ a b] (re-matches lines-re line)]
             [:item {:n n :kind :lines :a a :b (or b a) :note note}]
-            (if-let [[_ file t-in t-out] (re-matches file-re line)]
-              [:item {:n n :kind :file :file (str/trim file) :in t-in :out t-out :note note}]
-              [:problem (str "line " n ": " (quoted (str/trim raw)) " isn't a clip (a line id, id..id, or <file> <in>-<out>)")])))))))
+            (if-let [[_ id whole] (re-matches shot-re line)]
+              [:item {:n n :kind :shot :shot id :whole (some? whole) :note note}]
+              (if-let [[_ file t-in t-out] (re-matches file-re line)]
+                [:item {:n n :kind :file :file (str/trim file) :in t-in :out t-out :note note}]
+                [:problem (str "line " n ": " (quoted (str/trim raw))
+                               " isn't a clip (a line id, id..id, a shot id, or <file> <in>-<out>)")]))))))))
 
 (defn- parse-text [text]
   (let [parsed (keep identity (map-indexed (fn [i raw] (text-item (inc i) raw)) (str/split-lines text)))
@@ -81,11 +88,14 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
       (do (when-not (and (s "in") (s "out")) (throw (ex-info "a file clip needs in and out" {})))
           {:n 0 :kind :file :file (s "file") :in (s "in") :out (s "out") :note note})
 
+      (s "shot")
+      {:n 0 :kind :shot :shot (s "shot") :whole (true? (get cl "whole")) :note note}
+
       (s "from")
       (cond-> {:n 0 :kind :lines :a (s "from") :b (or (s "to") (s "from")) :note note}
         (s "text") (assoc :text (s "text")))
 
-      :else (throw (ex-info "a clip needs from (a line id) or file" {})))))
+      :else (throw (ex-info "a clip needs from (a line id), shot or file" {})))))
 
 (defn- parse-json [text]
   (try
@@ -102,7 +112,8 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
 
 (defn parse
   "The cut list in `text`: {:title :items :problems}. Each item is {:n (its line, 0 in JSON) :kind (:lines or
-  :file) :note}, with :a :b (line ids as written) and maybe :text for lines, :file :in :out for a file."
+  :file or :shot) :note}, with :a :b (line ids as written) and maybe :text for lines, :file :in :out for a file,
+  :shot :whole for a shot."
   [text]
   (if (str/starts-with? (str/trim text) "{")
     (parse-json (str/trim text))

@@ -75,7 +75,8 @@
     (let [res (run "look" "a" "test")]
       (is (= 0 (:exit res)))
       (is (= ["sqlknzuz.f1" "r54qb74c.f2" "luyk4sl6.f2"] (ids-of res)) "best first, one per clip")
-      (is (= {:id "r54qb74c.f2" :day "2026-09-16" :file "C5274.MP4" :at "0:05.0" :tc "03:06:56:08" :score 0.96}
+      (is (= {:id "r54qb74c.f2" :day "2026-09-16" :file "C5274.MP4" :at "0:05.0" :tc "03:06:56:08" :score 0.96
+              :camera "handheld" :action "Two people talk beside a crate in a stone yard."}
              (second (:frames (:edn res)))))
       (is (= 7 (:frames_searched (:edn res)))))
     (is (= ["sqlknzuz.f1" "r54qb74c.f2" "r54qb74c.f3" "r54qb74c.f1"] (ids-of (run "look" "x" "--per-clip" "0" "--limit" "4"))))
@@ -109,6 +110,9 @@
           (is (= {:id "r54qb74c.f2" :file "C5274.MP4" :rel "media/2026/09/16/src/fx3/C5274.MP4" :at "0:05.0"
                   :tc "03:06:56:08"
                   :faces [{:id "r54qb74c.face1" :person "Tobia Sàsso"}]
+                  :shot {:id "r54qb74c.s1" :at "0:00.0" :end "0:20.5" :framing "medium" :camera "handheld"
+                         :action "Two people talk beside a crate in a stone yard." :best "0:02.0-0:05.0"
+                         :issues "flat log look"}
                   :warning "the proxy has changed since it was embedded; this may not be the same frame"}
                  (dissoc edn :jpeg :help)))
           (is (fs/exists? (str/replace (:jpeg edn) #"^<local>" local))))

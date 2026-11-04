@@ -29,6 +29,7 @@ blackbox edl new <cutlist|-> [--title T] [--dry-run] [--play]
 blackbox edl list | edl show <id> [--play] | edl build <id>
 blackbox frame <file|line id|frame id> [--at T]   a JPEG from the proxy (ffmpeg)
 blackbox look <words…> | like <frame id> [--open|--html]   picture search
+blackbox shots [words…] [--camera M] [--framing F] [--clean] [--file F] [--per-clip N]   the shot logs
 blackbox people | whose <line id|face id> | like <line id|face id>   names, voices and faces
 blackbox still new <moment…> [--look L] [--tiff] [--out DIR] | still show <id> [--wait] | still list
 blackbox setup agent                      the skill and the session hook (Claude Code, Codex)
@@ -75,7 +76,12 @@ CHANGELOG.md.
     runs the jar. `tools/find-tool` looks in `$BLACKBOX_TOOLS` first, then the PATH and Homebrew. A
     `~/.local/bin/blackbox` that bbin installed from a checkout is left alone by Black Box.
 
+11. **Shot logs are read, never made.** Black Box logs each clip's shots on the mini with a pinned model and
+    prompt; the CLI reads one version (`gemini-3.1-pro/v1`), whole, whenever the folder's list of files changes,
+    into `shots.sqlite` with a full-text table. A shot id (`<clip>.s<n>`) is a cut list clip: its best moment, or
+    the whole shot; the file's transcript gives the timecode.
+
 ## Not this repo's
 
-Making proxies, transcripts, embeddings, people, prints or the sync map; Black Box itself; the studio's pipeline;
+Making proxies, transcripts, embeddings, people, prints, the sync map or shot logs; Black Box itself; the studio's pipeline;
 Resolve (project builds are Black Box's; this CLI only asks); anything on the NAS.

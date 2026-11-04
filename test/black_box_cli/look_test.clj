@@ -42,7 +42,10 @@
           jpeg (str/replace (:jpeg edn) #"^<local>" local)]
       (is (= 0 exit))
       (is (= {:id "r54qb74c.3" :file "C5274.MP4" :rel "media/2026/09/16/src/fx3/C5274.MP4" :at "0:22.2"
-              :tc "03:07:13:12" :faces "no face on screen"}
+              :tc "03:07:13:12" :faces "no face on screen"
+              :shot {:id "r54qb74c.s2" :at "0:20.5" :end "0:32.5" :framing "close" :camera "static"
+                     :action "Hands guide a hammer drill into a block of marble." :best "0:26.5-0:29.5"
+                     :issues "none"}}
              (dissoc edn :jpeg :help)))
       (is (str/starts-with? jpeg (str local "/frames/r54qb74c-")))
       (is (= 320 (width-of jpeg)) "never wider than the proxy")
@@ -54,6 +57,8 @@
         (let [{:keys [edn]} (run "frame" "C5274.MP4" "--at" "0:05" "--width" "160")]
           (is (= "0:05.0" (:at edn)))
           (is (= 160 (width-of (:jpeg edn))))))
+      (testing "a shot id: the middle of its best moment"
+        (is (= ["r54qb74c.s2" "0:28.0"] ((juxt :id :at) (:edn (run "frame" "r54qb74c.s2"))))))
       (testing "what can't be shown says why"
         (is (= "bad-time" (-> (run "frame" "C5274.MP4" "--at" "40") :edn :error :code)))
         (is (= 2 (:exit (run "frame" "r54qb74c.3" "--at" "1"))))

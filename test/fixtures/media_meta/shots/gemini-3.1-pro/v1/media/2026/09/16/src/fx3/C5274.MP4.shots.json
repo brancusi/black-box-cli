@@ -1,0 +1,63 @@
+{
+ "schema": "blackbox.shots/1",
+ "clip": {
+  "rel": "media/2026/09/16/src/fx3/C5274.MP4",
+  "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "duration_s": 32.5
+ },
+ "proxy": {
+  "rel": "media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4",
+  "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+ },
+ "shots": [
+  {
+   "start_s": 0.0,
+   "end_s": 20.5,
+   "framing": "medium",
+   "camera": "handheld",
+   "action": "Two people talk beside a crate in a stone yard.",
+   "best": {
+    "start_s": 2.0,
+    "end_s": 5.0,
+    "why": "Both faces are in the light."
+   },
+   "issues": [
+    "flat log look"
+   ]
+  },
+  {
+   "start_s": 20.5,
+   "end_s": 32.5,
+   "framing": "close",
+   "camera": "static",
+   "action": "Hands guide a hammer drill into a block of marble.",
+   "best": {
+    "start_s": 26.5,
+    "end_s": 29.5,
+    "why": "The drill bites and dust lifts."
+   },
+   "issues": []
+  }
+ ],
+ "summary": "In a stone yard two people talk, then a hammer drill cuts into a marble block.",
+ "tags": [
+  "stone yard",
+  "hammer drill",
+  "dust",
+  "marble"
+ ],
+ "producer": {
+  "tool": "blackbox-engine",
+  "model": "gemini-3.1-pro",
+  "label": "gemini-3.1-pro",
+  "prompt_version": "v1",
+  "media_resolution": "default",
+  "pieces": 1,
+  "tokens": {
+   "input": 1000,
+   "output": 100
+  },
+  "cost_usd": 0.0,
+  "made_at": "2026-11-02T00:00:00Z"
+ }
+}

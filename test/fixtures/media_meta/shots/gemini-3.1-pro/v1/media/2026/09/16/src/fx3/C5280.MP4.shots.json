@@ -1,0 +1,50 @@
+{
+ "schema": "blackbox.shots/1",
+ "clip": {
+  "rel": "media/2026/09/16/src/fx3/C5280.MP4",
+  "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "duration_s": 15.0
+ },
+ "proxy": {
+  "rel": "media/2026/09/16/src/fx3/C5280.MP4.proxy.mp4",
+  "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+ },
+ "shots": [
+  {
+   "start_s": 0.0,
+   "end_s": 15.0,
+   "framing": "wide",
+   "camera": "pan right",
+   "action": "A boat crosses the lagoon at dusk.",
+   "best": {
+    "start_s": 6.0,
+    "end_s": 9.0,
+    "why": "The boat is centred against the sky."
+   },
+   "issues": [
+    "shake",
+    "vignette"
+   ]
+  }
+ ],
+ "summary": "The lagoon at dusk with a boat crossing.",
+ "tags": [
+  "lagoon",
+  "boat",
+  "dusk"
+ ],
+ "producer": {
+  "tool": "blackbox-engine",
+  "model": "gemini-3.1-pro",
+  "label": "gemini-3.1-pro",
+  "prompt_version": "v1",
+  "media_resolution": "default",
+  "pieces": 1,
+  "tokens": {
+   "input": 1000,
+   "output": 100
+  },
+  "cost_usd": 0.0,
+  "made_at": "2026-11-02T00:00:00Z"
+ }
+}

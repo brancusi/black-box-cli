@@ -1,7 +1,7 @@
 # black-box-cli
 
 `blackbox`: a footage archive from the command line, for agents first. Search what was said and what's in the
-picture, find who is heard or seen, read lines in context, and build rough cuts (over the proxies) and EDLs for
+picture, see what happens in each shot, find who is heard or seen, read lines in context, and build rough cuts (over the proxies) and EDLs for
 DaVinci Resolve. Babashka; stateless (everything comes from a synced `media_meta` folder, which it only reads);
 [AXI](https://axi.md) output.
 

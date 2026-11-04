@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Shot logs: `blackbox index` reads Black Box's shot logs (`media_meta/shots/gemini-3.1-pro/v1`, schema
+  `blackbox.shots/1`) into `shots.sqlite`. `blackbox shots [words…]` finds shots by what happens in them (the
+  action, why a moment is best, issues, the clip's summary and tags) and by `--camera`, `--framing`, `--clean`,
+  `--file`, `--day`, `--month`, `--path`, at most `--per-clip` (2) from one clip. Shot ids are `<clip>.s<n>`.
+- `line`, `frame` and `look`/`like` show the shot a moment is in; `frame <shot id>` is the middle of its best
+  moment; a cut list takes a shot id (its best moment) or `<shot id> whole`, and JSON `{"shot": …, "whole": …}`.
+- Goldens 02, 03 (`shots:` in `index`), 19, 20 (`shot:` and a help line in `line`) and 38 (the cut list message
+  names shot ids) changed; the fixture has invented shot logs.
+
 ## 0.1.1 (2026-11-03)
 
 - The index builds with a `sqlite3` that has `trusted_schema` off (macOS 15's), which refused the triggers that

@@ -15,6 +15,7 @@
    [black-box-cli.picture :as picture]
    [black-box-cli.preview :as preview]
    [black-box-cli.project :as project]
+   [black-box-cli.shots :as shots]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
    [cheshire.core :as json]
@@ -94,9 +95,23 @@
                                  :words words :from a :to b})]
           [s (when-not (:play_path s) (str "no proxy, " cuts/no-proxy))])))))
 
+(defn- range-segment
+  "File `t` (a transcript row) from `t-in` to `t-out` seconds, exactly; the words said inside it are its text and
+  subtitles."
+  [{:keys [meta path]} t t-in t-out note]
+  (let [cues (db/query path "SELECT * FROM cues WHERE transcript_id = :t AND end > :a AND start < :b ORDER BY n;"
+                       {:t (:id t) :a t-in :b t-out})
+        per-cue (for [q cues]
+                  (filterv #(and (some? (second %)) (<= t-in (second %)) (< (second %) t-out)) (words-of q)))
+        s (segment meta t {:start (tc/round-to t-in 3) :end (tc/round-to t-out 3)
+                           :text (str/join " " (remove str/blank? (map #(str/join " " (map first %)) per-cue)))
+                           :why note
+                           :words (vec (apply concat per-cue))})]
+    [s (when-not (:play_path s) (str "no proxy, " cuts/no-proxy))]))
+
 (defn- file-segment
-  "A file from in to out, exactly; the words said inside it are its text and subtitles."
-  [{:keys [meta path opts]} {:keys [file note] t-in-s :in t-out-s :out}]
+  "A file from in to out, exactly."
+  [{:keys [path opts] :as ctx} {:keys [file note] t-in-s :in t-out-s :out}]
   (let [t (archive/find-file path (select-keys opts [:transcripts]) file)
         t-in (cutlist/parse-time t-in-s)
         t-out (cutlist/parse-time t-out-s)
@@ -105,16 +120,21 @@
       (out/fail! "bad-clip" (str "out " t-out-s " isn't after in " t-in-s)))
     (when (and dur (>= t-in dur))
       (out/fail! "bad-clip" (str "in " t-in-s " is past the end of " (:source_name t) " (" (tc/hms dur) ")")))
-    (let [t-out (if dur (min t-out dur) t-out)
-          cues (db/query path "SELECT * FROM cues WHERE transcript_id = :t AND end > :a AND start < :b ORDER BY n;"
-                         {:t (:id t) :a t-in :b t-out})
-          per-cue (for [q cues]
-                    (filterv #(and (some? (second %)) (<= t-in (second %)) (< (second %) t-out)) (words-of q)))
-          s (segment meta t {:start (tc/round-to t-in 3) :end (tc/round-to t-out 3)
-                             :text (str/join " " (remove str/blank? (map #(str/join " " (map first %)) per-cue)))
-                             :why note
-                             :words (vec (apply concat per-cue))})]
-      [s (when-not (:play_path s) (str "no proxy, " cuts/no-proxy))])))
+    (range-segment ctx t t-in (if dur (min t-out dur) t-out) note)))
+
+(defn- shot-segment
+  "A shot from the shot logs: its best moment, or all of it when `whole`. Its file's transcript gives the
+  timecode cut.edl needs; the note says what the shot is unless the cut list gives one."
+  [{:keys [path version home] :as ctx} {:keys [shot whole note]}]
+  (let [r (shots/lookup path home shot)
+        t (or (db/one path "SELECT * FROM transcripts WHERE version = :version AND rel = :rel;"
+                      {:version version :rel (:rel r)})
+              (out/fail! "not-found" (str "no transcript for " (:rel r) ", which cut.edl needs for its timecode")))
+        [a b] (if whole [(:start r) (:end r)] (shots/best r))
+        b (if (:duration t) (min b (:duration t)) b)]
+    (when (<= b a)
+      (out/fail! "bad-clip" (str (:id r) " has no length")))
+    (range-segment ctx t a b (if (str/blank? note) (str (:id r) ": " (:action r)) note))))
 
 (defn segments
   "The cut list's clips as segments, in order: {:segments :warnings :problems}. Any problem means nothing is
@@ -123,7 +143,10 @@
   (reduce (fn [acc [k it]]
             (let [where (if (pos? (:n it)) (str "clip " k " (line " (:n it) ")") (str "clip " k))]
               (try
-                (let [[s warning] (if (= :lines (:kind it)) (lines-segment ctx it) (file-segment ctx it))]
+                (let [[s warning] (case (:kind it)
+                                    :lines (lines-segment ctx it)
+                                    :shot (shot-segment ctx it)
+                                    (file-segment ctx it))]
                   (cond-> acc
                     s (update :segments conj s)
                     warning (update :warnings conj (str where ": " warning))))

@@ -16,6 +16,16 @@
   "length": "0:32.5",
   "proxy": "<meta>/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4"
  },
+ "shot": {
+  "id": "r54qb74c.s1",
+  "at": "0:00.0",
+  "end": "0:20.5",
+  "framing": "medium",
+  "camera": "handheld",
+  "action": "Two people talk beside a crate in a stone yard.",
+  "best": "0:02.0-0:05.0",
+  "issues": "flat log look"
+ },
  "context": [
   {
    "id": "r54qb74c.1",
@@ -34,6 +44,7 @@
  ],
  "help": [
   "Run `echo 'r54qb74c.1..r54qb74c.2' | blackbox edl new - --title <title>` to make these lines an EDL",
-  "Run `blackbox transcript C5274.MP4 --day 2026-09-16` for the whole file"
+  "Run `blackbox transcript C5274.MP4 --day 2026-09-16` for the whole file",
+  "Run `blackbox shots --file C5274.MP4 --day 2026-09-16` for the file's shots"
  ]
 }

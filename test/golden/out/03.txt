@@ -35,6 +35,12 @@
   "pairs": 1,
   "skipped": 0
  },
+ "shots": {
+  "version": "gemini-3.1-pro/v1",
+  "clips": 3,
+  "shots": 5,
+  "skipped": 1
+ },
  "help": [
   "Skipped files are online-only or not transcripts; make media_meta available offline in Finder",
   "Run `blackbox` for what the index holds"

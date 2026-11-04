@@ -52,7 +52,7 @@
 (def commands
   "Every command: its words, the phase that built it, a summary, arguments, flags and examples."
   [{:path ["index"] :phase 2
-    :summary "build this Mac's index from media_meta: transcripts and frames"
+    :summary "build this Mac's index from media_meta: transcripts, frames, people, sync and shot logs"
     :flags (into [{:flag "--rebuild" :doc "build it from scratch instead of updating it"} version-flag]
                  (output-flags false))
     :examples ["blackbox index" "blackbox index --rebuild" "blackbox index --format json"]}
@@ -113,13 +113,13 @@
                 "\"Black Box cuts\" folder, named \"<title> (<id>)\". Each cut is built once; `edl show` gives its state.\n")}
    {:path ["frame"] :phase 4
     :summary "a frame as a JPEG, pulled from the proxy into this Mac's cache; prints its path"
-    :args [{:arg "what" :doc "a frame id, a line id (its start), or a file (name or part of its path)"}]
+    :args [{:arg "what" :doc "a frame id, a shot id (its best moment), a line id (its start), or a file (name or part of its path)"}]
     :flags (-> [{:flag "--at" :value "time" :doc "for a file: the moment (s, m:ss or h:mm:ss; default 0)"}
                 {:flag "--width" :value "px" :parse :int :default 960 :doc "pixels wide (default 960; 0: the proxy's)"}
                 {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "for a file: only this day (repeatable)"}
                 {:flag "--path" :value "text" :doc "for a file: only paths containing this"}]
                (into (output-flags false)))
-    :examples ["blackbox frame <frame id>" "blackbox frame <line id>" "blackbox frame C5274.MP4 --at 0:21.5"
+    :examples ["blackbox frame <frame id>" "blackbox frame <shot id>" "blackbox frame <line id>" "blackbox frame C5274.MP4 --at 0:21.5"
                "blackbox frame <line id> --width 0"]}
    {:path ["still" "new"] :phase 12
     :summary "stills from the originals, native size, in a look: the mini renders them (minutes); still show has the paths"
@@ -164,6 +164,26 @@
     :flags (-> picture-flags (into (output-flags)))
     :examples ["blackbox like <frame id>" "blackbox like <frame id> --day 2026-09-16 --open" "blackbox like <line id>"
                "blackbox like <face id> --per-clip 0"]}
+   {:path ["shots"] :phase 13
+    :summary "shots by what happens in them (the shot logs): framing, the camera's move, the action, the best moment, issues"
+    :args [{:arg "words" :many true :optional true :doc "what happens, e.g. hands carving stone (optional with a filter)"}]
+    :flags (-> [{:flag "--all" :doc "every word must match"}
+                {:flag "--camera" :value "move" :doc "only this camera move: static, handheld, pan, tilt, follow, tracking, zoom…"}
+                {:flag "--framing" :value "wide|medium|close" :repeat true :doc "only this framing (repeatable)"}
+                {:flag "--clean" :doc "only shots with no issues logged"}
+                {:flag "--file" :value "file" :doc "only this file's shots (name or part of its path)"}
+                (limit-flag 20 "shots")
+                {:flag "--per-clip" :value "n" :parse :int :default 2 :doc "at most n shots from one clip (default 2; 0: no limit; --file: all)"}
+                {:flag "--month" :value "YYYY-MM" :repeat true :doc "only this month (repeatable)"}
+                {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "only this day (repeatable)"}
+                {:flag "--path" :value "text" :doc "only files whose path contains this, e.g. src/fx3"}]
+               (into (output-flags)))
+    :examples ["blackbox shots hands carving stone" "blackbox shots boat lagoon --camera pan --framing wide"
+               "blackbox shots --file C5274.MP4 --day 2026-09-16" "blackbox shots workshop --clean --fields all"]
+    :about (str "Black Box logs every clip's shots on the mini (Gemini, from the proxy with its sound): where each shot\n"
+                "starts and ends, its framing and camera move, what happens, its best few seconds and why, and issues\n"
+                "(shake, focus, flat log look…). Words match the action, the reason, the issues and the clip's summary\n"
+                "and tags. A shot id (k7f3q2ab.s3) in a cut list plays its best moment; `k7f3q2ab.s3 whole`, all of it.\n")}
    {:path ["people"] :phase 8
     :summary "the names Black Box publishes: who is heard and seen in how many clips"
     :flags (output-flags)
@@ -199,8 +219,8 @@
 (defn- flag-usage [{:keys [flag value]}]
   (if value (str flag " <" value ">") flag))
 
-(defn- arg-usage [{:keys [arg many]}]
-  (str "<" arg (when many "…") ">"))
+(defn- arg-usage [{:keys [arg many optional]}]
+  (if optional (str "[" arg (when many "…") "]") (str "<" arg (when many "…") ">")))
 
 (defn- usage-help
   "Next steps for a usage error on `spec`: its valid flags inline, so the agent corrects in one turn."
@@ -271,9 +291,10 @@
   [spec args]
   (let [specs (:args spec)
         {:keys [arg many]} (last specs)
-        fixed (if many (butlast specs) specs)]
-    (when (< (count args) (count specs))
-      (usage! spec (str "`" (command-name spec) "` needs " (str/join " " (map arg-usage (drop (count args) specs))))))
+        fixed (if many (butlast specs) specs)
+        required (remove :optional specs)]
+    (when (< (count args) (count required))
+      (usage! spec (str "`" (command-name spec) "` needs " (str/join " " (map arg-usage (drop (count args) required))))))
     (when (and (not many) (> (count args) (count specs)))
       (usage! spec (str "unexpected argument '" (nth args (count specs)) "' for `" (command-name spec) "`")))
     (cond-> (zipmap (map (comp keyword :arg) fixed) args)

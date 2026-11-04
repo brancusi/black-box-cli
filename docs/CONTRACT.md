@@ -18,6 +18,7 @@ Files Dropbox keeps online-only are skipped unread and counted (`skipped`), neve
 | `embeddings/` | picture-search vectors, one file per clip | `<provider>/<setup>/<rel>.frames.json`, e.g. `google/siglip2-base-patch16-256-5s/…` |
 | `people/` | names per clip: voices by speaker label, faces by face track (`media-mgmt.people/1`) | `registry/<stamp>.json` names `assignments/<stamp>.jsonl`; only the newest registry is read, and its assignments must match its `assignments_sha256` |
 | `prints/` | voice and face prints, float32 (`media-mgmt.prints/1`) | `<model>/<rel>.<stamp>.prints.json`; only the newest stamp of each (model, rel) is read |
+| `shots/` | what happens in each shot of a clip (`blackbox.shots/1`), by a model from the proxy with its sound | `<model label>/<prompt version>/<rel>.shots.json`; the CLI reads `gemini-3.1-pro/v1`; marker `.blackbox-shots-root`; never redone in place |
 | `sync/` | which recorder files were heard with each camera file, and the offset (`media-mgmt.sync/1`) | `<YYYY>/<MM>/<DD>.<stamp>.sync.jsonl`; only the newest stamp of each day is read; a pair joins on (rel, sha256) |
 
 `<rel>` is the original's path relative to the NAS media share, e.g. `media/2026/09/16/src/fx3/C5274.MP4`. Its
@@ -41,6 +42,25 @@ date folders give `day` and `month`.
   on (`rel`, transcript sha256, speaker): a redone transcript drops its names until the mini names it again.
 - A file that isn't this schema (an empty `{}`, a Dropbox conflict copy like `C5900.MP4 2.json`) is skipped.
 
+### Shot log JSON (`blackbox.shots/1`)
+
+```json
+{"schema": "blackbox.shots/1",
+ "clip": {"rel": "media/2026/09/16/src/fx3/C5274.MP4", "sha256": "…", "duration_s": 32.5},
+ "proxy": {"rel": "…/C5274.MP4.proxy.mp4", "sha256": "…"},
+ "shots": [{"start_s": 20.5, "end_s": 32.5, "framing": "close", "camera": "static", "action": "…",
+            "best": {"start_s": 26.5, "end_s": 29.5, "why": "…"}, "issues": ["shake"]}],
+ "summary": "…", "tags": ["…"],
+ "producer": {"tool": "…", "model": "…", "label": "…", "prompt_version": "v1", "media_resolution": "…",
+              "pieces": 1, "tokens": {"input": 0, "output": 0}, "cost_usd": 0.0, "made_at": "…"}}
+```
+
+- Times are seconds on the clip's own timeline, as in transcripts. A new shot starts only at a hard cut; a long
+  clip logged in pieces is joined so shots stay whole. `framing` and `camera` come from fixed lists or are null;
+  `issues` is `[]` for none.
+- A log whose `clip.rel` isn't its own path, or that isn't this schema, is skipped and counted. Shot ids are
+  `<clip>.s<n>`, n its place in the log.
+
 ### Frames JSON (`media-mgmt.embeddings/1`)
 
 One per clip: the proxy's SHA-256, the original's, the frame rule (a frame every 5 s), and per frame its time
@@ -51,7 +71,7 @@ Black Box); image vectors are float32-exact before storage.
 
 | What | Where (docs/DESIGN.md, decision 3) | Rule |
 |---|---|---|
-| The index (cache) | `<local>/search/transcripts.sqlite`; beside it the frames, names (`people.sqlite`), prints (`prints.sqlite`) and their vectors files, and the sync map (`sync.sqlite`) | rebuilt from `media_meta`; replaced only by rename of a new one |
+| The index (cache) | `<local>/search/transcripts.sqlite`; beside it the frames, names (`people.sqlite`), prints (`prints.sqlite`) and their vectors files, the sync map (`sync.sqlite`) and the shot logs (`shots.sqlite`) | rebuilt from `media_meta`; replaced only by rename of a new one |
 | Cuts | `<local>/cuts/<UTC stamp>-<slug>/`: `cut.mpv.edl`, `cut.edl`, `cut.srt`, `cut.json`, `cut.html`; `build.json` once `edl build` has sent it | a new folder each time, files created new |
 | Frames for `frame` | a temp folder | never in `media_meta` |
 | Stills (`still new`) | `<local>/stills/<UTC stamp>-<look>/`: `request.json`, then the stills Black Box brings back (`<name>.jpg`, `<name>.tif`); copies in the `--out` folder when one is named | a new folder each request, files created new; Black Box writes the stills; copies never over a file |

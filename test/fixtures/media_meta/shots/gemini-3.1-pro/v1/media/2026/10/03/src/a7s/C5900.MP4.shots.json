@@ -1,0 +1,62 @@
+{
+ "schema": "blackbox.shots/1",
+ "clip": {
+  "rel": "media/2026/10/03/src/a7s/C5900.MP4",
+  "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "duration_s": 60.0
+ },
+ "proxy": {
+  "rel": "media/2026/10/03/src/a7s/C5900.MP4.proxy.mp4",
+  "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+ },
+ "shots": [
+  {
+   "start_s": 0.0,
+   "end_s": 30.0,
+   "framing": "wide",
+   "camera": "static",
+   "action": "An empty workshop with a kiln.",
+   "best": {
+    "start_s": 10.0,
+    "end_s": 13.0,
+    "why": "Even light on the kiln."
+   },
+   "issues": []
+  },
+  {
+   "start_s": 30.0,
+   "end_s": 60.0,
+   "framing": "close",
+   "camera": "tilt up",
+   "action": "The camera tilts up a finished sculpture.",
+   "best": {
+    "start_s": 40.0,
+    "end_s": 43.5,
+    "why": "The tilt ends on the face."
+   },
+   "issues": [
+    "focus"
+   ]
+  }
+ ],
+ "summary": "A workshop with a kiln, then a finished sculpture.",
+ "tags": [
+  "workshop",
+  "kiln",
+  "sculpture"
+ ],
+ "producer": {
+  "tool": "blackbox-engine",
+  "model": "gemini-3.1-pro",
+  "label": "gemini-3.1-pro",
+  "prompt_version": "v1",
+  "media_resolution": "default",
+  "pieces": 1,
+  "tokens": {
+   "input": 1000,
+   "output": 100
+  },
+  "cost_usd": 0.0,
+  "made_at": "2026-11-02T00:00:00Z"
+ }
+}
