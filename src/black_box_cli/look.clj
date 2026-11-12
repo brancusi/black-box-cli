@@ -390,9 +390,14 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
                         :scope (shots-scope-words opts)
                         :logs shots/version)]
     (if (empty? rows)
-      [(merge head (array-map :count 0 :total 0 :result "0 shots match"))
-       ["Try fewer or other words (any word matches unless --all), or loosen the filters"
-        "Run `blackbox look <words>` to search the frames themselves"]]
+      (if (and (:file opts) (zero? (:total (shots/search db (assoc (select-keys (shots-scope (select-keys opts [:file])) [:where :params])
+                                                                   :limit 1 :per-clip 0)))))
+        [(merge head (array-map :count 0 :total 0 :result (str "no shot log for " (:file opts) " yet")))
+         ["Black Box logs shots on the mini a month at a time; this file's month may not be logged yet"
+          (str "Run `blackbox frame " (:file opts) " --at <time>` or `blackbox transcript " (:file opts) "` meanwhile")]]
+        [(merge head (array-map :count 0 :total 0 :result "0 shots match"))
+         ["Try fewer or other words (any word matches unless --all), or loosen the filters"
+          "Run `blackbox look <words>` to search the frames themselves"]])
       (let [one (when (and (:file opts) (= 1 files)) (first rows))
             shown (mapv #(out/pick (shot-row ctx % (trs (:rel %)) (:full opts))
                                    [:id :day :file :at :length :framing :camera :action :best :issues] opts)

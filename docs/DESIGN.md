@@ -30,6 +30,7 @@ blackbox edl new <cutlist|-> [--title T] [--dry-run] [--play]
 blackbox edl list | edl show <id> [--play] | edl build <id>
 blackbox frame <file|line id|frame id|shot id> [--at T]   a JPEG from the proxy (ffmpeg)
 blackbox look <words…> | like <frame id> [--open|--html]   picture search
+blackbox source <picture…> [--candidates N] [--max-diff X]   the original of a copy (Black Box finds it)
 blackbox shots [words…] [--camera M] [--framing F] [--clean] [--file F] [--per-clip N]   the shot logs
 blackbox people | whose <line id|face id> | like <line id|face id>   names, voices and faces
 blackbox still new <moment…> [--look L] [--tiff] [--out DIR] | still show <id> [--wait] | still list
@@ -86,6 +87,10 @@ CHANGELOG.md.
     since the last build (a `find -cnewer` over the sources, checked at most once a minute), so an agent never
     searches yesterday's index without knowing. Each build is recorded beside the index; `status` reads the
     record and media_meta and says the cache's health, for people, agents and Black Box's window alike.
+13. **Black Box finds a copy's original.** `source` hands the pictures to Black Box (0.43.0 or later, `--cli source`),
+    which picks look-alikes with its picture search and confirms each point by point and pixel by pixel; the CLI
+    shows the answer with the picture index's frame id for each hit. A picture on the NAS is refused before Black Box
+    is asked, so neither reads an original.
 
 ## Not this repo's
 

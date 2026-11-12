@@ -87,6 +87,13 @@ when the user needs certainty.
 
 Frame ids look like `k7f3q2ab.f12`: the clip, then the frame.
 
+**The original of a copy:** given a screenshot, a thumbnail, a crop or a picture someone sent,
+`blackbox source ~/Desktop/screenshot.png` finds the photo or the clip and moment it came from (Black Box 0.43.0 or
+later, on this Mac; about 7 s a picture, several at once). `matches` are confirmed copies, best first, each with its
+frame `id` (for `frame`, `like` and `still new`) and the original's path, shown, never opened; `similar` are
+look-alikes it couldn't confirm. It finds copies, not ideas: for pictures like a reference or a repaint, use
+`look` with words, or `like` from the closest `similar` frame. Never give it a picture on the NAS.
+
 ## What happens in a shot: the shot logs
 
 Black Box logs every clip's shots on the mini: where each shot starts and ends (a new one only at a hard cut),

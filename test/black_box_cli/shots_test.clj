@@ -82,6 +82,9 @@
                 :summary "In a stone yard two people talk, then a hammer drill cuts into a marble block."
                 :tags "stone yard, hammer drill, dust, marble"}
                (:clip edn)))))
+    (testing "--file on a clip with no shot log says so, not that nothing matched"
+      (is (= "no shot log for DJI_01.WAV yet" (:result (:edn (run "shots" "--file" "DJI_01.WAV")))))
+      (is (= "0 shots match" (:result (:edn (run "shots" "--file" "C5274.MP4" "--camera" "zoom"))))))
     (testing "--fields all: why, timecode and the clip's tags; a file without a transcript has no timecode"
       (let [row (first (:shots (:edn (run "shots" "boat" "--fields" "all"))))]
         (is (= ["sqlknzuz.s1" "C5280.MP4" "The boat is centred against the sky." "shake, vignette" nil]

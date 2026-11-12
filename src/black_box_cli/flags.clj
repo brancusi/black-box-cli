@@ -81,7 +81,11 @@
     :examples ["blackbox search marble"
                "blackbox search \"hammer drill\" --month 2026-09"
                "blackbox search marble sculpture --all --fields id,file,at,text"
-               "blackbox search marble --person <name>"]}
+               "blackbox search marble --person <name>"]
+    :about (str "One moment is often heard on several devices: a camera and the recorders on people's collars. Once\n"
+                "Black Box has synced them, a hit is shown once, with the same line on the other devices in `also`\n"
+                "(--every-device lists each). `check` is set when the devices' transcripts name different speakers\n"
+                "for it: read the line on each before putting the words in someone's mouth.\n")}
    {:path ["line"] :phase 2
     :summary "one line in context: its file, timecode and proxy"
     :args [{:arg "id" :doc "a line id from search"}]
@@ -133,7 +137,10 @@
                 {:flag "--path" :value "text" :doc "for a file: only paths containing this"}]
                (into (output-flags false)))
     :examples ["blackbox frame <frame id>" "blackbox frame <shot id>" "blackbox frame <line id>" "blackbox frame C5274.MP4 --at 0:21.5"
-               "blackbox frame <line id> --width 0"]}
+               "blackbox frame <line id> --width 0"]
+    :about (str "A recorder (sound only) has no picture: a recorder's line or file shows the picture of a camera heard\n"
+                "with it at that moment (the sync map), the speaker's face on screen first; `picture` says which camera\n"
+                "and when. With no camera heard with it, it's error.code audio-only.\n")}
    {:path ["still" "new"] :phase 12
     :summary "stills from the originals, native size, in a look: the mini renders them (minutes); still show has the paths"
     :args [{:arg "what" :many true :doc "a frame id, a line id, or file@time (as `frame` takes them); add =name to name the file, ~white=x,y or ~gains=r,g,b to balance it"}]
@@ -177,6 +184,20 @@
     :flags (-> picture-flags (into (output-flags)))
     :examples ["blackbox like <frame id>" "blackbox like <frame id> --day 2026-09-16 --open" "blackbox like <line id>"
                "blackbox like <face id> --per-clip 0"]}
+   {:path ["source"] :phase 14
+    :summary "the original of a screenshot, thumbnail or crop: Black Box finds and confirms it (photos and footage)"
+    :args [{:arg "picture" :many true :doc "the copy, a file on this Mac (JPEG, PNG, HEIC, TIFF …); several at once"}]
+    :flags (-> [{:flag "--candidates" :value "n" :parse :int :default 60 :doc "look-alikes to check (default 60)"}
+                {:flag "--max-diff" :value "x" :default "0.1" :doc "share of pixels that may differ (default 0.1)"}]
+               (into (output-flags)))
+    :examples ["blackbox source ~/Desktop/screenshot.png" "blackbox source a.jpg b.png --fields all"
+               "blackbox source crop.png --candidates 200"]
+    :about (str "Black Box (0.43.0 or later) does the work on this Mac: its picture search picks look-alikes from the\n"
+                "index of every frame and photo, then checks each against the copy point by point and pixel by pixel.\n"
+                "matches are confirmed copies, best first (best; near-identical: within 0.01 of the best, a burst or\n"
+                "a tripod; same picture). similar are look-alikes it couldn't confirm. id is the picture index's frame\n"
+                "(for `frame`, `like`, `still new`); original is the file's path on the NAS, shown, never opened.\n"
+                "It finds copies, not ideas: for pictures like a reference, use `look` or `like`.\n")}
    {:path ["shots"] :phase 13
     :summary "shots by what happens in them (the shot logs): framing, the camera's move, the action, the best moment, issues"
     :args [{:arg "words" :many true :optional true :doc "what happens, e.g. hands carving stone (optional with a filter)"}]

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.5 (2026-11-12)
+
+- `blackbox source <picture…>`: the original of a screenshot, a thumbnail or a crop, photo or footage. Black Box
+  (0.43.0 or later) picks look-alikes with its picture search and confirms each point by point and pixel by pixel;
+  `matches` are the confirmed copies, best first, `similar` the look-alikes it couldn't confirm, each with the
+  picture index's frame `id` (for `frame`, `like` and `still new`) and the original's path, shown, never opened.
+  `--candidates` and `--max-diff` pass through. A picture on the NAS is refused; an older Black Box says
+  `black-box-too-old`.
+- `shots --file` on a clip with no shot log says so (`no shot log for <file> yet`) instead of `0 shots match`.
+- `frame --help` says a recorder shows a camera heard with it; `search --help` says what `also` and `check` are.
+
 ## 0.1.4 (2026-11-04)
 
 - `frame` on a recorder's line (or a recorder file with `--at`) shows the picture of a camera heard with it, chosen

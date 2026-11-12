@@ -11,6 +11,7 @@
    [black-box-cli.meta :as meta]
    [black-box-cli.out :as out]
    [black-box-cli.setup :as setup]
+   [black-box-cli.source :as source]
    [black-box-cli.status :as status]
    [black-box-cli.stills :as stills]
    [black-box-cli.version :as version]
@@ -41,6 +42,7 @@
   blackbox frame <id>            a frame as a JPEG, from the proxy
   blackbox still new <id…>       stills from the originals, full size and graded, rendered by the mini (list, show)
   blackbox look <words…>         what's in the picture; like <frame id> for frames like one
+  blackbox source <picture…>     the original of a screenshot or crop, found and confirmed by Black Box
   blackbox shots [words…]        shots by what happens in them: camera move, framing, best moment, issues
   blackbox people                who is heard and seen (--person on search and footage)
   blackbox whose <id>            who a voice (line id) or a face (face id) may be; like <id> for ones like it
@@ -131,6 +133,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["still" "list"] stills/list-cmd
    ["look"] look/look-cmd
    ["like"] look/like-cmd
+   ["source"] source/source-cmd
    ["shots"] look/shots-cmd
    ["people"] who/people-cmd
    ["whose"] who/whose-cmd
@@ -139,7 +142,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
 (def ^:private reads-index
   "The commands that read the index, which bring it up to date first (status/refresh!)."
   #{["search"] ["line"] ["transcript"] ["footage"] ["edl" "new"] ["frame"] ["still" "new"] ["look"] ["like"]
-    ["shots"] ["people"] ["whose"]})
+    ["source"] ["shots"] ["people"] ["whose"]})
 
 (defn- meta!
   "media_meta for a command that reads it, or error.code no-meta."
