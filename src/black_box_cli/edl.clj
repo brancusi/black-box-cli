@@ -15,6 +15,7 @@
    [black-box-cli.picture :as picture]
    [black-box-cli.preview :as preview]
    [black-box-cli.project :as project]
+   [black-box-cli.resolve :as resolve]
    [black-box-cli.shots :as shots]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
@@ -50,6 +51,7 @@
             :start_tc (:start_tc t)
             :rate (:rate t)
             :tod_s (:tod_s t)
+            :duration (:duration t)
             :from nil
             :to nil}
            m)))
@@ -109,10 +111,17 @@
                            :words (vec (apply concat per-cue))})]
     [s (when-not (:play_path s) (str "no proxy, " cuts/no-proxy))]))
 
+(defn proxy->file
+  "The file a proxy's path or name stands for: media_meta/proxies/<rel>.proxy.mp4 is <rel>; anything else as it is."
+  [file]
+  (let [f (str/trim (str file))
+        f (if-let [i (str/last-index-of f "/proxies/")] (subs f (+ i (count "/proxies/"))) f)]
+    (str/replace f #"\.proxy\.[A-Za-z0-9]+$" "")))
+
 (defn- file-segment
-  "A file from in to out, exactly."
+  "A file (or its proxy) from in to out, exactly."
   [{:keys [path opts] :as ctx} {:keys [file note] t-in-s :in t-out-s :out}]
-  (let [t (archive/find-file path (select-keys opts [:transcripts]) file)
+  (let [t (archive/find-file path (select-keys opts [:transcripts]) (proxy->file file))
         t-in (cutlist/parse-time t-in-s)
         t-out (cutlist/parse-time t-out-s)
         dur (:duration t)]
@@ -148,7 +157,7 @@
                                     :shot (shot-segment ctx it)
                                     (file-segment ctx it))]
                   (cond-> acc
-                    s (update :segments conj s)
+                    s (update :segments conj (merge s (select-keys it [:pre :post])))
                     warning (update :warnings conj (str where ": " warning))))
                 (catch clojure.lang.ExceptionInfo e
                   (if-let [err (out/error-of e)]
@@ -214,9 +223,10 @@
              :length (tc/round-to (cuts/length s) 1)
              :text (out/cut (:text s) full cut-text-limit)))
 
-(defn new-cmd
-  "`blackbox edl new <cutlist|->`."
-  [{:keys [home env opts args] :as ctx}]
+(defn- read-cut
+  "The cut list in `args` as {:text :title :segments :warnings :version}, or error.code invalid-cutlist listing every
+  problem."
+  [{:keys [opts args] :as ctx} command]
   (let [path (index/require-index! ctx)
         version (archive/version-of opts)
         text (read-cutlist (:cutlist args))
@@ -231,48 +241,154 @@
       (out/fail! "invalid-cutlist" (str (count problems) " problem" (when (next problems) "s")
                                         " in the cut list; nothing was written")
                  {:problems problems
-                  :help ["Fix them and run it again" "Run `blackbox edl new --help` for the cut list format"]}))
-    (let [length (tc/round-to (reduce + 0.0 (map cuts/length segments)) 3)
-          rows (vec (map-indexed (fn [i s] (clip-row (inc i) s (:full opts))) segments))
-          head [:title title
-                :clips (count segments)
-                :length (tc/hms length)
-                :files (count (distinct (map :rel segments)))
-                :warnings (if (seq warnings) warnings "none")]]
-      (if (:dry-run opts)
-        [(apply array-map (concat head [:written "nothing (--dry-run)" :cut rows]))
-         ["Run the same without --dry-run to write the EDL"]]
-        (let [cache (:frames (index/paths ctx))
-              pictures (vec (pmap (fn [s]
-                                    (let [last-t (max (:start s) (- (:end s) 0.05))]
-                                      (mapv #(some-> (picture/try-jpeg {:env env :cache cache :clip (ids/clip (:rel s))
-                                                                        :proxy (:play_path s) :t % :width 320})
-                                                     picture/url)
-                                            [(:start s) (/ (+ (:start s) (:end s)) 2) last-t])))
-                                  segments))
-              folder (cuts/write! (:cuts (index/paths ctx))
-                                  {:title title
-                                   :pictures pictures
-                                   :scope (str "everything (" version ")")
-                                   :segments segments
-                                   :warnings warnings
-                                   :run (array-map :mode "cut list"
-                                                   :cutlist (subs text 0 (min 20000 (count text))))})
-              id (str (fs/file-name folder))
-              play (when (:play opts) (play! ctx folder))]
-          [(apply array-map (concat head
-                                    [:id id
-                                     :folder (out/home-path folder home)
-                                     :made (array-map :mpv "cut.mpv.edl"
-                                                      :resolve "cut.edl (CMX3600)"
-                                                      :subtitles "cut.srt"
-                                                      :page "cut.html"
-                                                      :record "cut.json")]
-                                    (when play [:playing (:playing play)])
-                                    [:cut rows]))
-           [(watch-help folder play)
-            (str "Import " (out/home-path (fs/path folder "cut.edl") home) " in Resolve (File → Import → Timeline)")
-            (str "Run `blackbox edl show " id "` to see it again")]])))))
+                  :help ["Fix them and run it again" (str "Run `blackbox " command " --help` for the cut list format")]}))
+    {:text text :title title :segments segments :warnings warnings :version version}))
+
+(defn new-cmd
+  "`blackbox edl new <cutlist|->`."
+  [{:keys [home env opts] :as ctx}]
+  (let [{:keys [text title segments warnings version]} (read-cut ctx "edl new")
+        length (tc/round-to (reduce + 0.0 (map cuts/length segments)) 3)
+        rows (vec (map-indexed (fn [i s] (clip-row (inc i) s (:full opts))) segments))
+        head [:title title
+              :clips (count segments)
+              :length (tc/hms length)
+              :files (count (distinct (map :rel segments)))
+              :warnings (if (seq warnings) warnings "none")]]
+    (if (:dry-run opts)
+      [(apply array-map (concat head [:written "nothing (--dry-run)" :cut rows]))
+       ["Run the same without --dry-run to write the EDL"]]
+      (let [cache (:frames (index/paths ctx))
+            pictures (vec (pmap (fn [s]
+                                  (let [last-t (max (:start s) (- (:end s) 0.05))]
+                                    (mapv #(some-> (picture/try-jpeg {:env env :cache cache :clip (ids/clip (:rel s))
+                                                                      :proxy (:play_path s) :t % :width 320})
+                                                   picture/url)
+                                          [(:start s) (/ (+ (:start s) (:end s)) 2) last-t])))
+                                segments))
+            folder (cuts/write! (:cuts (index/paths ctx))
+                                {:title title
+                                 :pictures pictures
+                                 :scope (str "everything (" version ")")
+                                 :segments segments
+                                 :warnings warnings
+                                 :run (array-map :mode "cut list"
+                                                 :cutlist (subs text 0 (min 20000 (count text))))})
+            id (str (fs/file-name folder))
+            play (when (:play opts) (play! ctx folder))]
+        [(apply array-map (concat head
+                                  [:id id
+                                   :folder (out/home-path folder home)
+                                   :made (array-map :mpv "cut.mpv.edl"
+                                                    :resolve "cut.edl (CMX3600)"
+                                                    :subtitles "cut.srt"
+                                                    :page "cut.html"
+                                                    :record "cut.json")]
+                                  (when play [:playing (:playing play)])
+                                  [:cut rows]))
+         [(watch-help folder play)
+          (str "Import " (out/home-path (fs/path folder "cut.edl") home) " in Resolve (File → Import → Timeline)")
+          (str "Run `blackbox edl show " id "` to see it again")]]))))
+
+(defn- resolve-row [n s full]
+  (apply array-map (concat [:n n
+                            :file (:source_name s)
+                            :in (tc/hms (:start s))
+                            :out (tc/hms (:end s))
+                            :pre (:pre_s s)
+                            :post (:post_s s)
+                            :length (tc/round-to (cuts/length s) 1)]
+                           (when full [:source_in (tc/source-tc s (:start s) (cuts/timeline-rate [s]))
+                                       :original (:original s)]))))
+
+(defn- resolve-help
+  "What to do about `edl resolve`'s error `code`."
+  [code edl]
+  (case code
+    "resolve-scripting-off" ["In Resolve: Preferences → System → General → External scripting using → Local, then run it again"]
+    "resolve-not-ready" ["Open Resolve, wait until it shows the Project Manager, then run it again"]
+    "no-originals" ["Mount the NAS on this Mac (Finder → Go → Connect to Server), or pass --originals <the folder that holds media/>"]
+    "no-database" ["Pass --db with a database Resolve lists in its Project Manager, or leave it out for the current one"]
+    "no-project" ["Open a project in Resolve, or pass --into new-project"]
+    "no-resolve" ["Install DaVinci Resolve on this Mac"]
+    [(str "Import " edl " in Resolve by hand meanwhile (File → Import → Timeline)")]))
+
+(defn resolve-cmd
+  "`blackbox edl resolve <cutlist|->`: the cut from the originals, each clip with its pre- and post-roll, as a new
+  timeline in DaVinci Resolve on this Mac (the owner's decision, 2026-11-23)."
+  [{:keys [home env opts] :as ctx}]
+  (let [place (:into opts)
+        _ (when-not (resolve/intos place)
+            (out/fail! "usage" (str "--into " place " isn't a choice; it's one of auto, current, new-project")
+                       {:help ["Run `blackbox edl resolve --help` for what each does"]}))
+        handles {:pre (cutlist/parse-time (:pre opts)) :post (cutlist/parse-time (:post opts))}
+        {:keys [text title segments warnings]} (read-cut ctx "edl resolve")
+        [segments short] (resolve/with-handles segments handles)
+        segments (mapv #(assoc % :original (resolve/original % (some-> (:originals opts) fs/expand-home str)))
+                       segments)
+        unplaced (keep-indexed (fn [i s] (when (str/blank? (:original s))
+                                           (str "clip " (inc i) " (" (:source_name s) "): its transcript has no "
+                                                "source path, so Resolve can't find the original")))
+                               segments)
+        _ (when (seq unplaced)
+            (out/fail! "invalid-cutlist" (str (count unplaced) " clip" (when (next unplaced) "s")
+                                              " without an original; nothing was written")
+                       {:problems (vec unplaced) :help ["Leave those clips out, or ask the owner why they have no source path"]}))
+        warnings (into (vec warnings) short)
+        rows (vec (map-indexed (fn [i s] (resolve-row (inc i) s (:full opts))) segments))
+        length (tc/round-to (reduce + 0.0 (map cuts/length segments)) 3)
+        head [:title title
+              :clips (count segments)
+              :length (tc/hms length)
+              :handles (str "pre " (:pre opts) " s, post " (:post opts) " s (a clip's own pre/post first)")
+              :warnings (if (seq warnings) warnings "none")]]
+    (if (:dry-run opts)
+      [(apply array-map (concat head [:written "nothing, and Resolve wasn't asked (--dry-run)" :cut rows]))
+       ["Run the same without --dry-run to build the timeline in Resolve"]]
+      (let [folder (cuts/write! (:cuts (index/paths ctx))
+                                {:title title
+                                 :pictures (vec (repeat (count segments) []))
+                                 :scope "the originals, with pre- and post-roll (edl resolve)"
+                                 :segments segments
+                                 :warnings warnings
+                                 :run (array-map :mode "resolve" :pre (:pre opts) :post (:post opts) :into place
+                                                 :cutlist (subs text 0 (min 20000 (count text))))})
+            id (str (fs/file-name folder))
+            edl (fs/path folder "cut.edl")
+            the-plan (resolve/plan segments {:edl edl :title title :id id :into place :db (:db opts)
+                                             :proxies (not (:no-proxies opts))
+                                             :originals (some-> (:originals opts) fs/expand-home str)
+                                             :rate (cuts/timeline-rate segments)})
+            plan-path (fs/path folder "resolve-plan.json")
+            _ (cuts/write-new! plan-path (json/generate-string the-plan {:pretty true}))
+            [res err] (resolve/build! env plan-path)
+            _ (cuts/write-new! (fs/path folder "resolve.json") (json/generate-string (or res {:error err}) {:pretty true}))
+            where [:id id :folder (out/home-path folder home)]]
+        (when err
+          (out/fail! (:code err) (str "the cut is written (" id ") but Resolve didn't make the timeline: " (:message err))
+                     {:help (resolve-help (:code err) (out/home-path edl home))}))
+        [(apply array-map
+                (concat head
+                        [:resolve (array-map :project (:project res)
+                                             :new_project (:created_project res)
+                                             :database (:database res)
+                                             :timeline (:timeline res)
+                                             :clips (:clips res)
+                                             :by (if (= "edl" (:method res)) "cut.edl, imported" "frames, appended")
+                                             :originals_imported (:imported res)
+                                             :originals_reused (:reused res)
+                                             :missing (if (seq (:missing res)) (:missing res) "none")
+                                             :proxies_linked (:proxies_linked res)
+                                             :started_resolve (:launched res))]
+                        where
+                        [:cut rows]))
+         (cond-> [(str "The timeline \"" (:timeline res) "\" is open in Resolve, in the project \"" (:project res) "\"")]
+           (not= "edl" (:method res))
+           (conj (str (:edl_note res) ", so the clips were placed by frame instead (the same ins and outs)"))
+           (seq (:missing res))
+           (conj (str (count (:missing res)) " original" (when (next (:missing res)) "s")
+                      " weren't found: mount the NAS, or pass --originals <the folder that holds media/>"))
+           true (conj (str "The EDL is " (out/home-path edl home))))]))))
 
 (defn list-cmd
   "`blackbox edl list`."

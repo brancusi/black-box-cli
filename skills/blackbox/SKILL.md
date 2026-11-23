@@ -179,6 +179,15 @@ installed either, say `brew install ffmpeg`.
 
 Only when the user wants the cut in Resolve:
 
+- **A timeline on this Mac, now, ready to grade:** `blackbox edl resolve - --dry-run` (the cut list on stdin) shows
+  each clip with its pre- and post-roll; then `blackbox edl resolve -` builds it. Each clip goes back from its proxy
+  to the camera original (a proxy's path works as the file in a cut list), gets 2 s of pre- and post-roll (`--pre`,
+  `--post`, or ` pre 1 post 3` at the end of a clip's line; clamped to the file), and Resolve on this Mac imports
+  the originals, links the proxies and imports cut.edl as a new timeline: in the open project, or a new project
+  when Resolve wasn't running (`--into current|new-project`; `--db local` for this Mac's database). It takes
+  seconds (about 15 s more when it has to start Resolve). `resolve` says where it went; `missing` lists originals
+  Resolve couldn't find (the NAS not mounted: `--originals <the folder holding media/>`). If it says
+  `resolve-scripting-off`, the user sets Resolve → Preferences → System → General → External scripting → Local.
 - **A project ready to edit:** `blackbox edl build <id>` asks the studio's Mac mini, through the Black Box app on
   this Mac, to build the cut as a new Resolve project on the shared database, named "<title> (<id>)" in the
   "Black Box cuts" folder: the originals laid out, the recorders' audio synced to them, the proxies linked. It
@@ -190,7 +199,8 @@ Only when the user wants the cut in Resolve:
   Import → Timeline into a project that already holds the originals. Give the user its path from `edl new` or
   `edl show`.
 
-Never drive Resolve yourself, and never delete or archive a project: a person does that.
+Use `edl resolve` for Resolve on this Mac; don't script Resolve yourself, and never delete or archive a project or
+timeline: a person does that.
 
 ## Not here
 

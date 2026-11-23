@@ -19,9 +19,13 @@
   k7f3q2ab.s3                       a shot's best moment (ids from `blackbox shots`)
   k7f3q2ab.s3 whole                 the whole shot
 
+  /…/media_meta/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4 21.9-26.6   a proxy's path works as the file
+  C5274.MP4 0:21.9-0:26.6 pre 1 post 3   pre- and post-roll for `edl resolve` (seconds; default --pre/--post)
+
 Line clips get 0.25 s handles and in/out from the words' own times; file and shot clips are cut exactly.
 JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\": \"k7f3q2ab.43\", \"note\": …},
-{\"file\": …, \"in\": …, \"out\": …}, {\"shot\": \"k7f3q2ab.s3\", \"whole\": false}]}. A line clip's \"text\", when given, must still be what its lines say.
+{\"file\": …, \"in\": …, \"out\": …, \"pre\": 2, \"post\": 2}, {\"proxy\": \"<a proxy's path>\", \"in\": …, \"out\": …},
+{\"shot\": \"k7f3q2ab.s3\", \"whole\": false}]}. A line clip's \"text\", when given, must still be what its lines say.
 ")
 
 (defn quoted
@@ -51,6 +55,22 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
 
 (def ^:private file-re #"(.+?)\s+([\d:.]+)\s*(?:-|–|\.\.)\s*([\d:.]+)")
 
+(def ^:private handles-re
+  "A clip's line and its own pre- and post-roll, for `edl resolve`: `… pre 1.5 post 3`."
+  #"(.*?)(?:\s+pre\s+([\d:.]+))?(?:\s+post\s+([\d:.]+))?")
+
+(defn- text-clip
+  "A clip's line without its handles: [:item m] or [:problem p]."
+  [n line note raw]
+  (if-let [[_ a b] (re-matches lines-re line)]
+    [:item {:n n :kind :lines :a a :b (or b a) :note note}]
+    (if-let [[_ id whole] (re-matches shot-re line)]
+      [:item {:n n :kind :shot :shot id :whole (some? whole) :note note}]
+      (if-let [[_ file t-in t-out] (re-matches file-re line)]
+        [:item {:n n :kind :file :file (str/trim file) :in t-in :out t-out :note note}]
+        [:problem (str "line " n ": " (quoted (str/trim raw))
+                       " isn't a clip (a line id, id..id, a shot id, or <file> <in>-<out>)")]))))
+
 (defn- text-item
   "One line of the text form: [:title t], [:item m], [:problem p] or nil for a blank line or a comment."
   [n raw]
@@ -61,14 +81,9 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
                           [line ""])]
         (if (str/starts-with? (str/lower-case line) "title:")
           [:title (str/trim (subs line 6))]
-          (if-let [[_ a b] (re-matches lines-re line)]
-            [:item {:n n :kind :lines :a a :b (or b a) :note note}]
-            (if-let [[_ id whole] (re-matches shot-re line)]
-              [:item {:n n :kind :shot :shot id :whole (some? whole) :note note}]
-              (if-let [[_ file t-in t-out] (re-matches file-re line)]
-                [:item {:n n :kind :file :file (str/trim file) :in t-in :out t-out :note note}]
-                [:problem (str "line " n ": " (quoted (str/trim raw))
-                               " isn't a clip (a line id, id..id, a shot id, or <file> <in>-<out>)")]))))))))
+          (let [[_ line pre post] (re-matches handles-re line)
+                handles (cond-> {} pre (assoc :pre pre) post (assoc :post post))]
+            (some-> (text-clip n line note raw) (update 1 #(if (map? %) (merge % handles) %)))))))))
 
 (defn- parse-text [text]
   (let [parsed (keep identity (map-indexed (fn [i raw] (text-item (inc i) raw)) (str/split-lines text)))
@@ -82,20 +97,21 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
 (defn- json-clip [cl]
   (when-not (map? cl) (throw (ex-info "each clip is an object" {})))
   (let [s (fn [k] (let [v (get cl k)] (when (some? v) (str v))))
-        note (or (s "note") "")]
+        note (or (s "note") "")
+        handles (cond-> {} (s "pre") (assoc :pre (s "pre")) (s "post") (assoc :post (s "post")))]
     (cond
-      (contains? cl "file")
+      (or (contains? cl "file") (contains? cl "proxy"))
       (do (when-not (and (s "in") (s "out")) (throw (ex-info "a file clip needs in and out" {})))
-          {:n 0 :kind :file :file (s "file") :in (s "in") :out (s "out") :note note})
+          (merge {:n 0 :kind :file :file (or (s "file") (s "proxy")) :in (s "in") :out (s "out") :note note} handles))
 
       (s "shot")
-      {:n 0 :kind :shot :shot (s "shot") :whole (true? (get cl "whole")) :note note}
+      (merge {:n 0 :kind :shot :shot (s "shot") :whole (true? (get cl "whole")) :note note} handles)
 
       (s "from")
-      (cond-> {:n 0 :kind :lines :a (s "from") :b (or (s "to") (s "from")) :note note}
+      (cond-> (merge {:n 0 :kind :lines :a (s "from") :b (or (s "to") (s "from")) :note note} handles)
         (s "text") (assoc :text (s "text")))
 
-      :else (throw (ex-info "a clip needs from (a line id), shot or file" {})))))
+      :else (throw (ex-info "a clip needs from (a line id), shot, file or proxy" {})))))
 
 (defn- parse-json [text]
   (try
@@ -112,8 +128,8 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
 
 (defn parse
   "The cut list in `text`: {:title :items :problems}. Each item is {:n (its line, 0 in JSON) :kind (:lines or
-  :file or :shot) :note}, with :a :b (line ids as written) and maybe :text for lines, :file :in :out for a file,
-  :shot :whole for a shot."
+  :file or :shot) :note}, with :a :b (line ids as written) and maybe :text for lines, :file :in :out for a file (a
+  proxy's path too), :shot :whole for a shot, and maybe its own :pre and :post (as written)."
   [text]
   (if (str/starts-with? (str/trim text) "{")
     (parse-json (str/trim text))

@@ -112,6 +112,31 @@
                (into (output-flags false)))
     :examples ["blackbox edl new cut.txt --dry-run" "blackbox edl new - --play < cut.txt"]
     :about cutlist/help}
+   {:path ["edl" "resolve"] :phase 15
+    :summary "a cut list → a new DaVinci Resolve timeline on this Mac, from the originals, with pre- and post-roll"
+    :args [{:arg "cutlist" :doc "a cut list file, or - for stdin (proxy paths work as files)"}]
+    :flags (-> [{:flag "--title" :value "text" :doc "the cut's and the timeline's title (or `title:` in the cut list)"}
+                {:flag "--pre" :value "s" :default "2" :doc "seconds before each clip's in (default 2; a clip's own `pre` first)"}
+                {:flag "--post" :value "s" :default "2" :doc "seconds after each clip's out (default 2; a clip's own `post` first)"}
+                {:flag "--into" :value "auto|current|new-project" :default "auto"
+                 :doc "auto (default): the open project, or a new one when Resolve wasn't running; current; new-project"}
+                {:flag "--db" :value "name" :doc "the Resolve database to use (`local` for this Mac's); default the current one"}
+                {:flag "--originals" :value "folder" :doc "where the NAS's media/ folder is mounted, if not where the index says"}
+                {:flag "--no-proxies" :doc "don't link the proxies to the originals"}
+                {:flag "--dry-run" :doc "check and show the clips with their handles; write nothing, don't open Resolve"}
+                version-flag]
+               (into (output-flags false)))
+    :examples ["blackbox edl resolve cut.txt --dry-run" "blackbox edl resolve - < cut.json"
+               "blackbox edl resolve cut.txt --pre 1 --post 3 --into new-project"
+               "blackbox edl resolve cut.txt --db local"]
+    :about (str "Each clip goes back from its proxy to the camera original (the same timecode), gets its pre- and\n"
+                "post-roll (clamped to the file), and the cut is written as a new cut folder with cut.edl. Then Resolve\n"
+                "on this Mac (started if it isn't running) imports the originals into a Media Pool folder\n"
+                "\"Black Box/<id>\", links their proxies, and imports cut.edl as a new timeline, ready to grade. If the\n"
+                "EDL doesn't link every clip to its original, the clips are placed by frame instead. Nothing in Resolve\n"
+                "is changed or deleted; a name already taken gets a number. Resolve must allow scripts: Preferences →\n"
+                "System → General → External scripting using → Local.\n\n"
+                cutlist/help)}
    {:path ["edl" "list"] :phase 3
     :summary "EDLs made on this Mac, newest first"
     :flags (into [(limit-flag 20 "EDLs")] (output-flags))

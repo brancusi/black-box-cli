@@ -28,6 +28,7 @@ blackbox transcript <file> [--limit N]    a file's lines
 blackbox footage [--person NAME] [--month …] [--day …] [--video]
 blackbox edl new <cutlist|-> [--title T] [--dry-run] [--play]
 blackbox edl list | edl show <id> [--play] | edl build <id>
+blackbox edl resolve <cutlist|-> [--pre S] [--post S] [--into auto|current|new-project] [--db name]   a Resolve timeline here
 blackbox frame <file|line id|frame id|shot id> [--at T]   a JPEG from the proxy (ffmpeg)
 blackbox look <words…> | like <frame id> [--open|--html]   picture search
 blackbox source <picture…> [--candidates N] [--max-diff X]   the original of a copy (Black Box finds it)
@@ -92,7 +93,15 @@ CHANGELOG.md.
     shows the answer with the picture index's frame id for each hit. A picture on the NAS is refused before Black Box
     is asked, so neither reads an original.
 
+14. **Resolve on this Mac makes a cut's timeline (owner, 2026-11-23).** `edl resolve` adds pre- and post-roll
+    (default 2 s, clamped to the file), writes the cut folder with cut.edl and a plan, and runs resolve_build.py
+    with Resolve's own Python: it imports the originals by path into "Black Box/<id>", reusing ones an earlier cut
+    brought in, links the proxies, and imports cut.edl as a new timeline that may link only to those clips. If the
+    EDL doesn't link every clip to its own original, the clips are appended by frame instead (the same frames). auto
+    puts it in the open project, or a new one when Resolve had to be started or nothing real is open.
+
 ## Not this repo's
 
 Making proxies, transcripts, embeddings, people, prints, the sync map or shot logs; Black Box itself; the studio's pipeline;
-Resolve (project builds are Black Box's; this CLI only asks); anything on the NAS.
+Resolve beyond new timelines and projects on the same Mac (`edl resolve`; the mini's project builds are Black Box's,
+this CLI only asks); anything on the NAS.

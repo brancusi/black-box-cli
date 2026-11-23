@@ -39,6 +39,7 @@
   blackbox edl new <cutlist|->   a rough cut (mpv, proxies only) and cut.edl for Resolve (--dry-run --play)
   blackbox edl list | edl show <id>
   blackbox edl build <id>        have the mini build a cut as a Resolve project (originals, synced audio, proxies)
+  blackbox edl resolve <cutlist|-> a new Resolve timeline on this Mac from the originals, with pre- and post-roll
   blackbox frame <id>            a frame as a JPEG, from the proxy
   blackbox still new <id…>       stills from the originals, full size and graded, rendered by the mini (list, show)
   blackbox look <words…>         what's in the picture; like <frame id> for frames like one
@@ -127,6 +128,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["edl" "list"] edl/list-cmd
    ["edl" "show"] edl/show-cmd
    ["edl" "build"] edl/build-cmd
+   ["edl" "resolve"] edl/resolve-cmd
    ["frame"] look/frame-cmd
    ["still" "new"] stills/new-cmd
    ["still" "show"] stills/show-cmd
@@ -141,7 +143,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
 
 (def ^:private reads-index
   "The commands that read the index, which bring it up to date first (status/refresh!)."
-  #{["search"] ["line"] ["transcript"] ["footage"] ["edl" "new"] ["frame"] ["still" "new"] ["look"] ["like"]
+  #{["search"] ["line"] ["transcript"] ["footage"] ["edl" "new"] ["edl" "resolve"] ["frame"] ["still" "new"] ["look"] ["like"]
     ["source"] ["shots"] ["people"] ["whose"]})
 
 (defn- meta!

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- `blackbox edl resolve <cutlist|->`: a cut list straight to a new DaVinci Resolve timeline on this Mac, from the
+  originals, ready to grade. Each clip goes back from its proxy to the camera original, gets pre- and post-roll
+  (`--pre`/`--post`, default 2 s, or a clip's own `pre`/`post`; clamped to the file) and the cut is written as a cut
+  folder with cut.edl. Resolve (started when it isn't running) imports the originals into "Black Box/<id>", links
+  the proxies and imports cut.edl as a new timeline; if the EDL doesn't link every clip, they're placed by frame.
+  `--into auto|current|new-project`, `--db`, `--originals`, `--no-proxies`, `--dry-run`. AGENTS.md rule 5 changes
+  with it (owner's decision, 2026-11-23).
+- Cut lists take a proxy's path as the file (`{"proxy": …}` in JSON too), and a clip's own `pre`/`post`.
+
 ## 0.1.5 (2026-11-12)
 
 - `blackbox source <picture…>`: the original of a screenshot, a thumbnail or a crop, photo or footage. Black Box
