@@ -68,40 +68,62 @@
         {:keys [python dir]} (fake-python answer)
         stdin (str/replace cut "<meta>" s/fixture-meta)]
     (testing "--dry-run: the clips with their handles; nothing written, Resolve not asked"
-      (let [out (run python stdin "edl" "resolve" "-" "--dry-run")]
+      (let [out (run python stdin "online" "-" "--dry-run")]
         (is (= 0 (:exit out)))
         (is (= [{:n 1 :file "C5274.MP4" :in "0:09.0" :out "0:32.5" :pre 1.0 :post 20.5 :length 23.5}
                 {:n 2 :file "C5274.MP4" :in "0:00.0" :out "0:05.0" :pre 1.0 :post 2.0 :length 5.0}]
                (:cut out)))
         (is (not (fs/exists? (fs/path dir "plan.json"))))))
     (testing "the plan Resolve's Python gets, and what it said"
-      (let [out (run python stdin "edl" "resolve" "-" "--into" "new-project")
+      (let [out (run python stdin "online" "-" "--into" "new-project")
             plan (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)]
         (is (= 0 (:exit out)))
-        (is (= {:project "Kiln (x)" :timeline "Kiln" :clips 2 :by "cut.edl, imported"}
+        (is (= {:project "Kiln (x)" :timeline "Kiln" :clips 2 :by "the EDL, imported"}
                (select-keys (:resolve out) [:project :timeline :clips :by])))
         (is (= ["new-project" "Kiln" "23.976" true] ((juxt :into :timeline :fps :proxies) plan)))
         (is (= (str "Kiln (" (:id out) ")") (:project plan)))
         (is (= {:source_path "/nowhere/media/2026/09/16/src/fx3/C5274.MP4" :video true :in_frame 216 :out_frame 779}
                (dissoc (first (:clips plan)) :proxy)))
         (is (str/ends-with? (:proxy (first (:clips plan))) "C5274.MP4.proxy.mp4"))
-        (is (fs/exists? (:edl plan)) "cut.edl is written before Resolve is asked")
-        (is (= "Kiln" (:timeline (json/parse-string (slurp (str (fs/path (fs/parent (:edl plan)) "resolve.json"))) true))))))
+        (is (fs/exists? (:edl plan)) "the EDL is written before Resolve is asked")
+        (is (= (:edl out) (str (fs/file-name (:edl plan)))))
+        (is (= "Kiln" (:timeline (json/parse-string (slurp (str/replace (:edl plan) #"\.edl$" ".json")) true))))))
     (testing "--originals: the NAS mounted somewhere else"
-      (run python stdin "edl" "resolve" "-" "--originals" "/Volumes/Other/MMM" "--no-proxies")
+      (run python stdin "online" "-" "--originals" "/Volumes/Other/MMM" "--no-proxies")
       (let [plan (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)]
         (is (= "/Volumes/Other/MMM/media/2026/09/16/src/fx3/C5274.MP4" (:source_path (first (:clips plan)))))
         (is (false? (:proxies plan)))))))
+
+(deftest a-saved-edit-goes-online
+  (let [{:keys [run]} (runner)
+        {:keys [python dir]} (fake-python answer)
+        stdin (str/replace cut "<meta>" s/fixture-meta)
+        {:keys [id folder]} (run python stdin "edl" "new" "-" "--no-render")
+        out (run python "" "online" (subs id 0 (- (count id) 2)) "--into" "current")
+        plan (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)]
+    (is (= 0 (:exit out)))
+    (is (= id (:id out)) "the same edit, found by part of its id")
+    (is (= [216 779] ((juxt :in_frame :out_frame) (first (:clips plan))))
+        "a clip's own pre and post, kept in cut.json")
+    (is (= "current" (:into plan)))
+    (let [files (set (map (comp str fs/file-name) (fs/list-dir folder)))]
+      (is (some #(re-matches #"online-.*\.edl" %) files) "the EDL with its handles, beside the edit")))
+  (testing "--dry-run on a saved edit: Resolve isn't asked"
+    (let [{:keys [run]} (runner)
+          {:keys [python dir]} (fake-python answer)
+          {:keys [id]} (run python "title: K\nC5274.MP4 0:01-0:03\n" "edl" "new" "-" "--no-render")]
+      (is (= 0 (:exit (run python "" "online" id "--dry-run"))))
+      (is (not (fs/exists? (fs/path dir "plan.json")))))))
 
 (deftest what-goes-wrong
   (let [{:keys [run]} (runner)
         stdin (str/replace cut "<meta>" s/fixture-meta)]
     (testing "Resolve's own errors pass through, with what to do"
       (let [{:keys [python]} (fake-python (json/generate-string {:error {:code "resolve-scripting-off" :message "no scripts"}}))
-            out (run python stdin "edl" "resolve" "-")]
+            out (run python stdin "online" "-")]
         (is (= "resolve-scripting-off" (-> out :error :code)))
         (is (str/includes? (first (:help out)) "External scripting"))))
     (testing "no Resolve"
-      (is (= "no-resolve" (-> (run "/nowhere/python" stdin "edl" "resolve" "-") :error :code))))
+      (is (= "no-resolve" (-> (run "/nowhere/python" stdin "online" "-") :error :code))))
     (testing "usage"
-      (is (= 2 (:exit (run "/nowhere/python" stdin "edl" "resolve" "-" "--into" "elsewhere")))))))
+      (is (= 2 (:exit (run "/nowhere/python" stdin "online" "-" "--into" "elsewhere")))))))

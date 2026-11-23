@@ -20,7 +20,7 @@
   k7f3q2ab.s3 whole                 the whole shot
 
   /…/media_meta/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4 21.9-26.6   a proxy's path works as the file
-  C5274.MP4 0:21.9-0:26.6 pre 1 post 3   pre- and post-roll for `edl resolve` (seconds; default --pre/--post)
+  C5274.MP4 0:21.9-0:26.6 pre 1 post 3   pre- and post-roll for `online` (seconds; default --pre/--post)
 
 Line clips get 0.25 s handles and in/out from the words' own times; file and shot clips are cut exactly.
 JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\": \"k7f3q2ab.43\", \"note\": …},
@@ -56,7 +56,7 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
 (def ^:private file-re #"(.+?)\s+([\d:.]+)\s*(?:-|–|\.\.)\s*([\d:.]+)")
 
 (def ^:private handles-re
-  "A clip's line and its own pre- and post-roll, for `edl resolve`: `… pre 1.5 post 3`."
+  "A clip's line and its own pre- and post-roll, for `online`: `… pre 1.5 post 3`."
   #"(.*?)(?:\s+pre\s+([\d:.]+))?(?:\s+post\s+([\d:.]+))?")
 
 (defn- text-clip

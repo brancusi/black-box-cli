@@ -442,7 +442,8 @@
    "argv": [
     "edl",
     "new",
-    "-"
+    "-",
+    "--no-render"
    ],
    "stdin": "title: Marble, the quote\n# the quote, then the drill\nr54qb74c.1..r54qb74c.2  # why we use it\nC5274.MP4 0:20-0:26.6 # the safer line\n09/16/audio/DJI_01.WAV 5-9.5\n2npshqu5.2\n",
    "exit": 0,

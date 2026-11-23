@@ -1,4 +1,4 @@
-"""Build a cut as a new timeline in DaVinci Resolve on this Mac: black-box-cli's `edl resolve` runs this with
+"""Build a cut as a new timeline in DaVinci Resolve on this Mac: black-box-cli's `online` runs this with
 Resolve's own Python and a plan (JSON) it wrote. It imports the originals by path into a Media Pool folder of their
 own, links their proxies, and imports cut.edl as a new timeline that links only to those clips. It never deletes,
 renames or changes anything that was there before; the one thing it may delete is a timeline it made itself a moment
@@ -82,7 +82,7 @@ def timeline_names(project):
 
 
 def main(plan_path):
-    with open(plan_path) as f:
+    with open(plan_path, encoding="utf-8") as f:
         plan = json.load(f)
     module = script_module()
     launched = False

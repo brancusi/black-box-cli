@@ -17,7 +17,9 @@ command line to fix (the valid flags are listed).
   `line` and `search --fields all` print each clip's `proxy`), frame embeddings (picture search), and the names
   and voice and face prints (people), and the shot logs. It's read-only: never write there.
 - **This Mac's index and frames:** `~/Library/Caches/black-box-cli/` (a cache: `blackbox index` rebuilds it).
-  **Cuts:** `~/Library/Application Support/black-box-cli/cuts/`.
+  **Edits:** `~/Black Box/edits/<id>/`, each with `edit.mp4` (the edit rendered from the proxies), `cut.edl` and
+  `cut.json` (every clip's source file and timecode), kept for good. Earlier ones in
+  `~/Library/Application Support/black-box-cli/cuts/` are still listed.
 - **The originals are on the NAS** (`source_path`, `/Volumes/…`, `/VideoSource/…`). Never open, read, probe
   (ffprobe, mediainfo), copy, play or transcode them, and never browse the NAS: it's slow, shared and holds the
   only copies. Work from proxies, transcripts and `blackbox frame`. If a clip has no proxy, say so; don't fall
@@ -158,7 +160,7 @@ ask you to open it. One moment is a one-clip cut.
    ```
 2. `blackbox edl new - --dry-run` (cut list on stdin) to check it; every problem is listed and nothing is
    written.
-3. `blackbox edl new - --play` writes it, renders it to one file and opens it. Tell the user what's in it in a
+3. `blackbox edl new - --play` saves it as an edit, renders it (`edit.mp4` in its folder) and opens it. Tell the user what's in it in a
    line or two.
 4. Revising: write a new cut list (each cut gets its own folder; nothing is overwritten) and `--play` again.
    `blackbox edl list` and `blackbox edl show marble --play` reopen earlier ones.
@@ -179,14 +181,15 @@ installed either, say `brew install ffmpeg`.
 
 Only when the user wants the cut in Resolve:
 
-- **A timeline on this Mac, now, ready to grade:** `blackbox edl resolve - --dry-run` (the cut list on stdin) shows
-  each clip with its pre- and post-roll; then `blackbox edl resolve -` builds it. Each clip goes back from its proxy
-  to the camera original (a proxy's path works as the file in a cut list), gets 2 s of pre- and post-roll (`--pre`,
-  `--post`, or ` pre 1 post 3` at the end of a clip's line; clamped to the file), and Resolve on this Mac imports
-  the originals, links the proxies and imports cut.edl as a new timeline: in the open project, or a new project
-  when Resolve wasn't running (`--into current|new-project`; `--db local` for this Mac's database). It takes
-  seconds (about 15 s more when it has to start Resolve). `resolve` says where it went; `missing` lists originals
-  Resolve couldn't find (the NAS not mounted: `--originals <the folder holding media/>`). If it says
+- **Online it: a timeline on this Mac, from the source files, ready to grade.** When the user says "online
+  this", "go to source" or "put it in Resolve": `blackbox online <edit id>` (`--dry-run` first shows each clip with
+  its pre- and post-roll). Each clip goes back from its proxy to the camera original, gets 2 s of pre- and
+  post-roll (`--pre`, `--post`, or ` pre 1 post 3` at the end of a clip's line in the cut list; clamped to the
+  file), and Resolve on this Mac imports the originals, links the proxies and imports the edit's EDL as a new
+  timeline: in the open project, or a new project when Resolve wasn't running (`--into current|new-project`;
+  `--db local` for this Mac's database). It takes seconds (about 15 s more when it has to start Resolve). A cut
+  list works too (`blackbox online -`): it's saved as an edit first. `resolve` says where it went; `missing` lists
+  originals Resolve couldn't find (the NAS not mounted: `--originals <the folder holding media/>`). If it says
   `resolve-scripting-off`, the user sets Resolve → Preferences → System → General → External scripting → Local.
 - **A project ready to edit:** `blackbox edl build <id>` asks the studio's Mac mini, through the Black Box app on
   this Mac, to build the cut as a new Resolve project on the shared database, named "<title> (<id>)" in the
@@ -199,7 +202,7 @@ Only when the user wants the cut in Resolve:
   Import → Timeline into a project that already holds the originals. Give the user its path from `edl new` or
   `edl show`.
 
-Use `edl resolve` for Resolve on this Mac; don't script Resolve yourself, and never delete or archive a project or
+Use `online` for Resolve on this Mac; don't script Resolve yourself, and never delete or archive a project or
 timeline: a person does that.
 
 ## Not here

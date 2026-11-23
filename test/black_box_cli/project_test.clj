@@ -122,7 +122,7 @@
         id (:id (run "edl" "new" "-"))
         old (fs/path home "Library/Application Support/Media Utilities/media-mgmt/cuts" "20250101T000000Z-old")]
     (fs/create-dirs (fs/parent old))
-    (fs/move (fs/path home "Library/Application Support/black-box-cli/cuts" id) old)
+    (fs/move (fs/path home "Black Box/edits" id) old)
     (is (= "old-cut" (-> (run "edl" "build" "20250101T000000Z-old") :error :code)))
     (is (empty? (calls log)))
     (is (not (fs/exists? (fs/path old "build.json"))))))

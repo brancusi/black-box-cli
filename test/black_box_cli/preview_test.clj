@@ -63,7 +63,7 @@
         (is (= "yes, in the default video app (1 recorder clip with a camera's picture)" playing)
             "the recorder's line takes the camera's picture through the fixture's sync map")
         (is (= "/usr/bin/open" open))
-        (is (str/starts-with? file (str (fs/path local "previews" id) "-")))
+        (is (= file (str (fs/path local "cuts" id "edit.mp4"))) "kept with the edit")
         (is (str/starts-with? (first help) "It's playing, rendered to one file"))
         (testing "one file: every clip at 960×540 with stereo sound, the WAV over black, and the subtitles"
           (is (= "video\naudio\nsubtitle" (probe file "stream=codec_type")))

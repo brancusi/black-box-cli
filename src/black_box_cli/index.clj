@@ -75,8 +75,9 @@ END;")
 (defn paths
   "Where the index and cuts live (decision 3). Under --local <folder> (tests, goldens): <folder>/search/ and
   <folder>/cuts/ (and frames as JPEGs in <folder>/frames/). Otherwise the cache in ~/Library/Caches/black-box-cli/
-  (the index, the JPEGs, rendered cuts), new cuts in
-  ~/Library/Application Support/black-box-cli/cuts/, and Black Box's old cuts folder read for `edl list`."
+  (the index, the JPEGs, renders in progress), new edits in ~/Black Box/edits/ (the owner's choice, 2026-11-23:
+  where people find them), and the edits made before in ~/Library/Application Support/black-box-cli/cuts/ and
+  Black Box's old cuts folder, read for `edl list`."
   [{:keys [local home]}]
   (if local
     (let [local (str (fs/absolutize local))]
@@ -90,7 +91,8 @@ END;")
      :frames (str (fs/path home "Library" "Caches" "black-box-cli" "frames"))
      :pages (str (fs/path home "Library" "Application Support" "black-box-cli" "look"))
      :previews (str (fs/path home "Library" "Caches" "black-box-cli" "previews"))
-     :cuts (str (fs/path home "Library" "Application Support" "black-box-cli" "cuts"))
+     :cuts (str (fs/path home "Black Box" "edits"))
+     :earlier-cuts (str (fs/path home "Library" "Application Support" "black-box-cli" "cuts"))
      :stills (str (fs/path home "Library" "Application Support" "black-box-cli" "stills"))
      :old-cuts (str (fs/path home "Library" "Application Support" "Media Utilities" "media-mgmt" "cuts"))}))
 

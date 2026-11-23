@@ -117,7 +117,7 @@
 (deftest old-cuts-are-listed-and-never-written
   (let [home (str (fs/create-temp-dir {:prefix "bbcli-home-"}))
         old (fs/path home "Library" "Application Support" "Media Utilities" "media-mgmt" "cuts")
-        ours (fs/path home "Library" "Application Support" "black-box-cli" "cuts")
+        ours (fs/path home "Black Box" "edits")
         run (fn [stdin & args] (s/cli* {:stdin stdin :home home} (concat ["--meta" s/fixture-meta "--format" "edn"] args)))]
     (fs/create-dirs (fs/path old "20261001T000000Z-before"))
     (spit (str (fs/path old "20261001T000000Z-before" "cut.json"))
@@ -129,7 +129,7 @@
     (let [{:keys [total edls]} (edn-out (run nil "edl" "list" "--fields" "id,title,folder"))]
       (is (= 2 total))
       (is (= ["After" "Before"] (map :title edls)))
-      (is (str/starts-with? (:folder (first edls)) "~/Library/Application Support/black-box-cli/cuts/")))
+      (is (str/starts-with? (:folder (first edls)) "~/Black Box/edits/")))
     (is (= ["20261001T000000Z-before"] (map (comp str fs/file-name) (fs/list-dir old))))
     (is (= 1 (count (fs/list-dir ours))))
     (testing "edl show finds either, by part of its id"

@@ -107,36 +107,12 @@
     :args [{:arg "cutlist" :doc "a cut list file, or - for stdin"}]
     :flags (-> [{:flag "--title" :value "text" :doc "the cut's title (or `title:` in the cut list)"}
                 {:flag "--dry-run" :doc "check and show the cut; write nothing"}
-                {:flag "--play" :doc "open the cut in mpv when it's written"}
+                {:flag "--play" :doc "render it (edit.mp4 in its folder) and open it"}
+                {:flag "--no-render" :doc "don't render edit.mp4 now (--play or `edl show --play` render it later)"}
                 version-flag]
                (into (output-flags false)))
     :examples ["blackbox edl new cut.txt --dry-run" "blackbox edl new - --play < cut.txt"]
     :about cutlist/help}
-   {:path ["edl" "resolve"] :phase 15
-    :summary "a cut list → a new DaVinci Resolve timeline on this Mac, from the originals, with pre- and post-roll"
-    :args [{:arg "cutlist" :doc "a cut list file, or - for stdin (proxy paths work as files)"}]
-    :flags (-> [{:flag "--title" :value "text" :doc "the cut's and the timeline's title (or `title:` in the cut list)"}
-                {:flag "--pre" :value "s" :default "2" :doc "seconds before each clip's in (default 2; a clip's own `pre` first)"}
-                {:flag "--post" :value "s" :default "2" :doc "seconds after each clip's out (default 2; a clip's own `post` first)"}
-                {:flag "--into" :value "auto|current|new-project" :default "auto"
-                 :doc "auto (default): the open project, or a new one when Resolve wasn't running; current; new-project"}
-                {:flag "--db" :value "name" :doc "the Resolve database to use (`local` for this Mac's); default the current one"}
-                {:flag "--originals" :value "folder" :doc "where the NAS's media/ folder is mounted, if not where the index says"}
-                {:flag "--no-proxies" :doc "don't link the proxies to the originals"}
-                {:flag "--dry-run" :doc "check and show the clips with their handles; write nothing, don't open Resolve"}
-                version-flag]
-               (into (output-flags false)))
-    :examples ["blackbox edl resolve cut.txt --dry-run" "blackbox edl resolve - < cut.json"
-               "blackbox edl resolve cut.txt --pre 1 --post 3 --into new-project"
-               "blackbox edl resolve cut.txt --db local"]
-    :about (str "Each clip goes back from its proxy to the camera original (the same timecode), gets its pre- and\n"
-                "post-roll (clamped to the file), and the cut is written as a new cut folder with cut.edl. Then Resolve\n"
-                "on this Mac (started if it isn't running) imports the originals into a Media Pool folder\n"
-                "\"Black Box/<id>\", links their proxies, and imports cut.edl as a new timeline, ready to grade. If the\n"
-                "EDL doesn't link every clip to its original, the clips are placed by frame instead. Nothing in Resolve\n"
-                "is changed or deleted; a name already taken gets a number. Resolve must allow scripts: Preferences →\n"
-                "System → General → External scripting using → Local.\n\n"
-                cutlist/help)}
    {:path ["edl" "list"] :phase 3
     :summary "EDLs made on this Mac, newest first"
     :flags (into [(limit-flag 20 "EDLs")] (output-flags))
@@ -153,6 +129,31 @@
     :examples ["blackbox edl build <id>" "blackbox edl show <id>   (how the build is going)"]
     :about (str "Black Box on this Mac carries the request to the mini, which builds the project in Resolve's\n"
                 "\"Black Box cuts\" folder, named \"<title> (<id>)\". Each cut is built once; `edl show` gives its state.\n")}
+   {:path ["online"] :phase 15
+    :summary "an edit → a new DaVinci Resolve timeline on this Mac, from the source files, with pre- and post-roll"
+    :args [{:arg "edit" :doc "an edit's id (or part of it) from `blackbox edl list`, or a cut list file, or - for stdin"}]
+    :flags (-> [{:flag "--pre" :value "s" :default "2" :doc "seconds before each clip's in (default 2; a clip's own `pre` first)"}
+                {:flag "--post" :value "s" :default "2" :doc "seconds after each clip's out (default 2; a clip's own `post` first)"}
+                {:flag "--into" :value "auto|current|new-project" :default "auto"
+                 :doc "auto (default): the open project, or a new one when Resolve wasn't running; current; new-project"}
+                {:flag "--db" :value "name" :doc "the Resolve database to use (`local` for this Mac's); default the current one"}
+                {:flag "--originals" :value "folder" :doc "where the NAS's media/ folder is mounted, if not where the index says"}
+                {:flag "--no-proxies" :doc "don't link the proxies to the originals"}
+                {:flag "--title" :value "text" :doc "for a cut list: the edit's title (or `title:` in the cut list)"}
+                {:flag "--no-render" :doc "for a cut list: don't render the new edit's edit.mp4"}
+                {:flag "--dry-run" :doc "check and show the clips with their pre- and post-roll; write nothing, don't open Resolve"}
+                version-flag]
+               (into (output-flags false)))
+    :examples ["blackbox online <edit id>" "blackbox online <edit id> --pre 1 --post 3 --into new-project"
+               "blackbox online cut.txt --dry-run" "blackbox online - < cut.json" "blackbox online <edit id> --db local"]
+    :about (str "Each clip goes back from its proxy to the camera original (the same timecode) and gets its pre- and\n"
+                "post-roll, clamped to the file. The edit's folder gets an EDL for it (online-<time>.edl), and Resolve\n"
+                "on this Mac (started if it isn't running) imports the originals into a Media Pool folder\n"
+                "\"Black Box/<id>\", links their proxies and imports the EDL as a new timeline, ready to grade. If the\n"
+                "EDL doesn't link every clip to its original, the clips are placed by frame instead. Nothing in Resolve\n"
+                "is changed or deleted; a name already taken gets a number. A cut list is saved as an edit first, as\n"
+                "`edl new` saves it. Resolve must allow scripts: Preferences → System → General → External scripting\n"
+                "using → Local.\n")}
    {:path ["frame"] :phase 4
     :summary "a frame as a JPEG, pulled from the proxy into this Mac's cache; prints its path"
     :args [{:arg "what" :doc "a frame id, a shot id (its best moment), a line id (its start), or a file (name or part of its path)"}]

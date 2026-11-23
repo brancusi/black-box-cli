@@ -224,24 +224,29 @@ td{vertical-align:top;padding:6px 10px 6px 0;border-top:1px solid #34373b}td.t{w
                :run run
                :length_s (tc/round-to (reduce + 0.0 (map length segments)) 3)
                :clips (mapv (fn [s]
-                              (array-map :source_name (:source_name s)
-                                         :source_path (:source_path s)
-                                         :source_sha256 (:source_sha256 s)
-                                         :rel (:rel s)
-                                         :play_path (:play_path s)
-                                         :proxy (boolean (:proxy s))
-                                         :start (:start s)
-                                         :end (:end s)
-                                         :source_in (tc/source-tc s (:start s) rate)
-                                         :source_out (tc/source-tc s (:end s) rate)
-                                         :text (:text s)
-                                         :why (:why s)
-                                         :from (:from s)
-                                         :to (:to s)))
+                              (apply array-map
+                                     (concat
+                                      [:source_name (:source_name s)
+                                       :source_path (:source_path s)
+                                       :source_sha256 (:source_sha256 s)
+                                       :rel (:rel s)
+                                       :play_path (:play_path s)
+                                       :proxy (boolean (:proxy s))
+                                       :start (:start s)
+                                       :end (:end s)
+                                       :source_in (tc/source-tc s (:start s) rate)
+                                       :source_out (tc/source-tc s (:end s) rate)
+                                       :text (:text s)
+                                       :why (:why s)
+                                       :from (:from s)
+                                       :to (:to s)]
+                                      ;; a clip's own pre- and post-roll for `online`, as its cut list gave them
+                                      (when (:pre s) [:pre (:pre s)])
+                                      (when (:post s) [:post (:post s)]))))
                             segments))))
 
 (defn write!
-  "A new cut folder under `cuts-dir` with its five files, each created new. Returns the folder. `cut` holds :title
+  "A new cut folder under `cuts-dir` (and `cuts-dir` itself when it's the first) with its five files, each created new. Returns the folder. `cut` holds :title
   :scope :segments :warnings :run, and :pictures for cut.html."
   [cuts-dir {:keys [title scope segments warnings pictures] :as cut}]
   (let [made (now)
@@ -271,9 +276,10 @@ td{vertical-align:top;padding:6px 10px 6px 0;border-top:1px solid #34373b}td.t{w
     (catch Exception _ nil)))
 
 (defn edls
-  "Every cut with a readable cut.json in the folders of `paths` (:cuts and :old-cuts), newest first by id."
-  [{:keys [cuts old-cuts]}]
-  (->> [cuts old-cuts]
+  "Every cut with a readable cut.json in the folders of `paths` (:cuts, :earlier-cuts and :old-cuts), newest first
+  by id."
+  [{:keys [cuts earlier-cuts old-cuts]}]
+  (->> [cuts earlier-cuts old-cuts]
        (remove nil?)
        (filter fs/directory?)
        (mapcat #(fs/glob % "*/cut.json"))
@@ -284,8 +290,8 @@ td{vertical-align:top;padding:6px 10px 6px 0;border-top:1px solid #34373b}td.t{w
 (defn find-cut
   "The folder of the cut `id` names: exactly, else the one cut whose id contains it. error.code not-found or
   ambiguous otherwise."
-  [{:keys [cuts old-cuts]} id]
-  (let [dirs (filter #(and % (fs/directory? %)) [cuts old-cuts])
+  [{:keys [cuts earlier-cuts old-cuts]} id]
+  (let [dirs (filter #(and % (fs/directory? %)) [cuts earlier-cuts old-cuts])
         exact (some #(let [f (fs/path % id)] (when (fs/regular-file? (fs/path f "cut.json")) (str f))) dirs)
         hits (or (some-> exact vector)
                  (->> dirs

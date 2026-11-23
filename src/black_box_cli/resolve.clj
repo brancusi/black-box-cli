@@ -1,5 +1,5 @@
 (ns black-box-cli.resolve
-  "DaVinci Resolve on this Mac, for `edl resolve` (the owner's decision, 2026-11-23): a cut's clips with their pre-
+  "DaVinci Resolve on this Mac, for `online` (the owner's decision, 2026-11-23): a cut's clips with their pre-
   and post-roll, as a plan, and running resolve_build.py with Resolve's own Python to make a new timeline from the
   originals. Resolve opens the originals by path; the CLI never does (AGENTS.md rules 1 and 5)."
   (:require

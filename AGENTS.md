@@ -36,11 +36,11 @@ The footage is irreplaceable. When a rule and a request conflict, stop and ask t
    cache (the index), and only by building a new one beside it and renaming it into place.
 4. **No LLM calls, no network.** The agent using the CLI does the thinking. The CLI reads local files and runs
    local tools (`sqlite3`, `ffmpeg`, `mpv`, the Black Box app for picture search, project builds and stills,
-   DaVinci Resolve on the same Mac for `edl resolve`); it
+   DaVinci Resolve on the same Mac for `online`); it
    sends nothing anywhere itself. `edl build` and `still new` hand a request to the Black Box app on the same Mac;
    the app, not the CLI, carries it to the mini.
 5. **Resolve only to make something new; never offloads or the catalog.** It writes `cut.edl`, and `edl build` asks
-   Black Box to have the mini build a cut's project. `edl resolve` drives DaVinci Resolve on the same Mac, through
+   Black Box to have the mini build a cut's project. `online` drives DaVinci Resolve on the same Mac, through
    Resolve's own scripting and Python (owner's decision, 2026-11-23): it may start Resolve, create a project, a
    Media Pool folder and a timeline, import originals by path and link proxies. It never deletes, renames or changes
    what was there before (a name already taken gets a number); the one exception is a timeline it made itself
