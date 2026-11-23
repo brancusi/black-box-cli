@@ -36,6 +36,9 @@
                         (spit ".nrepl-port" (:port server))
                         (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (fs/delete-if-exists ".nrepl-port"))))
                         (deref (promise)))}
+         editors {:doc "Writes docs/EDITORS.md from the tutorial's lessons (src/black_box_cli/tutorial.clj)."
+                  :requires ([black-box-cli.tutorial :as tutorial])
+                  :task (spit "docs/EDITORS.md" (tutorial/markdown))}
          lint {:doc "clj-kondo over src, test and dev."
                :task (shell "clj-kondo --lint src test dev")}
          fmt {:doc "cljfmt check (fmt fix to rewrite)."

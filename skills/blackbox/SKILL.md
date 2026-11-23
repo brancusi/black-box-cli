@@ -11,6 +11,15 @@ default (`--format json` or `--format edn`); after the output, `help[n]:` lines 
 command has `--help`. Nothing prompts. Errors come on stdout as `error:` with a `code`; exit 1 is an error, 2 a
 command line to fix (the valid flags are listed).
 
+## Teaching it: "give me a tutorial"
+
+When someone asks for a tutorial, what Black Box can do, or how to do something with it, run `blackbox tutorial`
+and teach from it. Give the overview in a few lines (the lessons and one thing to ask in each), then go a lesson at
+a time with `blackbox tutorial <id>` (`blackbox tutorial online`, say), or straight to the one they asked about.
+Teach in their words, not the commands: each lesson's `ask` is what they can say to you, and `runs` is what you do
+for them. Offer to try each lesson on their own footage (a real search, a real cut) before moving on. People can
+also read the same lessons in docs/EDITORS.md.
+
 ## Where things are: everything you need is on this Mac
 
 - **Dropbox `media_meta`** (`blackbox` alone prints where): transcripts, proxies (small copies of every clip;

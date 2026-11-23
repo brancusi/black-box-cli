@@ -14,6 +14,7 @@
    [black-box-cli.source :as source]
    [black-box-cli.status :as status]
    [black-box-cli.stills :as stills]
+   [black-box-cli.tutorial :as tutorial]
    [black-box-cli.version :as version]
    [black-box-cli.who :as who]
    [clojure.string :as str]))
@@ -47,6 +48,7 @@
   blackbox shots [words…]        shots by what happens in them: camera move, framing, best moment, issues
   blackbox people                who is heard and seen (--person on search and footage)
   blackbox whose <id>            who a voice (line id) or a face (face id) may be; like <id> for ones like it
+  blackbox tutorial [lesson]     what an editor can do, lesson by lesson (ask your agent for the tutorial)
   blackbox setup agent           the Agent Skill and the session hook
 
 Global flags, before the command: --meta <media_meta folder>, --local <cache and cuts folder>.
@@ -139,6 +141,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["shots"] look/shots-cmd
    ["people"] who/people-cmd
    ["whose"] who/whose-cmd
+   ["tutorial"] tutorial/tutorial-cmd
    ["setup" "agent"] setup/agent-cmd})
 
 (def ^:private reads-index

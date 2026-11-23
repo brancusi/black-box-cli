@@ -1,7 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.1.6 (2026-11-23)
 
+- `blackbox tutorial [lesson|all]`: what an editor can do with Black Box, lesson by lesson (what to ask in plain
+  words, the commands behind it, tips), for an agent to teach from when someone asks for a tutorial. The same
+  lessons are docs/EDITORS.md, for people (`bb editors` writes it).
 - Edits are kept in `~/Black Box/edits/<id>/` (the owner's choice), each with `edit.mp4`: the edit rendered from the
   proxies once, when it's made (`--no-render` to skip) or first played, and played from there after. Edits made
   before, in `~/Library/Application Support/black-box-cli/cuts/`, are still listed and found.

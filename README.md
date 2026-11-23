@@ -9,6 +9,7 @@ It reads the `media_meta` that the studio's pipeline (Black Box, a separate proj
 few things only it can do (picture-search queries, stills from the originals, Resolve projects). On its own it's a
 reference for an agent-first CLI in Babashka more than a tool you can use as is.
 
+- What an editor can do with it: [docs/EDITORS.md](docs/EDITORS.md) (or ask your agent for the Black Box tutorial)
 - How it's built: [docs/DESIGN.md](docs/DESIGN.md)
 - What it reads and writes: [docs/CONTRACT.md](docs/CONTRACT.md)
 - Working on it: [AGENTS.md](AGENTS.md)

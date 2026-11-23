@@ -67,7 +67,7 @@ The footage is irreplaceable. When a rule and a request conflict, stop and ask t
   `picture` (JPEGs from proxies), `preview` (a cut rendered to one mp4 for `--play`), `sync` (the sync map:
   recorders heard with each camera), `app` (running the Black Box app for what only it can do), `project` (asking
   Black Box to have the mini build a cut's Resolve project), `stills` (`still`: frames rendered from the originals
-  by the mini), `setup` (`setup agent`), `tools` (finding ffmpeg and mpv), `index` (building the index), `db`
+  by the mini), `setup` (`setup agent`), `tutorial` (the lessons for editors, and docs/EDITORS.md made from them), `tools` (finding ffmpeg and mpv), `index` (building the index), `db`
   (running `sqlite3`), `ids` (line ids), `tc` (times and timecode), `toon` (the TOON encoder), `out` (stdout, AXI
   errors, exit codes), `meta` (finding `media_meta`). Each namespace owns one thing; only `out` prints.
 - `test/black_box_cli/`: tests; `test/fixtures/media_meta/` is an invented `media_meta`; `test/golden/` is what

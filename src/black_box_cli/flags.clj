@@ -253,6 +253,11 @@
     :args [{:arg "id" :doc "a line id (its speaker's voice) or a face id (from frame or like)"}]
     :flags (into [(limit-flag 5 "people")] (output-flags false))
     :examples ["blackbox whose <line id>" "blackbox whose <face id>"]}
+   {:path ["tutorial"] :phase 16
+    :summary "what an editor can do with Black Box, lesson by lesson: what to ask, the commands behind it, tips"
+    :args [{:arg "lesson" :optional true :doc "a lesson's id (start, said, people, picture, shots, cut, online, project, source, stills), or all"}]
+    :flags (output-flags false)
+    :examples ["blackbox tutorial" "blackbox tutorial online" "blackbox tutorial all"]}
    {:path ["setup" "agent"] :phase 6
     :summary "install the Agent Skill and the session hook"
     :flags (output-flags false)
