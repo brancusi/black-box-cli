@@ -108,8 +108,9 @@ and `shots` all narrow by it, with each other and with `--month`, `--day` and `-
 `slow_motion` (`5x`: plays 5 times slower as it is; `conform`: a high-frame-rate file to conform); `--fields
 file,day,device,res,fps,slow_motion,codec,bitrate,lens,gamma` shows more. Then `look <what> --device fx3
 --slow-motion` or `shots <what> --slow-motion` finds the moment. Slow motion records no sound, so `footage` lists
-files nothing is said in too (`lines` 0), and a cut list takes them by file name (`C5280.MP4 0:04-0:09`):
-`cut.edl` has no timecode for them (a warning says so), and `online` places such a cut by frame. `search` only
+files nothing is said in too (`lines` 0), and a cut list takes them by file name (`C5280.MP4 0:04-0:09`),
+with their own start timecode once Black Box has read it (otherwise a warning says `cut.edl` counts from 0:00,
+and `online` places that cut by frame). `search` only
 finds what was said, so a filter there narrows to files with speech.
 
 `error.code no-probe` means this Mac's index has no camera facts yet: run `blackbox index`. If `index` counts many

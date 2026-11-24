@@ -1,5 +1,8 @@
 ;; Written by `bb narrate`: each narration line's audio and its length. Don't edit by hand.
-{"214b0cbbb1540673"
+{"19bf54ddfa76bc76"
+ {:text "New in version 0.1.14: slow motion on its own timecode.",
+  :seconds 6.034},
+ "214b0cbbb1540673"
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
   :seconds 6.113},
@@ -11,9 +14,6 @@
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
   :seconds 7.889},
- "5e9ba3450f797c9b"
- {:text "New in version 0.1.13: slow motion from the FX3.",
-  :seconds 5.878},
  "8536408f509e5a99"
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",

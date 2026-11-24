@@ -129,8 +129,10 @@ CHANGELOG.md.
     `media_meta/probe`; never a folder name, never a location. The CLI indexes the newest file per original and
     narrows every finding command by it (`--device`, `--fps`, `--slow-motion`, `--res`, `--codec`, `--bitrate`).
     Slow motion records no sound, so a file with facts but no transcript is still footage: `footage` lists it, a
-    cut list takes it by name (its original's path from the root the transcripts give), and with no timecode in
-    the facts, `cut.edl` counts it from 0:00 and `online` places any cut holding one by frame.
+    cut list takes it by name (its original's path from the root the transcripts give) with the start timecode
+    the facts carry; without one, `cut.edl` counts it from 0:00 and `online` places any cut holding one by frame.
+    Each original's facts come from the newest version folder that has it, so a version being republished
+    overlays the last.
 
 ## Not this repo's
 

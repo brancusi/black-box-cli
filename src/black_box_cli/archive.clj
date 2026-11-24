@@ -328,11 +328,12 @@
 
 (defn- from-facts
   "An original without a transcript (nothing said in it: slow motion records no sound), from its camera facts, as
-  a transcript row stands for a file: no lines, no timecode (`clock_kind` nil), its source path under the NAS root
-  the transcripts give."
+  a transcript row stands for a file: no lines; its start timecode, or a recorder's time of day, when the facts
+  have one (`clock_kind` nil when neither); its source path under the NAS root the transcripts give."
   [path f]
   {:rel (:rel f) :source_name (:name f) :source_sha256 (:sha256 f) :duration (:duration f) :rate (:rate f)
-   :clock_kind nil :start_tc nil :tod_s nil
+   :clock_kind (cond (and (:timecode f) (:rate f)) "timecode" (:start_s f) "time_of_day")
+   :start_tc (when (:rate f) (:timecode f)) :tod_s (:start_s f)
    :source_path (some-> (source-root path) (str (:rel f)))})
 
 (defn original-row

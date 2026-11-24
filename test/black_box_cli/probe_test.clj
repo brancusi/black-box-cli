@@ -141,21 +141,30 @@
       (is (= "no-probe" (-> out :error :code)))
       (is (= 4 (:total (run "" "footage"))) "without facts, footage is the transcribed files, as before"))))
 
-(deftest the-newest-version-is-read
+(deftest each-original-from-the-newest-version-that-has-it
   (let [meta (str (fs/create-temp-dir {:prefix "bbcli-meta-"}))
         rel "media/2026/09/16/src/fx3/C5280.MP4"]
     (fs/copy-tree s/fixture-meta meta)
     (let [[f] (fs/glob (fs/path meta "probe" "v1") (str rel ".*.json"))
           doc (-> (json/parse-string (slurp (str f)) true)
                   (assoc-in [:video :capture_fps] 23.976)
-                  (assoc-in [:video :slow_motion] nil))]
+                  (assoc-in [:video :slow_motion] nil)
+                  (assoc-in [:video :timecode] "01:29:39:08"))]
       (fs/create-dirs (fs/path meta "probe" "v9"))
       (fs/create-dirs (fs/parent (fs/path meta "probe" "v10" rel)))
       (spit (str (fs/path meta "probe" "v10" (str (fs/relativize (fs/path meta "probe" "v1") f))))
             (json/generate-string doc)))
-    (let [{:keys [run index]} (runner meta)]
-      (is (= {:version "v10" :files 1} (select-keys (:probe index) [:version :files])) "v10 after v9, by number")
-      (is (= 0 (:total (run "" "footage" "--slow-motion"))) "v10's facts, not v1's"))))
+    (let [{:keys [run local index]} (runner meta)]
+      (testing "v10 is newer than v9; while it's being published, v1 has the rest"
+        (is (= {:version "v10" :files 5} (select-keys (:probe index) [:version :files]))))
+      (testing "v10's facts for the original it has"
+        (is (= [["C5900.MP4" "2026-10-03"]] (files (run "" "footage" "--slow-motion")))))
+      (testing "with its start timecode, a clip nothing is said in has its own source timecode in cut.edl"
+        (let [out (run "title: Slow\nC5280.MP4 0:01-0:03\n" "edl" "new" "-" "--no-render")
+              clip (first (:clips (json/parse-string (slurp (str (fs/path local "cuts" (:id out) "cut.json"))) true)))]
+          (is (= 0 (:exit out)))
+          (is (not-any? #(str/includes? % "no timecode") (:warnings out)))
+          (is (= "01:29:40:08" (:source_in clip)) "1 s (24 frames at 23.976) after its start"))))))
 
 (deftest a-file-is-only-the-facts-of-its-own-original
   (let [doc {:schema "media-mgmt.probe/1" :source {:rel "media/a/C1.MP4" :sha256 "0123456789abcdef"}}]

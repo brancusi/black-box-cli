@@ -19,7 +19,7 @@ Files Dropbox keeps online-only are skipped unread and counted (`skipped`), neve
 | `people/` | names per clip: voices by speaker label, faces by face track (`media-mgmt.people/1`) | `registry/<stamp>.json` names `assignments/<stamp>.jsonl`; only the newest registry is read, and its assignments must match its `assignments_sha256` |
 | `prints/` | voice and face prints, float32 (`media-mgmt.prints/1`) | `<model>/<rel>.<stamp>.prints.json`; only the newest stamp of each (model, rel) is read |
 | `shots/` | what happens in each shot of a clip (`blackbox.shots/1`), by a model from the proxy with its sound | `<model label>/<prompt version>/<rel>.shots.json`; the CLI reads `gemini-3.1-pro/v1`; marker `.blackbox-shots-root`; never redone in place |
-| `probe/` | each original's camera or recorder, rates, slow motion, resolution, codec and bitrate, from its own metadata (`media-mgmt.probe/1`) | `v<N>/<rel>.<sha256[:12]>.json`, the newest N read (a new version republishes everything; `v1` stays as it was); marker `.media-mgmt-probe-root`; written once, a changed original gets a new file beside the old one (the CLI keeps the newest per rel) |
+| `probe/` | each original's camera or recorder, rates, slow motion, resolution, codec and bitrate, from its own metadata (`media-mgmt.probe/1`) | `v<N>/<rel>.<sha256[:12]>.json`; each original from the newest N that has it (a new version republishes everything over minutes, the old stays as it was); marker `.media-mgmt-probe-root`; written once, a changed original gets a new file beside the old one (the CLI keeps the newest per rel) |
 | `sync/` | which recorder files were heard with each camera file, and the offset (`media-mgmt.sync/1`) | `<YYYY>/<MM>/<DD>.<stamp>.sync.jsonl`; only the newest stamp of each day is read; a pair joins on (rel, sha256) |
 
 `<rel>` is the original's path relative to the NAS media share, e.g. `media/2026/09/16/src/fx3/C5274.MP4`. Its
@@ -85,6 +85,9 @@ date folders give `day` and `month`.
 - `fps` is the rate it plays at, `capture_fps` the rate it was shot at (equal for normal footage), `slow_motion`
   capture over the rate it's meant to play at (S&Q, a phone's slo-mo), null when it isn't; a high-frame-rate file
   without S&Q has `capture_fps` 119.88 and `slow_motion` null.
+- `video.timecode` is where the file starts, as written (`;` for drop frame), at `fps_exact`, or null;
+  `audio.start_s` a Broadcast WAV's start in seconds since midnight on the recorder's clock, or null. A clip with
+  facts but no transcript takes its clock from these in a cut.
 - `resolution` comes from the long edge: 8K, 6K, 5K, 4K, 2.7K, 1080p, 720p, SD.
 - No location is ever written. A file whose `source.rel` isn't its own path, whose name's sha isn't its
   `source.sha256`'s start, or that isn't this schema, is skipped and counted.

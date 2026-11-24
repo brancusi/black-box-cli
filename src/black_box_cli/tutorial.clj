@@ -248,7 +248,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.13" :date "2026-11-24"
+  [{:version "0.1.14" :date "2026-11-24"
+    :items [{:title "Slow motion on its own timecode" :lesson "cut" :run "blackbox edl new - --play"
+             :what "A clip nothing is said in now keeps its camera's own timecode in a cut, so it goes to Resolve like any other."}]}
+   {:version "0.1.13" :date "2026-11-24"
     :items [{:title "Slow motion from the FX3" :lesson "shots" :run "blackbox footage --device fx3 --slow-motion"
              :what (str "Find footage by the camera that shot it, its frame rate, slow motion and resolution, read from each "
                         "file's own metadata. Silent slow-motion clips can go straight into a cut.")}]}

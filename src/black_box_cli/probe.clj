@@ -1,7 +1,7 @@
 (ns black-box-cli.probe
   "The camera and technical facts of every original: the device that made it (camera or recorder), its resolution,
   the rate it was shot at and plays at, slow motion, codec and bitrate, from media_meta's
-  `probe/v<N>/<rel>.<sha12>.json` (the newest N) (schema media-mgmt.probe/1; docs/CONTRACT.md). Black Box reads them from each
+  `probe/v<N>/<rel>.<sha12>.json` (each original from the newest N that has it) (schema media-mgmt.probe/1; docs/CONTRACT.md). Black Box reads them from each
   file's own metadata on the mini, never from folder names, and writes each once; a changed original gets a new
   file beside the old one. Read into `probe.sqlite` beside the transcripts' index, one row per original (its newest
   file), whenever the folder's files change.
@@ -18,21 +18,24 @@
   (:import
    (java.text Normalizer Normalizer$Form)))
 
-(defn version-in
-  "The probe version read under media_meta's probe folder `root`: its newest `v<N>` folder (by N; a new version is
-  everything republished, the old left as it was), or v1 when there is none yet."
+(defn- versions
+  "The `v<N>` folders under media_meta's probe folder `root`, oldest first (by N): [[n name] ...]."
   [root]
-  (or (->> (when (fs/directory? root) (fs/list-dir root))
-           (keep (fn [p] (when-let [[_ n] (re-matches #"v(\d+)" (str (fs/file-name p)))]
-                           (when (fs/directory? p) [(parse-long n) (str (fs/file-name p))]))))
-           sort last second)
-      "v1"))
+  (->> (when (fs/directory? root) (fs/list-dir root))
+       (keep (fn [p] (when-let [[_ n] (re-matches #"v(\d+)" (str (fs/file-name p)))]
+                       (when (fs/directory? p) [(parse-long n) (str (fs/file-name p))]))))
+       sort vec))
+
+(defn version-in
+  "The newest probe version under `root` (by N), or v1 when there is none yet."
+  [root]
+  (or (second (peek (versions root))) "v1"))
 
 (def marker
   "The file that marks media_meta's probe folder as published by Black Box."
   ".media-mgmt-probe-root")
 
-(def ^:private schema-version 1)
+(def ^:private schema-version 2)
 
 (def ^:private schema-sql
   "CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -48,6 +51,8 @@ CREATE TABLE media (
   width        INTEGER,
   height       INTEGER,
   resolution   TEXT,             -- 8K, 6K, 5K, 4K, 2.7K, 1080p, 720p, SD
+  timecode     TEXT,             -- where the file starts, as written (; for drop frame), at `rate`
+  start_s      REAL,             -- a Broadcast WAV's start: seconds since midnight on the recorder's clock
   fps          REAL,             -- the rate it plays at
   rate         TEXT,             -- the same, exactly: 24000/1001
   capture_fps  REAL,             -- the rate it was shot at
@@ -67,7 +72,7 @@ CREATE TABLE media (
 );")
 
 (def ^:private cols
-  [:rel :sha256 :name :kind :device :make :model :lens :width :height :resolution :fps :rate :capture_fps :slow_motion
+  [:rel :sha256 :name :kind :device :make :model :lens :width :height :resolution :timecode :start_s :fps :rate :capture_fps :slow_motion
    :vfr :codec :profile :bit_depth :chroma :bitrate :gamma :gamut :channels :sample_rate :duration :recorded_at])
 
 (def ^:private insert-sql
@@ -114,6 +119,7 @@ COMMIT;"))
          :device (text-or-nil (:name c)) :make (text-or-nil (:make c)) :model (text-or-nil (:model c))
          :lens (text-or-nil (:lens c))
          :width (num-or-nil (:width v)) :height (num-or-nil (:height v)) :resolution (text-or-nil (:resolution v))
+         :timecode (text-or-nil (:timecode v)) :start_s (num-or-nil (:start_s a))
          :fps (num-or-nil (:fps v)) :rate (text-or-nil (:fps_exact v)) :capture_fps (num-or-nil (:capture_fps v))
          :slow_motion (num-or-nil (:slow_motion v)) :vfr (when (boolean? (:vfr v)) (if (:vfr v) 1 0))
          :codec (text-or-nil (:codec v)) :profile (text-or-nil (:profile v)) :bit_depth (num-or-nil (:bit_depth v))
@@ -139,29 +145,36 @@ COMMIT;"))
   "Brings the facts beside `index-path` up to date with media_meta's probe folder: their summary, or nil when
   media_meta has no published probe folder (and then an old database here is removed). Read again whole whenever
   the folder's files change; a file that isn't one, or that Dropbox keeps online-only, is skipped and counted. Of
-  several files for one original (it changed), the newest is kept."
+  several files for one original, the one in the newest version folder that has it, and of those the newest (it
+  changed)."
   [{:keys [meta index-path rebuild]}]
   (let [root (fs/path meta "probe")
+        vs (versions root)
         version (version-in root)
-        tree (fs/path root version)
         db (path index-path)]
     (if-not (fs/exists? (fs/path root marker))
       (do (fs/delete-if-exists db) nil)
-      (let [files (if (fs/directory? tree) (walk tree) [])
-            listing (str version "\n" (str/join "\n" (map #(str (:rel %) "." (:sha12 %) " " (fs/size (:path %))) files)))
+      (let [files (vec (for [[n v] vs f (walk (fs/path root v))] (assoc f :n n :v v)))
+            listing (str/join "\n" (map #(str (:v %) "/" (:rel %) "." (:sha12 %) " " (fs/size (:path %))) files))
             m (when (and (not rebuild) (fs/exists? db)) (try (meta-of db) (catch clojure.lang.ExceptionInfo _ nil)))]
         (fs/create-dirs (fs/parent db))
         (if (and m (= (str schema-version) (get m "schema_version")) (= listing (get m "files")))
           (summary db version)
-          (let [parsed (keep (fn [{p :path :keys [rel sha12]}]
-                               (when-not (tools/online-only? p)
-                                 (some-> (try (json/parse-string (slurp p) true) (catch Exception _ nil))
-                                         (row rel sha12))))
-                             files)
-                rows (->> (group-by :rel parsed)
-                          (map (fn [[_ rs]] (dissoc (last (sort-by :made_at rs)) :made_at)))
-                          (sort-by :rel))
-                skipped (- (count files) (count parsed))
+          (let [read-file (fn [{p :path :keys [rel sha12]}]
+                            (when-not (tools/online-only? p)
+                              (some-> (try (json/parse-string (slurp p) true) (catch Exception _ nil))
+                                      (row rel sha12))))
+                ;; each original from the newest version that has it (a version being published overlays the one
+                                ;; before it), and of its files there the newest; an older version only when none of those reads
+                picked (for [[_ fs*] (group-by :rel files)]
+                         (loop [[[_ top] & older] (sort-by key > (group-by :n fs*)) skipped 0]
+                           (let [rs (keep read-file top)
+                                 skipped (+ skipped (- (count top) (count rs)))]
+                             (cond (seq rs) {:row (dissoc (last (sort-by :made_at rs)) :made_at) :skipped skipped}
+                                   (seq older) (recur older skipped)
+                                   :else {:row nil :skipped skipped}))))
+                rows (sort-by :rel (keep :row picked))
+                skipped (reduce + (map :skipped picked))
                 tmp (str db ".new-" (.pid (java.lang.ProcessHandle/current)))]
             (try
               (fs/delete-if-exists tmp)

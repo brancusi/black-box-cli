@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- The camera facts give a clip nothing is said in its own start timecode (`video.timecode`) or a recorder's time of
+  day (`audio.start_s`), so `cut.edl` and `online` place it by timecode like any other; only a file with neither is
+  counted from 0:00, with a warning. Each original's facts come from the newest `probe/v<N>` that has it, so a
+  version Black Box is still publishing never hides the rest.
+
 ## 0.1.13 (2026-11-24)
 
 - Find footage by what shot it, from the files' own metadata (Black Box's `media_meta/probe`, ask 14; the newest

@@ -134,7 +134,7 @@
     (when (and dur (>= t-in dur))
       (out/fail! "bad-clip" (str "in " t-in-s " is past the end of " (:source_name t) " (" (tc/hms dur) ")")))
     (cond-> (range-segment ctx t t-in (if dur (min t-out dur) t-out) note)
-      (nil? (:id t))
+      (nil? (:clock_kind t))
       (update 1 #(str/join "; " (remove nil? [% no-timecode]))))))
 
 (defn- shot-segment
@@ -150,7 +150,7 @@
     (when (<= b a)
       (out/fail! "bad-clip" (str (:id r) " has no length")))
     (cond-> (range-segment ctx t a b (if (str/blank? note) (str (:id r) ": " (:action r)) note))
-      (nil? (:id t)) (update 1 #(str/join "; " (remove nil? [% no-timecode]))))))
+      (nil? (:clock_kind t)) (update 1 #(str/join "; " (remove nil? [% no-timecode]))))))
 
 (defn segments
   "The cut list's clips as segments, in order: {:segments :warnings :problems}. Any problem means nothing is
