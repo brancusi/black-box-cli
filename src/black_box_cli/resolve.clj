@@ -7,6 +7,8 @@
    [babashka.process :as process]
    [black-box-cli.archive :as archive]
    [black-box-cli.cutlist :as cutlist]
+   [black-box-cli.db :as db]
+   [black-box-cli.sync :as sync]
    [black-box-cli.tc :as tc]
    [cheshire.core :as json]
    [clojure.java.io :as io]
@@ -49,6 +51,52 @@
               segments)]
     [(mapv first done) (vec (keep second done))]))
 
+(def min-confidence
+  "The sync map's confidence a recorder needs to be laid under a clip (Black Box's advice: below it, list it)."
+  0.5)
+
+(defn- device
+  "Which recorder a file is, for its track: its folder and the start of its name (LAV3_0007.wav in lavs/ is
+  lavs/LAV3), so one lav keeps one track through an edit."
+  [rel]
+  (str (fs/file-name (fs/parent rel)) "/" (first (str/split (str (fs/file-name rel)) #"[_\-.]"))))
+
+(declare original)
+
+(defn synced-audio
+  "The recorders heard with each segment (pre- and post-roll applied), by the sync map: [audio warnings]. Each is
+  {:clip (1-based) :recorder :rel :source_path :start :end :record_s (where the clip starts on the timeline)
+  :track (the recorder's place, 1 up: Resolve's script gives each a block of tracks from A2 as wide as its channels)}, recorder time = camera time + offset_s + drift (Black Box's formula, per
+  segment). Only pairs whose overlap covers the whole segment; ones under min-confidence are named in a warning."
+  [index-path segments originals]
+  (let [starts (reductions + 0.0 (map #(- (:end %) (:start %)) segments))
+        found (for [[i s record-s] (map vector (range) segments starts)
+                    :when (and (:rel s) (:source_sha256 s))
+                    p (sync/recorders-of index-path (:rel s) (:source_sha256 s))
+                    :when (and (<= (:o0 p) (+ (:start s) 1e-3)) (<= (- (:end s) 1e-3) (:o1 p)))]
+                [i s record-s p])
+        weak (filter (fn [[_ _ _ p]] (< (:confidence p) min-confidence)) found)
+        strong (remove (fn [[_ _ _ p]] (< (:confidence p) min-confidence)) found)
+        tracks (zipmap (sort (distinct (map (fn [[_ _ _ p]] (device (:recorder_rel p))) strong))) (iterate inc 1))
+        audio (vec (for [[i s record-s p] strong
+                         :let [t (db/one index-path (str "SELECT rel, source_path FROM transcripts "
+                                                         "WHERE rel = :rel AND source_sha256 = :sha LIMIT 1;")
+                                         {:rel (:recorder_rel p) :sha (:recorder_sha256 p)})
+                               in (sync/recorder-time p (:start s))]]
+                     (array-map :clip (inc i)
+                                :recorder (str (fs/file-name (:recorder_rel p)))
+                                :rel (:recorder_rel p)
+                                :source_path (original {:rel (:recorder_rel p) :source_path (:source_path t)} originals)
+                                :start (tc/round-to in 3)
+                                :end (tc/round-to (+ in (- (:end s) (:start s))) 3)
+                                :record_s (tc/round-to record-s 3)
+                                :track (tracks (device (:recorder_rel p)))
+                                :confidence (:confidence p))))
+        warnings (vec (for [[i s _ p] weak]
+                        (str "clip " (inc i) " (" (:source_name s) "): " (fs/file-name (:recorder_rel p))
+                             " left out, a weak sync match (confidence " (:confidence p) ")")))]
+    [(vec (remove #(str/blank? (:source_path %)) audio)) warnings]))
+
 (defn original
   "Where Resolve finds a segment's original: its source path, or under `root` when the NAS is mounted elsewhere on
   this Mac (the same rel below it)."
@@ -73,7 +121,7 @@
 (defn plan
   "What resolve_build.py does, as data: the timeline's place and name, and each clip's original, proxy and frames
   (end exclusive, as AppendToTimeline counts)."
-  [segments {:keys [edl title id into db proxies originals rate]}]
+  [segments {:keys [edl title id into db proxies originals rate audio]}]
   (array-map :into into
              :db db
              :project (str title " (" id ")")
@@ -89,7 +137,16 @@
                                          :video (boolean (video? s))
                                          :in_frame (long (Math/rint (* (:start s) fps)))
                                          :out_frame (long (Math/rint (* (:end s) fps))))))
-                          segments)))
+                          segments)
+             :audio (let [fps (tc/rate-value rate)
+                          f #(long (Math/rint (* % fps)))]
+                      (mapv (fn [a]
+                              (array-map :source_path (:source_path a)
+                                         :in_s (:start a) :out_s (:end a)
+                                         :in_frame (f (:start a)) :out_frame (f (:end a))
+                                         :record_frame (f (:record_s a))
+                                         :track (:track a)))
+                            audio))))
 
 (defn- python
   "Resolve's Python, or `$BLACKBOX_RESOLVE_PYTHON` alone when it's set (tests set it, so they never reach a real

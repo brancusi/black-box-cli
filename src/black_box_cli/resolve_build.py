@@ -81,6 +81,41 @@ def timeline_names(project):
     return {project.GetTimelineByIndex(i).GetName() for i in range(1, project.GetTimelineCount() + 1)}
 
 
+def channels(item):
+    """How many audio channels a Media Pool clip has (a poly WAV from a recorder can have four)."""
+    try:
+        return max(1, int(str(item.GetClipProperty("Audio Ch") or "1").split()[0]))
+    except ValueError:
+        return 1
+
+
+def place_audio(media_pool, timeline, audio, have):
+    """The recorders synced to the clips, one recorder (the plan's `track`, 1 up) to a block of mono tracks from A2,
+    as wide as its channels, at its clip's place on the timeline. Returns how many are on the timeline after."""
+    if not audio:
+        return 0
+    width = {}
+    for a in audio:
+        width[a["track"]] = max(width.get(a["track"], 1), channels(have[a["source_path"]]))
+    first, n = {}, 2
+    for t in sorted(width):
+        first[t], n = n, n + width[t]
+    while timeline.GetTrackCount("audio") < n - 1:
+        if not timeline.AddTrack("audio", "mono"):
+            break
+    start = timeline.GetStartFrame()
+    media_pool.AppendToTimeline([{"mediaPoolItem": have[a["source_path"]], "startFrame": a["in_frame"],
+                                  "endFrame": a["out_frame"], "recordFrame": start + a["record_frame"],
+                                  "trackIndex": first[a["track"]], "mediaType": 2} for a in audio])
+    placed = 0
+    for a in audio:
+        items = timeline.GetItemListInTrack("audio", first[a["track"]]) or []
+        if any(it.GetStart() - start == a["record_frame"] and it.GetMediaPoolItem()
+               and file_path(it.GetMediaPoolItem()) == a["source_path"] for it in items):
+            placed += 1
+    return placed
+
+
 def main(plan_path):
     with open(plan_path, encoding="utf-8") as f:
         plan = json.load(f)
@@ -139,7 +174,8 @@ def main(plan_path):
 
     # Originals an earlier cut already brought into this project (under "Black Box") are used again, not imported
     # twice: the EDL may link to them in their own folders.
-    paths = list(dict.fromkeys(c["source_path"] for c in plan["clips"]))
+    audio = plan.get("audio") or []
+    paths = list(dict.fromkeys([c["source_path"] for c in plan["clips"]] + [a["source_path"] for a in audio]))
     have, homes = {}, [folder]
     for f in walk(ours):
         found = False
@@ -191,6 +227,7 @@ def main(plan_path):
                                       "endFrame": c["out_frame"]} for c in clips])
         method = "append"
     project.SetCurrentTimeline(timeline)
+    audio_placed = place_audio(media_pool, timeline, [a for a in audio if a["source_path"] in have], have)
     if plan.get("page"):
         resolve.OpenPage(plan["page"])
     pm.SaveProject()
@@ -200,7 +237,8 @@ def main(plan_path):
             "clips": len(timeline.GetItemListInTrack("video", 1) or []) + len(
                 [c for c in clips if not c["video"]]),
             "imported": len(imported or []), "reused": len(paths) - len(new), "missing": missing,
-            "proxies_linked": linked, "launched": launched, "resolve": resolve.GetVersionString()}
+            "proxies_linked": linked, "launched": launched, "resolve": resolve.GetVersionString(),
+            "audio": len(audio), "audio_placed": audio_placed}
 
 
 if __name__ == "__main__":

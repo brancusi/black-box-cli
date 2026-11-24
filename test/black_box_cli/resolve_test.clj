@@ -70,8 +70,8 @@
     (testing "--dry-run: the clips with their handles; nothing written, Resolve not asked"
       (let [out (run python stdin "online" "-" "--dry-run")]
         (is (= 0 (:exit out)))
-        (is (= [{:n 1 :file "C5274.MP4" :in "0:09.0" :out "0:32.5" :pre 1.0 :post 20.5 :length 23.5}
-                {:n 2 :file "C5274.MP4" :in "0:00.0" :out "0:05.0" :pre 1.0 :post 2.0 :length 5.0}]
+        (is (= [{:n 1 :file "C5274.MP4" :in "0:09.0" :out "0:32.5" :pre 1.0 :post 20.5 :length 23.5 :recorders 0}
+                {:n 2 :file "C5274.MP4" :in "0:00.0" :out "0:05.0" :pre 1.0 :post 2.0 :length 5.0 :recorders 0}]
                (:cut out)))
         (is (not (fs/exists? (fs/path dir "plan.json"))))))
     (testing "the plan Resolve's Python gets, and what it said"
@@ -114,6 +114,24 @@
           {:keys [id]} (run python "title: K\nC5274.MP4 0:01-0:03\n" "edl" "new" "-" "--no-render")]
       (is (= 0 (:exit (run python "" "online" id "--dry-run"))))
       (is (not (fs/exists? (fs/path dir "plan.json")))))))
+
+(deftest recorders-come-synced
+  (let [{:keys [run]} (runner)
+        {:keys [python dir]} (fake-python answer)
+        cut "title: Kiln\nC5274.MP4 0:20-0:25\nC5274.MP4 0:01-0:03\n"]
+    (testing "the fixture's sync map puts DJI_01.WAV with C5274 from 13.2 s, 13.2 s earlier"
+      (let [out (run python cut "online" "-" "--pre" "1" "--post" "1")
+            plan (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)]
+        (is (= 0 (:exit out)))
+        (is (= [1 0] (map :recorders (:cut out))) "the second clip is outside the overlap")
+        (is (str/starts-with? (:synced_audio out) "1 recorder clip from 1 recorder"))
+        (is (= [{:source_path "/nowhere/media/2026/09/16/audio/DJI_01.WAV" :in_s 5.8 :out_s 12.8
+                 :in_frame 139 :out_frame 307 :record_frame 0 :track 1}]
+               (:audio plan))
+            "recorder time = camera time + offset_s, the clip's own length, at the clip's place")))
+    (testing "--no-audio"
+      (run python cut "online" "-" "--no-audio")
+      (is (= [] (:audio (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)))))))
 
 (deftest what-goes-wrong
   (let [{:keys [run]} (runner)

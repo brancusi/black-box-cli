@@ -118,6 +118,15 @@ COMMIT;")
     (db/query (path index-path) "SELECT * FROM pairs WHERE recorder_rel = :rel AND recorder_sha256 = :sha;"
               {:rel rel :sha sha256})))
 
+(defn recorders-of
+  "The pairs that put recorder files with the camera file `rel` (`sha256`), best first, or [] without a sync map."
+  [index-path rel sha256]
+  (if-not (available? index-path)
+    []
+    (db/query (path index-path) (str "SELECT * FROM pairs WHERE camera_rel = :rel AND camera_sha256 = :sha "
+                                     "ORDER BY confidence DESC, recorder_rel;")
+              {:rel rel :sha sha256})))
+
 (defn pairs-among
   "The pairs whose recorder is among `rels` (with any camera: two recorders heard with one camera are one moment
   even when the camera's line isn't among them), or [] without a sync map."

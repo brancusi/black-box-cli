@@ -396,13 +396,26 @@
         _ (when (and edit (= (str (fs/parent edit)) (str (:old-cuts (index/paths ctx)))))
             (out/fail! "old-cut" (str (fs/file-name edit) " is in Black Box's old cuts folder, which this CLI never writes to")
                        {:help ["Make it again with `blackbox edl new` (`edl show` has its cut list), then online that"]}))
-        warnings (into (vec warnings) short)
-        rows (vec (map-indexed (fn [i s] (online-row (inc i) s (:full opts))) segments))
+        [audio weak] (if (:no-audio opts)
+                       [[] []]
+                       (resolve/synced-audio (index/require-index! ctx) segments originals))
+        warnings (-> (vec warnings) (into short) (into weak))
+        heard (group-by :clip audio)
+        rows (vec (map-indexed (fn [i s] (cond-> (online-row (inc i) s (:full opts))
+                                           true (assoc :recorders (count (heard (inc i))))))
+                               segments))
         length (tc/round-to (reduce + 0.0 (map cuts/length segments)) 3)
         head [:title title
               :clips (count segments)
               :length (tc/hms length)
               :handles (str "pre " (:pre opts) " s, post " (:post opts) " s (a clip's own pre/post first)")
+              :synced_audio (cond
+                              (:no-audio opts) "none (--no-audio)"
+                              (seq audio) (str (count audio) " recorder clip" (when (next audio) "s") " from "
+                                               (count (distinct (map :track audio))) " recorder"
+                                               (when (next (distinct (map :track audio))) "s")
+                                               ", each on its own tracks from A2, synced by the sync map")
+                              :else "none: no recorder synced with these clips")
               :warnings (if (seq warnings) warnings "none")]]
     (if (:dry-run opts)
       [(apply array-map (concat head [:written "nothing, and Resolve wasn't asked (--dry-run)" :cut rows]))
@@ -414,7 +427,7 @@
             edl (fs/path folder (str "online-" stamp ".edl"))
             _ (cuts/write-new! edl edl-text)
             the-plan (resolve/plan segments {:edl edl :title title :id id :into place :db (:db opts)
-                                             :proxies (not (:no-proxies opts)) :originals originals
+                                             :proxies (not (:no-proxies opts)) :originals originals :audio audio
                                              :rate (cuts/timeline-rate segments)})
             plan-path (fs/path folder (str "online-" stamp "-plan.json"))
             _ (cuts/write-new! plan-path (json/generate-string the-plan {:pretty true}))
@@ -436,6 +449,7 @@
                                              :originals_reused (:reused res)
                                              :missing (if (seq (:missing res)) (:missing res) "none")
                                              :proxies_linked (:proxies_linked res)
+                                             :audio_placed (str (:audio_placed res) " of " (:audio res))
                                              :started_resolve (:launched res))
                          :id id
                          :folder (out/home-path folder home)
