@@ -68,13 +68,13 @@
       (testing "the page carries the review, and nothing in it can end its script early"
         (is (str/includes? html "\"title\":\"Kiln selects\""))
         (is (not (str/includes? html "/*REVIEW_DATA*/")))
-        (is (= 2 (count (re-seq #"</script>" html))))))
+        (is (= 3 (count (re-seq #"</script>" html))))))
     (testing "list"
       (is (= ["Kiln selects"] (map :title (:reviews (run nil "review" "list"))))))))
 
 (deftest the-page-is-in-the-json-safely
   (let [html (review/page {:title "x</script><script>alert(1)</script>" :clips []})]
-    (is (= 2 (count (re-seq #"</script>" html))))
+    (is (= 3 (count (re-seq #"</script>" html))))
     (is (str/includes? html "x<\\/script>"))))
 
 (deftest a-file-in-ranges

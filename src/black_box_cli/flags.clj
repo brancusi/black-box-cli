@@ -280,9 +280,11 @@
     :examples ["blackbox review list"]}
    {:path ["tutorial"] :phase 16
     :summary "what an editor can do with Black Box, lesson by lesson: what to ask, the commands behind it, tips"
-    :args [{:arg "lesson" :optional true :doc "a lesson's id (start, said, people, picture, shots, cut, review, online, project, source, stills), or all"}]
-    :flags (output-flags false)
-    :examples ["blackbox tutorial" "blackbox tutorial online" "blackbox tutorial all"]}
+    :args [{:arg "lesson" :optional true :doc "a lesson's id (start, said, people, picture, shots, cut, review, online, project, source, stills), all, or new (what's new, by version)"}]
+    :flags (into [{:flag "--open" :doc "the animated tutorial, opened in the browser (every lesson, every command, what's new)"}
+                  {:flag "--html" :doc "write the animated tutorial's page and print its path; don't open it"}]
+                 (output-flags false))
+    :examples ["blackbox tutorial --open" "blackbox tutorial" "blackbox tutorial online" "blackbox tutorial new"]}
    {:path ["setup" "skill-check"] :phase 17
     :summary "for the hook `setup agent` installs: tells a running session when a newer skill was installed"
     :flags [{:flag "--agent" :value "claude|codex" :default "claude" :doc "whose skill to check (default claude)"}]

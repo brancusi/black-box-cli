@@ -17,6 +17,7 @@
    [black-box-cli.project :as project]
    [black-box-cli.resolve :as resolve]
    [black-box-cli.shots :as shots]
+   [black-box-cli.sync :as sync]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
    [cheshire.core :as json]
@@ -398,7 +399,10 @@
                        {:help ["Make it again with `blackbox edl new` (`edl show` has its cut list), then online that"]}))
         [audio weak] (if (:no-audio opts)
                        [[] []]
-                       (resolve/synced-audio (index/require-index! ctx) segments originals))
+                       (let [idx (index/require-index! ctx)]
+                         ;; the mini republishes the sync map as it gets better: sync with the newest here
+                         (sync/build! {:meta (:meta ctx) :index-path idx})
+                         (resolve/synced-audio idx segments originals)))
         warnings (-> (vec warnings) (into short) (into weak))
         heard (group-by :clip audio)
         rows (vec (map-indexed (fn [i s] (cond-> (online-row (inc i) s (:full opts))

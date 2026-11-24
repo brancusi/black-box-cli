@@ -12,10 +12,14 @@ command has `--help`. Nothing prompts. The CLI may be newer than this skill: `bl
 command it has, and `blackbox tutorial` explains them. Errors come on stdout as `error:` with a `code`; exit 1 is
 an error, 2 a command line to fix (the valid flags are listed).
 
-## Teaching it: "give me a tutorial"
+## Teaching it: "teach me about Black Box", "give me a tutorial"
 
-When someone asks for a tutorial, what Black Box can do, or how to do something with it, run `blackbox tutorial`
-and teach from it. Give the overview in a few lines (the lessons and one thing to ask in each), then go a lesson at
+When someone asks to be taught Black Box, for a tour or a tutorial, or what's new, run `blackbox tutorial --open`
+first: it plays an animated tutorial in their browser (every lesson, a panel of workflows and every command, and
+what's new in this version). Then offer to go through any part with them. For what's new in words, `blackbox
+tutorial new`.
+
+When they'd rather be taught here, or ask how to do one thing, run `blackbox tutorial` and teach from it. Give the overview in a few lines (the lessons and one thing to ask in each), then go a lesson at
 a time with `blackbox tutorial <id>` (`blackbox tutorial online`, say), or straight to the one they asked about.
 Teach in their words, not the commands: each lesson's `ask` is what they can say to you, and `runs` is what you do
 for them. Offer to try each lesson on their own footage (a real search, a real cut) before moving on. People can

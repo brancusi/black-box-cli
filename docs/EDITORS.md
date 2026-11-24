@@ -4,7 +4,9 @@
 
 Black Box knows every clip the studio has filmed: what was said, what's in the picture, each shot, and who is heard and seen. Ask your agent in your own words; it runs `blackbox` for you, shows you the footage and builds edits you can watch, then takes them to Resolve from the camera originals.
 
-You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
+You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
+
+**What's new in 0.1.8:** Selects review; Recorders come synced; This tutorial, animated ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -35,6 +37,9 @@ Everything Black Box reads is already on your Mac, in Dropbox's media_meta: tran
 - `blackbox`: what's indexed (months, hours, files) and the latest edits
 - `blackbox footage --month 2026-10`: the files of a month: day, length, lines
 - `blackbox status`: the index's health, and anything Dropbox hasn't brought down yet
+- `blackbox index`: read what Dropbox has brought down (seconds; your agent does it when it's needed)
+- `blackbox tutorial --open`: this tutorial, animated, in your browser
+- `blackbox setup agent`: once on a new Mac: teaches your agent Black Box
 
 **Tips:**
 
@@ -266,6 +271,7 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 **Behind it:**
 
 - `blackbox still new k7f3q2ab.f12 --look filmic --tiff --out ~/Downloads`: ask the mini for the still
+- `blackbox still show 20261124T080000Z-kiln --wait`: waits until the stills are back, with their paths
 - `blackbox still list`: every request and where it stands
 
 **Tips:**
@@ -273,3 +279,23 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 - Looks: neutral (the house look), filmic, rec709, or log for a colourist.
 - It takes minutes; your agent tells you when they're ready.
 - Too warm or too cool? Ask it to balance on something white in the shot.
+
+<a id="whats-new"></a>
+
+## What's new
+
+### 0.1.8 (this version)
+
+- **Selects review:** Ask for selects and get a page: each clip plays on hover with its words under it; open one for its whole transcript. s selects, i imports the selected into Resolve. `blackbox review new - --open`
+- **Recorders come synced:** Onlining an edit lays the lavs and field recorder under each clip, frame-exact, each on its own tracks. `blackbox online quarry`
+- **This tutorial, animated:** Say "teach me about Black Box" and it plays in your browser, with every command and what's new. `blackbox tutorial --open`
+
+### 0.1.7 (2026-11-24)
+
+- **Your agent keeps up:** When Black Box updates, a running agent session is told to re-read what it can do. `blackbox setup agent`
+
+### 0.1.6 (2026-11-23)
+
+- **Online an edit:** An edit back to the camera originals as a new Resolve timeline on your Mac, with handles. `blackbox online quarry`
+- **Edits kept where you find them:** Each edit in ~/Black Box/edits, with its video, its EDL and its source clips. `blackbox edl list`
+- **The tutorial:** Ask your agent for the tutorial, or read docs/EDITORS.md. `blackbox tutorial`

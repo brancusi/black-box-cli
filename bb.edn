@@ -39,6 +39,10 @@
          editors {:doc "Writes docs/EDITORS.md from the tutorial's lessons (src/black_box_cli/tutorial.clj)."
                   :requires ([black-box-cli.tutorial :as tutorial])
                   :task (spit "docs/EDITORS.md" (tutorial/markdown))}
+         narrate {:doc "Makes the animated tutorial's narration with ElevenLabs (the `elevenlabs` CLI): only lines without audio. bb narrate --dry-run lists them."
+                  :extra-paths ["dev"]
+                  :requires ([narrate])
+                  :task (narrate/narrate! :dry-run (some #{"--dry-run"} *command-line-args*))}
          lint {:doc "clj-kondo over src, test and dev."
                :task (shell "clj-kondo --lint src test dev")}
          fmt {:doc "cljfmt check (fmt fix to rewrite)."

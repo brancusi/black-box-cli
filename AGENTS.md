@@ -74,6 +74,8 @@ The footage is irreplaceable. When a rule and a request conflict, stop and ask t
   errors, exit codes), `meta` (finding `media_meta`). Each namespace owns one thing; only `out` prints.
 - `test/black_box_cli/`: tests; `test/fixtures/media_meta/` is an invented `media_meta`; `test/golden/` is what
   the CLI prints for it, step by step (`steps.json`).
+- `src/black_box_cli/tutorial_voice/`: the animated tutorial's narration, made by `bb narrate` (dev/narrate.clj,
+  ElevenLabs on a development Mac) from the lines in `tutorial`; the CLI only copies it beside the page.
 - `dev/`: the REPL (`user.clj` tiny, `dev.clj` the workbench, `fiddle.clj` to play). Only `bb nrepl` loads it.
 - `skills/blackbox/SKILL.md`: the Agent Skill the CLI installs for users (`blackbox setup agent`).
 

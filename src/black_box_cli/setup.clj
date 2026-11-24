@@ -235,5 +235,5 @@
         (when (and seen (not start?) (not= seen installed))
           (out/text! (str "The blackbox skill on this Mac was updated (to " installed ") after this session read it. "
                           "Before using blackbox again, re-read " (out/home-path skill home)
-                          ": it may have new commands (`blackbox tutorial` lists what it can do).\n")))))
+                          ": it may have new commands (`blackbox tutorial new` says what's new; tell the user in a line).\n")))))
     nil))

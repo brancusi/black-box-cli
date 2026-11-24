@@ -5,4 +5,5 @@
                 black-box-cli.main {:linters {:discouraged-var {:level :off}}}
                 black-box-cli.golden {:linters {:discouraged-var {:level :off}}}
                 dev {:linters {:discouraged-var {:level :off}}}
-                fiddle {:linters {:discouraged-var {:level :off}}}}}
+                fiddle {:linters {:discouraged-var {:level :off}}}
+                narrate {:linters {:discouraged-var {:level :off}}}}}

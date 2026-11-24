@@ -49,6 +49,17 @@
 (deftest the-newest-day-file-is-read
   (let [run (runner s/fixture-meta)]
     (is (= {:days 1 :pairs 1 :skipped 0} (:sync (run "index"))) "the older stamp of the day and an unknown kind ignored"))
+  (testing "a day whose newest file is still in the cloud is read from the one before, not dropped"
+    (let [meta (copy-meta)
+          day (fs/parent (first (fs/glob (fs/path meta "sync") "*/*/16.20261030T120000Z.sync.jsonl")))]
+      (spit (str (fs/path day "16.20261124T073536Z.sync.jsonl")) "") ; a Dropbox placeholder: empty
+      (let [run (runner meta)
+            out (:sync (run "index"))]
+        (is (= {:days 1 :pairs 1 :skipped 1} out))
+        (testing "and the newest once it's here"
+          (fs/copy (fs/path day "16.20261030T120000Z.sync.jsonl") (fs/path day "16.20261124T073536Z.sync.jsonl")
+                   {:replace-existing true})
+          (is (= {:days 1 :pairs 1 :skipped 0} (:sync (run "index"))))))))
   (testing "no sync folder"
     (let [meta (copy-meta)]
       (fs/delete-tree (fs/path meta "sync"))

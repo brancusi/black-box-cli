@@ -1,0 +1,57 @@
+;; Written by `bb narrate`: each narration line's audio and its length. Don't edit by hand.
+{"127a1a813cb9d4f5"
+ {:text
+  "New in version 0.1.8: selects review, recorders come synced, and this tutorial, animated.",
+  :seconds 8.908},
+ "214b0cbbb1540673"
+ {:text
+  "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
+  :seconds 6.113},
+ "2a248d043f075888"
+ {:text
+  "Describe a shot in plain words and get the frames. Like one? Find more like it.",
+  :seconds 5.642},
+ "5bfc004f4da848c1"
+ {:text
+  "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
+  :seconds 7.889},
+ "8536408f509e5a99"
+ {:text
+  "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",
+  :seconds 8.124},
+ "a611f3e3e2f9abd1"
+ {:text
+  "Ask for a rough cut and it plays seconds later. Every edit is kept, so you can always go back.",
+  :seconds 6.609},
+ "ad1188b354b088c3"
+ {:text
+  "It all lives on your Mac already: transcripts, proxies and picture search, brought down by Dropbox. Fast, and the NAS is never touched.",
+  :seconds 10.031},
+ "b5e367e65b254f24"
+ {:text
+  "Online it: back to the camera originals, with handles, and every recorder synced underneath.",
+  :seconds 6.269},
+ "b86f575f1edfe17a"
+ {:text
+  "This is Black Box. Every clip, every word, every frame, every face. You ask in plain words. Your agent does the rest.",
+  :seconds 10.188},
+ "c55f36933b66060d"
+ {:text
+  "Search by person: who's talking, who's on screen, and in how many clips.",
+  :seconds 5.721},
+ "ee646e730511565f"
+ {:text
+  "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",
+  :seconds 8.594},
+ "f62fc0406604cf31"
+ {:text
+  "Stills for print and the web, rendered full size from the originals, in the house look or yours.",
+  :seconds 6.348},
+ "fb45dfbfc96548ae"
+ {:text
+  "A screenshot from a client? Black Box finds the clip, and the exact moment, it came from.",
+  :seconds 6.113},
+ "fe66302d76c212c4"
+ {:text
+  "That's Black Box. Now ask your agent for anything. Every lesson and every command is on the right.",
+  :seconds 6.687}}

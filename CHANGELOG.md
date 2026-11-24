@@ -11,6 +11,17 @@
   as wide as its channels; weak matches (confidence under 0.5) are named, not placed. `--no-audio` to skip.
 - Cut lists take `group:` lines (and a JSON clip's "group").
 - The tutorial has a review lesson.
+- `blackbox tutorial --open` ("teach me about Black Box"): an animated tutorial in the browser, every lesson as a
+  quick narrated scene (ElevenLabs voice, made by `bb narrate` and shipped as audio: the CLI never calls ElevenLabs),
+  beside a panel of workflows, every command (from the flags table, so a new one shows the day it ships) and what's
+  new. `blackbox tutorial new` says what's new in words; docs/EDITORS.md has it too. Tests fail when a command isn't
+  taught, a release has no news, or a narration line has no audio.
+- The review page and the tutorial take Walkabout's look: mono type, square corners, light and dark (auto, or chosen
+  and remembered). The review's bar has labelled groups (handles as steppers, Into and Recorders as two-way
+  switches), and an import's result shows as a toast over the gallery or an open clip.
+- The sync map: a day whose newest file Dropbox hasn't brought down yet is read from its newest file that is here,
+  not dropped; `online` (and a review's Import) brings the sync map up to date first, so recorders come synced with
+  the mini's newest map.
 
 ## 0.1.7 (2026-11-24)
 

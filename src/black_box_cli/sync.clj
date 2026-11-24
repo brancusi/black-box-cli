@@ -51,8 +51,8 @@ COMMIT;")
 (defn- meta-of [db]
   (into {} (map (juxt :key :value)) (db/query db "SELECT key, value FROM meta;")))
 
-(defn newest-days
-  "The current file of each day under `root`: the newest stamp per `<YYYY>/<MM>/<DD>`, sorted by day."
+(defn- day-files
+  "Each day's files under `root`, newest stamp first, sorted by day."
   [root]
   (->> (fs/glob root "*/*/*.sync.jsonl")
        (keep (fn [p]
@@ -61,8 +61,13 @@ COMMIT;")
                    {:day day :stamp stamp :path p :rel r}))))
        (group-by :day)
        vals
-       (map #(last (sort-by :stamp %)))
-       (sort-by :day)))
+       (map #(vec (reverse (sort-by :stamp %))))
+       (sort-by (comp :day first))))
+
+(defn newest-days
+  "The current file of each day under `root`: the newest stamp per `<YYYY>/<MM>/<DD>`, sorted by day."
+  [root]
+  (map first (day-files root)))
 
 (defn- summary [db]
   (let [m (meta-of db)]
@@ -78,12 +83,16 @@ COMMIT;")
         db (path index-path)]
     (if-not (fs/exists? (fs/path root marker))
       (do (fs/delete-if-exists db) nil)
-      (let [days (newest-days root)
+      (let [stamps (day-files root)
+            days (map first stamps)
             files (str/join "\n" (map :rel days))
             m (when (and (not rebuild) (fs/exists? db)) (try (meta-of db) (catch clojure.lang.ExceptionInfo _ nil)))]
         (if (and m (= (str schema-version) (get m "schema_version")) (= files (get m "files")))
           (summary db)
-          (let [{readable false skipped true} (group-by #(tools/online-only? (:path %)) days)
+          ;; A day whose newest file Dropbox hasn't brought down yet is read from its newest file that is here (the
+          ;; mini's earlier map of that day), not dropped; the next build reads the newest once it's here.
+          (let [skipped (filter #(tools/online-only? (:path %)) days)
+                readable (keep (fn [fs*] (first (remove #(tools/online-only? (:path %)) fs*))) stamps)
                 pairs (->> readable
                            (mapcat #(str/split-lines (slurp (str (:path %)))))
                            (remove str/blank?)
