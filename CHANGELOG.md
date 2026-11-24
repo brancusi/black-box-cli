@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.16 (2026-11-24)
 
 - Selects reviews stay open: one review server on this Mac (127.0.0.1:7387) serves every review at its own
   address, so editors can keep several in tabs, and opening another never closes one. `review open` and
