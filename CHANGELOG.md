@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.13 (2026-11-24)
 
 - Find footage by what shot it, from the files' own metadata (Black Box's `media_meta/probe`, ask 14; the newest
   `v<N>` folder is read): `--device fx3` (camera or recorder by name, model or make), `--slow-motion`, `--fps 120`
