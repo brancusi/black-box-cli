@@ -126,9 +126,10 @@ def channels(item):
         return 1
 
 
-def place_audio(media_pool, timeline, audio, have):
+def place_audio(media_pool, timeline, audio, have, at="record_frame"):
     """The recorders synced to the clips, one recorder (the plan's `track`, 1 up) to a block of mono tracks from A2,
-    as wide as its channels, at its clip's place on the timeline. Returns how many are on the timeline after."""
+    as wide as its channels, at its clip's place on the timeline (`at`: record_frame where the EDL put the clips,
+    clip_frame where they were placed by frame). Returns how many are on the timeline after."""
     if not audio:
         return 0
     width = {}
@@ -142,12 +143,12 @@ def place_audio(media_pool, timeline, audio, have):
             break
     start = timeline.GetStartFrame()
     media_pool.AppendToTimeline([{"mediaPoolItem": have[a["source_path"]], "startFrame": a["in_frame"],
-                                  "endFrame": a["out_frame"], "recordFrame": start + a["record_frame"],
+                                  "endFrame": a["out_frame"], "recordFrame": start + a.get(at, a["record_frame"]),
                                   "trackIndex": first[a["track"]], "mediaType": 2} for a in audio])
     placed = 0
     for a in audio:
         items = timeline.GetItemListInTrack("audio", first[a["track"]]) or []
-        if any(it.GetStart() - start == a["record_frame"] and it.GetMediaPoolItem()
+        if any(it.GetStart() - start == a.get(at, a["record_frame"]) and it.GetMediaPoolItem()
                and file_path(it.GetMediaPoolItem()) == a["source_path"] for it in items):
             placed += 1
     return placed
@@ -243,15 +244,47 @@ def main(plan_path):
     if not clips:
         raise Fail("no-originals", "none of the originals could be imported (is the NAS mounted on this Mac?)")
     name = unique(plan["timeline"], timeline_names(project))
-    method = "edl"
-    timeline = media_pool.ImportTimelineFromFile(plan["edl"], {"timelineName": name, "importSourceClips": False,
-                                                               "sourceClipsFolders": homes})
+    subtitles_placed, subtitles_note = 0, None
+    srt = plan.get("subtitles")
+    subtitle_item = None
+    if srt and os.path.isfile(srt):
+        found = media_pool.ImportMedia([srt]) or media_pool.ImportMedia([{"FilePath": srt}]) or []
+        subtitle_item = next((i for i in found if i.GetClipProperty("Type") == "Subtitle"), None)
+        if subtitle_item is None:
+            subtitles_note = "Resolve didn't import the subtitles"
+    edl_note = None
+    if subtitle_item is not None:
+        # Subtitles first, on the empty timeline: Resolve appends a subtitle clip at the timeline's end, keeping each
+        # line's time from there (and crashes if given frames for one), so only an empty timeline puts them at its
+        # start. Then each clip goes down at its own frame, as the EDL would have put it; a missing one leaves its gap.
+        method = "subtitles"
+        timeline = media_pool.CreateEmptyTimeline(name)
+        if timeline is None:
+            raise Fail("resolve-failed", f"Resolve couldn't create the timeline {name}")
+        project.SetCurrentTimeline(timeline)
+        if timeline.GetTrackCount("subtitle") == 0:
+            timeline.AddTrack("subtitle")
+        media_pool.AppendToTimeline([{"mediaPoolItem": subtitle_item, "trackIndex": 1}])
+        subtitles_placed = len(timeline.GetItemListInTrack("subtitle", 1) or [])
+        start = timeline.GetStartFrame()
+        for c in plan["clips"]:
+            if c["source_path"] in have:
+                media_pool.AppendToTimeline([{"mediaPoolItem": have[c["source_path"]], "startFrame": c["in_frame"],
+                                              "endFrame": c["out_frame"], "recordFrame": start + c["record_frame"]}])
+    else:
+        method = "edl"
+        timeline = media_pool.ImportTimelineFromFile(plan["edl"], {"timelineName": name, "importSourceClips": False,
+                                                                   "sourceClipsFolders": homes})
     placed = timeline.GetItemListInTrack("video", 1) if timeline else []
     placed = placed or []
     ok = (timeline is not None and len(placed) == len([c for c in clips if c["video"]])
           and all(file_path(t.GetMediaPoolItem()) == c["source_path"]
                   for t, c in zip(placed, [c for c in clips if c["video"]])))
-    edl_note = None
+    if not ok and method == "subtitles":
+        if timeline is not None:
+            media_pool.DeleteTimelines([timeline])  # this run's own, seconds old, and wrong
+        raise Fail("resolve-failed", f"Resolve placed {len(placed)} of {len([c for c in clips if c['video']])} "
+                                     f"clips on the timeline {name}; run it again with --no-subtitles")
     if not ok:
         # The EDL didn't link every event to its own original: put the clips down by frame instead. The timeline it
         # made is this run's own, seconds old, and wrong; nothing else is ever deleted.
@@ -266,7 +299,8 @@ def main(plan_path):
                                       "endFrame": c["out_frame"]} for c in clips])
         method = "append"
     project.SetCurrentTimeline(timeline)
-    audio_placed = place_audio(media_pool, timeline, [a for a in audio if a["source_path"] in have], have)
+    audio_placed = place_audio(media_pool, timeline, [a for a in audio if a["source_path"] in have], have,
+                               "record_frame" if method == "edl" else "clip_frame")
     if plan.get("page"):
         resolve.OpenPage(plan["page"])
     pm.SaveProject()
@@ -278,7 +312,8 @@ def main(plan_path):
             "imported": len(imported or []), "reused": len(paths) - len(new), "in_project": len(theirs),
             "missing": missing,
             "proxies_linked": linked, "launched": launched, "resolve": resolve.GetVersionString(),
-            "audio": len(audio), "audio_placed": audio_placed}
+            "audio": len(audio), "audio_placed": audio_placed,
+            "subtitles_placed": subtitles_placed, "subtitles_note": subtitles_note}
 
 
 if __name__ == "__main__":

@@ -87,7 +87,7 @@
   (let [ms (long (Math/rint (* t 1000)))]
     (format "%02d:%02d:%02d,%03d" (quot ms 3600000) (rem (quot ms 60000) 60) (rem (quot ms 1000) 60) (rem ms 1000))))
 
-(defn- srt-entries
+(defn srt-entries
   "One segment's subtitles on the cut's timeline from `offset`: a run of words up to a sentence's end or 12 words."
   [s offset]
   (let [groups (loop [[w & more :as ws] (:words s) group [] out []]
@@ -102,6 +102,12 @@
                 b (min (or (nth (last g) 2) (second (last g))) (:end s))]
           :when (> b a)]
       [(+ offset (- a (:start s))) (+ offset (- b (:start s))) (str/join " " (map first g))])))
+
+(defn srt-text
+  "SRT from entries ([start end text], seconds)."
+  [entries]
+  (apply str (map-indexed (fn [i [a b text]] (str (inc i) "\n" (srt-time a) " --> " (srt-time b) "\n" text "\n\n"))
+                          entries)))
 
 (defn srt
   "What's said, timed on the cut's own timeline (mpv --sub-file); clips left out of the rough cut are left out."

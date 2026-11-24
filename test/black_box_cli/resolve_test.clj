@@ -83,8 +83,19 @@
                (select-keys (:resolve out) [:project :timeline :clips :by])))
         (is (= ["new-project" "Kiln" "23.976" true] ((juxt :into :timeline :fps :proxies) plan)))
         (is (= (str "Kiln (" (:id out) ")") (:project plan)))
-        (is (= {:source_path "/nowhere/media/2026/09/16/src/fx3/C5274.MP4" :video true :in_frame 216 :out_frame 779}
+        (is (= {:source_path "/nowhere/media/2026/09/16/src/fx3/C5274.MP4" :video true :in_frame 216 :out_frame 779
+                :record_frame 0}
                (dissoc (first (:clips plan)) :proxy)))
+        (is (= 563 (:record_frame (second (:clips plan)))) "placed by frame, a clip starts where the frames before it end")
+        (testing "what's said goes on the subtitle track, timed from the same frames"
+          (let [srt (slurp (:subtitles plan))
+                cues (re-seq #"(\d\d):(\d\d):(\d\d),(\d{3}) --> " srt)
+                secs (map (fn [[_ h m sec ms]] (+ (* 3600 (parse-long h)) (* 60 (parse-long m)) (parse-long sec) (/ (parse-long ms) 1000.0))) cues)]
+            (is (re-find #"lines on the subtitle track" (:subtitles out)))
+            (is (seq cues))
+            (is (apply <= secs) "in timeline order")
+            (is (< (last secs) (/ (+ 563 120) (/ 24000.0 1001))) "within the timeline")
+            (is (str/ends-with? (:subtitles plan) ".srt"))))
         (is (str/ends-with? (:proxy (first (:clips plan))) "C5274.MP4.proxy.mp4"))
         (is (fs/exists? (:edl plan)) "the EDL is written before Resolve is asked")
         (is (= (:edl out) (str (fs/file-name (:edl plan)))))
@@ -127,7 +138,7 @@
         (is (= [1 0] (map :recorders (:cut out))) "the second clip is outside the overlap")
         (is (str/starts-with? (:synced_audio out) "1 recorder clip from 1 recorder"))
         (is (= [{:source_path "/nowhere/media/2026/09/16/audio/DJI_01.WAV" :in_s 5.8 :out_s 12.8
-                 :in_frame 139 :out_frame 307 :record_frame 0 :track 1}]
+                 :in_frame 139 :out_frame 306 :record_frame 0 :clip_frame 0 :track 1}]
                (:audio plan))
             "recorder time = camera time + offset_s, the clip's own length, at the clip's place")))
     (testing "--no-audio"

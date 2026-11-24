@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `online` (and a review's Import) puts what's said on the timeline's subtitle track, so editors can copy lines
+  from it: every word in each clip's range, handles included, timed to the clips' frames (`subtitles_placed`;
+  `--no-subtitles` leaves them out; the .srt is kept beside the EDL). With subtitles, the clips are placed by frame
+  after them (Resolve only puts subtitles at a timeline's start when it's empty); recorders start on their clip's
+  frame and are exactly its length. The review's toast says how many subtitles came.
 - Releases are signed as they're published: `bb release` signs the manifest (Ed25519, the key only in the releasing
   Mac's keychain; `bb release-key` makes it once) and publishes `blackbox-cli.json.sig`. Black Box, with the public
   key `docs/release-key.pub` built in, installs only a signed release. Nothing is done by hand.

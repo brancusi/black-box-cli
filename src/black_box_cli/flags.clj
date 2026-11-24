@@ -140,6 +140,7 @@
                 {:flag "--originals" :value "folder" :doc "where the NAS's media/ folder is mounted, if not where the index says"}
                 {:flag "--no-proxies" :doc "don't link the proxies to the originals"}
                 {:flag "--no-audio" :doc "don't lay in the recorders synced with each clip (A2 up)"}
+                {:flag "--no-subtitles" :doc "don't put what's said on the timeline's subtitle track"}
                 {:flag "--title" :value "text" :doc "for a cut list: the edit's title (or `title:` in the cut list)"}
                 {:flag "--no-render" :doc "for a cut list: don't render the new edit's edit.mp4"}
                 {:flag "--dry-run" :doc "check and show the clips with their pre- and post-roll; write nothing, don't open Resolve"}

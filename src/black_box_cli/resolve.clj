@@ -7,6 +7,7 @@
    [babashka.process :as process]
    [black-box-cli.archive :as archive]
    [black-box-cli.cutlist :as cutlist]
+   [black-box-cli.cuts :as cuts]
    [black-box-cli.db :as db]
    [black-box-cli.sync :as sync]
    [black-box-cli.tc :as tc]
@@ -118,35 +119,77 @@
   [s]
   (some #(str/ends-with? (str/lower-case (str (:rel s))) (str "." %)) archive/video-exts))
 
+(defn- clip-frames
+  "Each segment's [in out] frames (end exclusive, as AppendToTimeline counts), at its own rate."
+  [segments rate]
+  (mapv (fn [s] (let [fps (tc/rate-value (or (tc/parse-rate (:rate s)) rate))]
+                  [(long (Math/rint (* (:start s) fps))) (long (Math/rint (* (:end s) fps)))]))
+        segments))
+
 (defn plan
   "What resolve_build.py does, as data: the timeline's place and name, and each clip's original, proxy and frames
-  (end exclusive, as AppendToTimeline counts)."
-  [segments {:keys [edl title id into db proxies originals rate audio]}]
-  (array-map :into into
-             :db db
-             :project (str title " (" id ")")
-             :timeline title
-             :bin id
-             :edl (str edl)
-             :fps (fps-setting rate)
-             :proxies (boolean proxies)
-             :clips (mapv (fn [s]
-                            (let [fps (tc/rate-value (or (tc/parse-rate (:rate s)) rate))]
+  (end exclusive, as AppendToTimeline counts). Placed by frame, a clip starts at `record_frame`, where the frames
+  before it end, and its recorders at their clip's (`clip_frame`); the subtitles are timed the same way."
+  [segments {:keys [edl title id into db proxies originals rate audio subtitles]}]
+  (let [frames (clip-frames segments rate)
+        records (vec (reductions + 0 (map (fn [[a b]] (- b a)) frames)))]
+    (array-map :into into
+               :db db
+               :project (str title " (" id ")")
+               :timeline title
+               :bin id
+               :edl (str edl)
+               :fps (fps-setting rate)
+               :proxies (boolean proxies)
+               :subtitles (some-> subtitles str)
+               :clips (mapv (fn [s [in out] record]
                               (array-map :source_path (original s originals)
                                          :proxy (when (video? s) (:play_path s))
                                          :video (boolean (video? s))
-                                         :in_frame (long (Math/rint (* (:start s) fps)))
-                                         :out_frame (long (Math/rint (* (:end s) fps))))))
-                          segments)
-             :audio (let [fps (tc/rate-value rate)
-                          f #(long (Math/rint (* % fps)))]
-                      (mapv (fn [a]
-                              (array-map :source_path (:source_path a)
-                                         :in_s (:start a) :out_s (:end a)
-                                         :in_frame (f (:start a)) :out_frame (f (:end a))
-                                         :record_frame (f (:record_s a))
-                                         :track (:track a)))
-                            audio))))
+                                         :in_frame in
+                                         :out_frame out
+                                         :record_frame record))
+                            segments frames records)
+               :audio (let [fps (tc/rate-value rate)
+                            f #(long (Math/rint (* % fps)))]
+                        (mapv (fn [a]
+                                (array-map :source_path (:source_path a)
+                                           :in_s (:start a) :out_s (:end a)
+                                           :in_frame (f (:start a))
+                                         ;; as long as its clip in frames, so it ends where its clip ends
+                                           :out_frame (+ (f (:start a))
+                                                         (if-let [[ca cb] (get frames (dec (:clip a)))]
+                                                           (- cb ca)
+                                                           (- (f (:end a)) (f (:start a)))))
+                                           :record_frame (f (:record_s a))
+                                           :clip_frame (get records (dec (:clip a)) (f (:record_s a)))
+                                           :track (:track a)))
+                              audio)))))
+
+(defn- words-in
+  "Every word the file of segment `s` has between its in and out, handles included, from the index: [[w start end]]."
+  [idx version s]
+  (when-let [t (db/one idx "SELECT id FROM transcripts WHERE version = :v AND rel = :rel;" {:v version :rel (:rel s)})]
+    (->> (db/query idx (str "SELECT start, end, words FROM cues WHERE transcript_id = :t AND end > :a AND start < :b "
+                            "ORDER BY n;")
+                   {:t (:id t) :a (:start s) :b (:end s)})
+         (mapcat (fn [q] (map (fn [[w ws we]] [w (or ws (:start q)) (or we ws (:end q))])
+                              (json/parse-string (:words q)))))
+         (filter (fn [[_ ws]] (and (>= ws (:start s)) (< ws (:end s)))))
+         vec)))
+
+(defn subtitles
+  "What's said in `segments`, as [start end text] in seconds on the timeline Resolve builds: every word of each
+  clip's range (handles included), each clip starting where the frames before it end (the plan's frames, at each
+  clip's own rate, counted at the timeline's `rate`), so the subtitles sit on the words however the frames round."
+  [idx version segments rate]
+  (let [tfps (tc/rate-value rate)
+        offsets (map #(/ % tfps) (reductions + 0 (map (fn [[a b]] (- b a)) (clip-frames segments rate))))]
+    ;; a clip's lines end where its frames end, never in the next clip
+    (vec (mapcat (fn [s offset next-offset]
+                   (keep (fn [[a b text]] (let [b (min b next-offset)] (when (> b a) [a b text])))
+                         (cuts/srt-entries (assoc s :words (words-in idx version s)) offset)))
+                 segments offsets (rest offsets)))))
 
 (defn- python
   "Resolve's Python, or `$BLACKBOX_RESOLVE_PYTHON` alone when it's set (tests set it, so they never reach a real

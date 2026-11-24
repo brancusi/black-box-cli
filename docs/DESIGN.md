@@ -110,6 +110,12 @@ CHANGELOG.md.
     ~/Black Box/reviews/<id>/ (review.html with the review's JSON in it, review.json, thumbnails); `review open`
     serves it on 127.0.0.1 with a key, and its Import sends the ticked clips, trimmed or not, to `online`. English
     under Italian lines waits for Black Box's translations in media_meta (ask 12).
+17. **`online` puts what's said on the subtitle track (owner, 2026-11-24).** Every word in each clip's range,
+    handles included, as an .srt beside the EDL. Resolve 21.1 has no call to write subtitle items and crashes when
+    given frames for a subtitle clip, and it appends one at the timeline's end, keeping each line's time from there;
+    so the subtitles go first onto an empty timeline, and then each clip at its own frame (where the frames before it
+    end, as the plan counts them), its recorders at their clip's frame and exactly its length. Without anything
+    said, the EDL is imported as before.
 16. **Black Box updates the CLI between its own releases (owner, 2026-11-24).** A release is live on every Mac
     minutes after it's published, with no one signing anything by hand: `bb release` builds it here and publishes it with
     a manifest, waiting on nothing (GitHub only re-runs the tests in the background); it signs the manifest as it publishes

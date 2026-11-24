@@ -263,7 +263,9 @@ Only when the user wants the cut in Resolve:
   `--db local` for this Mac's database). The recorders heard with each clip come with it, synced by the sync map,
   each on its own tracks from A2 (`--no-audio` to leave them out): the output's `recorders` column and
   `audio_placed` say what came, and a match too weak to place (confidence under 0.5) is named in `warnings`, not
-  placed. It takes seconds (about 15 s more when it has to start Resolve). A cut
+  placed. What's said goes on the timeline's subtitle track (every word in each clip's range, handles included;
+  `subtitles_placed` counts them; `--no-subtitles` to leave them out), so the editor can copy lines straight from
+  it. It takes seconds (about 15 s more when it has to start Resolve). A cut
   list works too (`blackbox online -`): it's saved as an edit first. `resolve` says where it went; `missing` lists
   originals Resolve couldn't find (the NAS not mounted: `--originals <the folder holding media/>`). If it says
   `resolve-scripting-off`, the user sets Resolve → Preferences → System → General → External scripting → Local.
