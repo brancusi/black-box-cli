@@ -153,7 +153,7 @@
     :flags (-> [{:flag "--pre" :value "s" :default "2" :doc "seconds before each clip's in (default 2; a clip's own `pre` first)"}
                 {:flag "--post" :value "s" :default "2" :doc "seconds after each clip's out (default 2; a clip's own `post` first)"}
                 {:flag "--into" :value "auto|current|new-project" :default "auto"
-                 :doc "auto (default): the open project, or a new one when Resolve wasn't running; current; new-project"}
+                 :doc "auto (default): the open project (an untitled one too), or a new one when Resolve wasn't running; current; new-project"}
                 {:flag "--db" :value "name" :doc "the Resolve database to use (`local` for this Mac's); default the current one"}
                 {:flag "--originals" :value "folder" :doc "where the NAS's media/ folder is mounted, if not where the index says"}
                 {:flag "--no-proxies" :doc "don't link the proxies to the originals"}

@@ -102,7 +102,8 @@ CHANGELOG.md.
     alone), and only the rest are imported by path into "Black Box/<id>" with the proxies linked (the editor's clips
     are left as they are); cut.edl comes in as a new timeline that may link only to those clips. If the
     EDL doesn't link every clip to its own original, the clips are appended by frame instead (the same frames). auto
-    puts it in the open project, or a new one when Resolve had to be started or nothing real is open.
+    puts it in the open project, whatever its name, or a new one when Resolve had to be started or the open one is
+    the empty Untitled Project Resolve starts with (owner, 2026-11-24: a project that is open is always used first).
 15. **The recorders come synced, and a selects review imports (owner, 2026-11-24).** `online` lays each clip's
     recorders under it from the sync map (Black Box's formula: recorder time = camera time + offset_s + drift; only
     pairs whose overlap covers the clip, confidence 0.5 and up), each recorder on its own block of tracks from A2,
@@ -123,7 +124,8 @@ CHANGELOG.md.
     given frames for a subtitle clip, and it appends one at the timeline's end, keeping each line's time from there;
     so the subtitles go first onto an empty timeline, and then each clip at its own frame (where the frames before it
     end, as the plan counts them), its recorders at their clip's frame and exactly its length. Without anything
-    said, the EDL is imported as before.
+    said, the EDL is imported as before. The .srt's Media Pool item goes into `Black Box/Subtitles`, never the cut's
+    folder: Resolve crashes when an editor drags a subtitle item into a timeline with the clips.
 18. **Footage is found by what shot it, from the files' own metadata (owner, 2026-11-24; Black Box ask 14).**
     Black Box reads each original's camera, rates, resolution, codec and bitrate on the mini into
     `media_meta/probe`; never a folder name, never a location. The CLI indexes the newest file per original and

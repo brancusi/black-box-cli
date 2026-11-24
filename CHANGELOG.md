@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Import into Resolve, "Open project": the project open in Resolve is always the one used, an untitled one too. A new
+  project is made only when Resolve had to be started, or the open one is the empty Untitled Project it starts with.
+- The subtitles' Media Pool item goes into `Black Box/Subtitles`, never into the cut's folder, and is no longer
+  deleted after placing (0.1.15 deleted it, a step that may itself have crashed Resolve).
+- Each import writes `online-<time>-steps.log` beside its EDL, a line per step as it starts. When Resolve quits
+  mid-import, the error is `resolve-crashed` and says on which step ("Resolve quit while placing the subtitles"),
+  where 0.1.16 said `TypeError: 'NoneType' object is not callable`.
+- No new project is made when none of the originals is on this Mac (the NAS isn't mounted): it says so first.
+
 ## 0.1.16 (2026-11-24)
 
 - Selects reviews stay open: one review server on this Mac (127.0.0.1:7387) serves every review at its own

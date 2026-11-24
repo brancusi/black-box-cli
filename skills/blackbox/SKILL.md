@@ -294,7 +294,7 @@ Only when the user wants the cut in Resolve:
   post-roll (`--pre`, `--post`, or ` pre 1 post 3` at the end of a clip's line in the cut list; clamped to the
   file), and Resolve on this Mac uses the originals already in the project wherever they are (the editor's own
   folders first; `originals_in_project` counts them), imports only the rest into "Black Box/<id>" with their
-  proxies linked, and imports the edit's EDL as a new timeline: in the open project, or a new project when Resolve wasn't running (`--into current|new-project`;
+  proxies linked, and imports the edit's EDL as a new timeline: in the project open in Resolve (an untitled one too), or a new project when Resolve wasn't running (`--into current|new-project`;
   `--db local` for this Mac's database). The recorders heard with each clip come with it, synced by the sync map,
   each on its own tracks from A2 (`--no-audio` to leave them out): the output's `recorders` column and
   `audio_placed` say what came, and a match too weak to place (confidence under 0.5) is named in `warnings`, not

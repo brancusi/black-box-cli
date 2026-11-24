@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.16" :date "2026-11-24"
+  [{:version "0.1.17" :date "2026-11-24"
+    :items [{:title "Into the project you have open" :lesson "review" :run "blackbox review open kiln"
+             :what "Import into Resolve with Open project goes into the project open in Resolve, even an untitled one; a new project only when Resolve wasn't running."}]}
+   {:version "0.1.16" :date "2026-11-24"
     :items [{:title "Many reviews, all open" :lesson "review" :run "blackbox review open kiln"
              :what "Keep as many selects reviews open in tabs as you like and move between them: opening a new one never closes an older one."}]}
    {:version "0.1.15" :date "2026-11-24"

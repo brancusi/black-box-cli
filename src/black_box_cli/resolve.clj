@@ -24,8 +24,8 @@
   "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Applications/ResolvePython")
 
 (def intos
-  "Where the timeline goes: auto (the open project, or a new one when Resolve wasn't running or nothing real is
-  open), current (the open project) or new-project."
+  "Where the timeline goes: auto (the project open in Resolve, whatever its name; a new one only when Resolve wasn't
+  running or the open one is the empty Untitled Project it starts with), current (the open project) or new-project."
   #{"auto" "current" "new-project"})
 
 (defn- seconds [v default]

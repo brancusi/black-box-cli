@@ -371,6 +371,9 @@
     "no-database" ["Pass --db with a database Resolve lists in its Project Manager, or leave it out for the current one"]
     "no-project" ["Open a project in Resolve, or pass --into new-project"]
     "no-resolve" ["Install DaVinci Resolve on this Mac"]
+    "resolve-crashed" [(str "Open Resolve again, and send the owner " (str/replace (str edl) #"\.edl$" "-steps.log")
+                            " (where it crashed) and Resolve's crash report (Console → Crash Reports)")
+                       (str "Meanwhile, import " edl " in Resolve by hand (File → Import → Timeline)")]
     [(str "Import " edl " in Resolve by hand meanwhile (File → Import → Timeline)")]))
 
 (defn online-cmd

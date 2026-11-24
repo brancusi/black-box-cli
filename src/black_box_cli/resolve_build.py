@@ -2,7 +2,8 @@
 Resolve's own Python and a plan (JSON) it wrote. It imports the originals by path into a Media Pool folder of their
 own, links their proxies, and imports cut.edl as a new timeline that links only to those clips. It never deletes,
 renames or changes anything that was there before; the one thing it may delete is a timeline it made itself a moment
-ago, when the EDL linked to the wrong clips, before appending them instead.
+ago, when the EDL linked to the wrong clips, before appending them instead. Each step goes into <plan>-steps.log
+beside the plan as it starts, so a crash says where.
 
     ResolvePython resolve_build.py plan.json
 
@@ -27,6 +28,18 @@ class Fail(Exception):
         self.code = code
 
 
+STEP = {"now": "starting", "log": None}
+
+
+def step(what):
+    """Notes what the script is about to ask Resolve, in the steps log beside the plan (a new file each run): if
+    Resolve crashes, the last line says on what."""
+    STEP["now"] = what
+    if STEP["log"]:
+        with open(STEP["log"], "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%H:%M:%S')} {what}\n")
+
+
 def script_module():
     lib = os.environ.get("RESOLVE_SCRIPT_LIB", LIB)
     loader = importlib.machinery.ExtensionFileLoader("fusionscript", lib)
@@ -38,6 +51,15 @@ def script_module():
 
 def running():
     return subprocess.run(["pgrep", "-x", "Resolve"], capture_output=True).returncode == 0
+
+
+def gone():
+    """Resolve has quit (a crash takes a moment to end the process)."""
+    for _ in range(5):
+        if not running():
+            return True
+        time.sleep(1)
+    return False
 
 
 def connect(module, wait_s):
@@ -114,6 +136,16 @@ def find_existing(root, ours, paths):
     return {p: (item, f, theirs) for p, (item, f, theirs, _) in found.items()}
 
 
+def blank(project):
+    """An Untitled Project nobody has put anything in: what Resolve opens with when it starts."""
+    if project is None:
+        return True
+    if project.GetName() != "Untitled Project":
+        return False
+    root = project.GetMediaPool().GetRootFolder()
+    return project.GetTimelineCount() == 0 and not (root.GetClipList() or root.GetSubFolderList())
+
+
 def timeline_names(project):
     return {project.GetTimelineByIndex(i).GetName() for i in range(1, project.GetTimelineCount() + 1)}
 
@@ -157,6 +189,15 @@ def place_audio(media_pool, timeline, audio, have, at="record_frame"):
 def main(plan_path):
     with open(plan_path, encoding="utf-8") as f:
         plan = json.load(f)
+    log = plan_path[:-len("-plan.json")] + "-steps.log" if plan_path.endswith("-plan.json") else plan_path + ".log"
+    with open(log, "x", encoding="utf-8"):
+        STEP["log"] = log
+    audio = plan.get("audio") or []
+    paths = list(dict.fromkeys([c["source_path"] for c in plan["clips"]] + [a["source_path"] for a in audio]))
+    if not any(os.path.exists(p) for p in paths):
+        # Before Resolve is touched, so no project is made for nothing.
+        raise Fail("no-originals", "none of the originals is on this Mac (is the NAS mounted?)")
+    step("connecting to Resolve")
     module = script_module()
     launched = False
     resolve = connect(module, 3)
@@ -185,12 +226,16 @@ def main(plan_path):
                 raise Fail("no-database", f"Resolve couldn't switch to the database {db.get('DbName')}")
             switched = True
 
+    step("finding the open project")
     current = pm.GetCurrentProject()
     into = plan["into"]
     if into == "auto":
-        fresh = current is None or current.GetName() == "Untitled Project"
-        into = "new-project" if (launched or fresh or switched) else "current"
+        # The project open in Resolve, whatever its name (an editor may be working in an untitled one); a new one
+        # only when there's nothing to import into: Resolve was just started, the database was switched, or the
+        # open project is the empty Untitled one Resolve starts with.
+        into = "new-project" if (launched or switched or blank(current)) else "current"
     if into == "new-project":
+        step("creating a project")
         taken = set(pm.GetProjectListInCurrentFolder() or [])
         name = unique(plan["project"], taken)
         project = pm.CreateProject(name)
@@ -204,6 +249,7 @@ def main(plan_path):
             raise Fail("no-project", "Resolve has no project open")
         created = False
 
+    step(f"opening the project's Media Pool ({project.GetName()})")
     media_pool = project.GetMediaPool()
     root = media_pool.GetRootFolder()
     ours = subfolder(media_pool, root, "Black Box")
@@ -213,8 +259,7 @@ def main(plan_path):
     # Originals already in this project, in any folder (the editor's own first, then an earlier cut's under "Black
     # Box"), are used where they are, never imported twice; only the rest come into this cut's Black Box folder. The
     # EDL links to them in their folders.
-    audio = plan.get("audio") or []
-    paths = list(dict.fromkeys([c["source_path"] for c in plan["clips"]] + [a["source_path"] for a in audio]))
+    step("looking for the originals already in the project")
     existing = find_existing(root, ours, paths)
     have = {p: item for p, (item, _, _) in existing.items()}
     theirs = {p for p, (_, _, mine) in existing.items() if mine}
@@ -225,12 +270,14 @@ def main(plan_path):
             homes.append(f)
     new = [p for p in paths if p not in have]
     # Resolve 21.1 answers None to the documented [{"FilePath": …}] form; a list of paths works.
+    step(f"importing {len(new)} originals")
     imported = (media_pool.ImportMedia(new) or media_pool.ImportMedia([{"FilePath": p} for p in new])) if new else []
     for item in imported or []:
         have[file_path(item)] = item
     missing = [p for p in paths if p not in have]
 
     linked = 0
+    step("linking proxies")
     if plan.get("proxies"):
         for c in plan["clips"]:
             item, proxy = have.get(c["source_path"]), c.get("proxy")
@@ -252,7 +299,12 @@ def main(plan_path):
         subtitles_note = (f"Resolve {resolve.GetVersionString()}: subtitles are placed on 21 or later; "
                           "import the .srt beside the EDL by hand (File > Import > Subtitle)")
     elif srt and os.path.isfile(srt):
+        # Into a folder of their own, never the cut's: an editor drags the cut's folder into a timeline, and Resolve
+        # crashes placing a subtitle clip that way. Kept there, not deleted (a placed clip's item is never deleted).
+        step("importing the subtitles")
+        media_pool.SetCurrentFolder(subfolder(media_pool, ours, "Subtitles"))
         found = media_pool.ImportMedia([srt]) or media_pool.ImportMedia([{"FilePath": srt}]) or []
+        media_pool.SetCurrentFolder(folder)
         subtitle_item = next((i for i in found if i.GetClipProperty("Type") == "Subtitle"), None)
         if subtitle_item is None:
             subtitles_note = "Resolve didn't import the subtitles"
@@ -263,6 +315,7 @@ def main(plan_path):
         # start. Then each clip goes down at its own frame, as the EDL would have put it; a missing one leaves its gap.
         # A cut with a clip that has no timecode (nothing said in it) is placed this way too, with or without lines.
         method = "subtitles" if subtitle_item is not None else "frames"
+        step(f"creating the timeline {name}")
         timeline = media_pool.CreateEmptyTimeline(name)
         if timeline is None:
             raise Fail("resolve-failed", f"Resolve couldn't create the timeline {name}")
@@ -270,21 +323,18 @@ def main(plan_path):
         if subtitle_item is not None:
             if timeline.GetTrackCount("subtitle") == 0:
                 timeline.AddTrack("subtitle")
+            step("placing the subtitles")
             media_pool.AppendToTimeline([{"mediaPoolItem": subtitle_item, "trackIndex": 1}])
             subtitles_placed = len(timeline.GetItemListInTrack("subtitle", 1) or [])
-        if subtitle_item is not None:
-            # The lines are the timeline's own once placed. Left in the bin, the .srt's item goes into an editor's
-            # timeline with the clips when they drag the bin's contents, and Resolve crashes placing a subtitle clip
-            # that way. It's this run's own, seconds old; the .srt stays beside the EDL.
-            media_pool.DeleteClips([subtitle_item])
-            subtitle_item = None
         start = timeline.GetStartFrame()
+        step("placing the clips")
         for c in plan["clips"]:
             if c["source_path"] in have:
                 media_pool.AppendToTimeline([{"mediaPoolItem": have[c["source_path"]], "startFrame": c["in_frame"],
                                               "endFrame": c["out_frame"], "recordFrame": start + c["record_frame"]}])
     else:
         method = "edl"
+        step(f"importing the EDL as the timeline {name}")
         timeline = media_pool.ImportTimelineFromFile(plan["edl"], {"timelineName": name, "importSourceClips": False,
                                                                    "sourceClipsFolders": homes})
     placed = timeline.GetItemListInTrack("video", 1) if timeline else []
@@ -310,15 +360,19 @@ def main(plan_path):
         if timeline is None:
             raise Fail("resolve-failed", f"Resolve couldn't create the timeline {name}")
         project.SetCurrentTimeline(timeline)
+        step("placing the clips one after another")
         media_pool.AppendToTimeline([{"mediaPoolItem": have[c["source_path"]], "startFrame": c["in_frame"],
                                       "endFrame": c["out_frame"]} for c in clips])
         method = "append"
     project.SetCurrentTimeline(timeline)
+    step("placing the recorders")
     audio_placed = place_audio(media_pool, timeline, [a for a in audio if a["source_path"] in have], have,
                                "record_frame" if method == "edl" else "clip_frame")
     if plan.get("page"):
         resolve.OpenPage(plan["page"])
+    step("saving the project")
     pm.SaveProject()
+    step("done")
     db = pm.GetCurrentDatabase() or {}
     return {"project": project.GetName(), "created_project": created, "database": db.get("DbName"),
             "timeline": timeline.GetName(), "method": method, "edl_note": edl_note,
@@ -337,5 +391,11 @@ if __name__ == "__main__":
     except Fail as e:
         result = {"error": {"code": e.code, "message": str(e)}}
     except Exception as e:  # anything Resolve threw: report it, never a traceback on stdout
-        result = {"error": {"code": "resolve-failed", "message": f"{type(e).__name__}: {e}"}}
+        if STEP["now"] != "starting" and gone():
+            result = {"error": {"code": "resolve-crashed",
+                                "message": f"Resolve quit while {STEP['now']}"}}
+        else:
+            result = {"error": {"code": "resolve-failed",
+                                "message": f"{type(e).__name__}: {e} (while {STEP['now']})"}}
+        step(f"failed: {result['error']['message']}")
     print(json.dumps(result))
