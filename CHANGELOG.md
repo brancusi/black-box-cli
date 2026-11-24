@@ -6,6 +6,10 @@
   each release carries a manifest, `blackbox-cli.json` (version, SHA-256, size and `min_black_box`, the oldest
   Black Box it works with), which Black Box checks every few minutes. `blackbox update` asks Black Box to check now.
   The home view says how this blackbox was installed (`installed`: bundled or updated, and Black Box's version).
+- The selects review never shifts: selecting a clip (in the gallery or an open clip) moves nothing. The selected
+  clips' strip keeps one height (the wheel scrolls it sideways), the open clip's video box takes the clip's own
+  shape (no black bars as the space changes), and labels that change (Select/Selected, Follow/Following, the count)
+  keep their width. In a narrow window the open clip's video is full width with the transcript below it.
 - `bb release X.Y.Z` makes a release in one step; GitHub's release workflow builds and publishes it from the tag,
   with the CHANGELOG's notes.
 
