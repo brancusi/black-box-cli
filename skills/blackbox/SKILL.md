@@ -233,7 +233,7 @@ When the user asks for selects ("build me selects for …", "a selects review of
    browser, serving it on this Mac until the page has been closed for 5 minutes. Don't wait for it; tell them in a
    line or two what's in it, by group.
 
-What they can do on the page, if they ask: hover a clip to preview it silently; click it to open it with sound and
+What they can do on the page, if they ask: move the mouse across a clip to scrub through it, in to out; click it to open it with sound and
 its file's whole transcript (a word jumps there; `i` and `o` set the in and out; ← → move between clips). `s`
 selects the clip under the mouse or the open one; the selected gather at the top in the order picked, which is
 their order on the timeline. `i` in the gallery, Shift+I anywhere, or the Import into Resolve button sends them

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The selects review's gallery scrubs: the mouse's place across a clip is its time from in to out (a playhead and
+  the time follow it; one seek at a time, always to where the mouse is now). The open clip is unchanged.
+
 ## 0.1.9 (2026-11-24)
 
 - The skill routes what editors say: a table from "teach me about Black Box", "build me selects of …", "cut me …",

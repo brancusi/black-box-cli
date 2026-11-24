@@ -68,6 +68,9 @@ section.group h2::after { content: ""; flex: 1; height: 1px; background: var(--l
 .media video { width: 100%; height: 100%; display: block; object-fit: contain; background: var(--video); pointer-events: none; }
 .media .bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--mustard); opacity: 0; }
 .card:hover .media .bar { opacity: 1; }
+.media .scrub { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: var(--mustard); opacity: 0; pointer-events: none; }
+.card:hover .media .scrub { opacity: 1; }
+.card:hover .media .len { background: var(--mustard); color: #1a1408; }
 .media .len, .media .open { position: absolute; font-size: 11px; line-height: 18px; padding: 0 6px; background: rgba(14,14,13,.78); color: var(--video-fg); }
 .media .len { right: 6px; bottom: 6px; }
 .media .open { right: 6px; top: 6px; opacity: 0; }
@@ -227,7 +230,7 @@ body.in-detail header.top { padding-top: 8px; }
   <div class="box">
     <h3>Keys</h3>
     <div><h4>Gallery</h4><dl>
-      <dt>hover</dt><dd>preview a clip, silent</dd>
+      <dt>hover</dt><dd>scrub through a clip: move across it</dd>
       <dt>click</dt><dd>open a clip</dd>
       <dt><kbd>s</kbd></dt><dd>select or deselect the clip under the mouse</dd>
       <dt><kbd>space</kbd> <kbd>enter</kbd></dt><dd>open the clip under the mouse</dd>
@@ -283,7 +286,7 @@ body.in-detail header.top { padding-top: 8px; }
   $("title").textContent = D.title; document.title = D.title + " · selects";
   var groups = D.groups.length ? D.groups : ["Clips"];
   $("sub").textContent = D.clips.length + " clips · " + fmt(D.clips.reduce(function (a, c) { return a + c.end - c.start; }, 0)) +
-    " · made " + D.made_at.slice(0, 16).replace("T", " ") + " · hover a clip to preview it, click it to open it" + (SERVER ? "" : " · open with `blackbox review open " + D.id + "` to import");
+    " · made " + D.made_at.slice(0, 16).replace("T", " ") + " · move across a clip to scrub it, click it to open it" + (SERVER ? "" : " · open with `blackbox review open " + D.id + "` to import");
   var nav = $("groups");
   if (groups.length > 1) {
     [null].concat(groups).forEach(function (g) {
@@ -302,26 +305,41 @@ body.in-detail header.top { padding-top: 8px; }
       '<div class="media"><video preload="none" muted playsinline poster="' + esc(thumbURL(c)) + '"></video>' +
       (c.audio_only ? '<div class="audio">audio only</div>' : "") +
       '<button class="pick" title="Tick to import">✓</button><span class="open">Open ↗</span>' +
-      '<span class="len">' + fmt(r.end - r.start) + '</span><div class="bar"></div></div>' +
+      '<span class="len">' + fmt(r.end - r.start) + '</span><div class="bar"></div><div class="scrub"></div></div>' +
       '<div class="meta"><b title="' + esc(c.rel) + '">' + esc(c.file) + "</b><span>" + esc(c.tc_in || "") + " · " +
       fmt(r.end - r.start) + (ranges[c.n] ? " (trimmed)" : "") + "</span></div>" +
       (c.note ? '<div class="note">' + esc(c.note) + "</div>" : "") +
       '<div class="lines">' + (lines.length ? lines.map(function (l) { return "<p>" + lineHTML(l) + "</p>"; }).join("")
                                             : '<p class="none">No words in this clip.</p>') + "</div>";
-    // Hover previews the clip, silent and looping from in to out; a click anywhere opens it.
-    var v = a.querySelector("video"), bar = a.querySelector(".bar"), hovering = false;
-    v.src = mediaURL(c.media) + "#t=" + r.start + "," + r.end; // preload none: nothing loads until it's played
+    // In the gallery the mouse scrubs: its place across the card is the clip's time from in to out. A click opens it.
+    var v = a.querySelector("video"), bar = a.querySelector(".bar"), head = a.querySelector(".scrub"), len = a.querySelector(".len");
+    v.src = mediaURL(c.media) + "#t=" + r.start + "," + r.end; // preload none: nothing loads until it's scrubbed
     if (!c.audio_only) {
-      a.addEventListener("mouseenter", function () {
-        hovering = true; var rr = rangeOf(c);
-        if (v.currentTime < rr.start || v.currentTime >= rr.end - 0.03) v.currentTime = rr.start;
-        v.play().catch(function () {});
-      });
-      a.addEventListener("mouseleave", function () { hovering = false; v.pause(); });
-      v.addEventListener("timeupdate", function () {
-        var rr = rangeOf(c);
-        if (v.currentTime >= rr.end - 0.03) { v.currentTime = rr.start; if (hovering && cur === null) v.play().catch(function () {}); else v.pause(); }
-        bar.style.width = (100 * Math.max(0, v.currentTime - rr.start) / Math.max(0.1, rr.end - rr.start)) + "%";
+      var want = null, seeking = false;
+      // One seek at a time, always to where the mouse is now: fast moves skip what's in between.
+      var go = function () {
+        if (want === null || seeking || v.readyState < 1) return;
+        var tm = want; want = null; seeking = true;
+        if (v.fastSeek) v.fastSeek(tm); else v.currentTime = tm;
+      };
+      v.addEventListener("loadedmetadata", go);
+      v.addEventListener("seeked", function () { seeking = false; go(); });
+      var scrub = function (e) {
+        if (cur !== null) return; // only in the gallery
+        var rr = rangeOf(c), box = a.getBoundingClientRect();
+        var f = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+        var tm = rr.start + f * Math.max(0, rr.end - rr.start - 0.04);
+        want = tm;
+        if (v.preload !== "auto") v.preload = "auto";
+        go();
+        bar.style.width = (100 * f) + "%"; head.style.left = (100 * f) + "%";
+        len.textContent = fmt(tm - rr.start) + " / " + fmt(rr.end - rr.start);
+      };
+      a.addEventListener("mouseenter", scrub);
+      a.addEventListener("mousemove", scrub);
+      a.addEventListener("mouseleave", function () {
+        var rr = rangeOf(c); want = rr.start; go(); // back to its first frame
+        bar.style.width = "0"; len.textContent = fmt(rr.end - rr.start);
       });
     }
     a.addEventListener("mouseenter", function () { hoverN = c.n; });
