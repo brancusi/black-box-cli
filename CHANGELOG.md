@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.17 (2026-11-24)
 
 - Import into Resolve, "Open project": the project open in Resolve is always the one used, an untitled one too. A new
   project is made only when Resolve had to be started, or the open one is the empty Untitled Project it starts with.
