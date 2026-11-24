@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.12 (2026-11-24)
 
 - `online` (and a review's Import) puts what's said on the timeline's subtitle track, so editors can copy lines
   from it: every word in each clip's range, handles included, timed to the clips' frames (`subtitles_placed`;
