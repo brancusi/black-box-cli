@@ -4,6 +4,8 @@ on:
     tags: ['v*']
 permissions:
   contents: write
+  id-token: write      # build provenance: the mini checks the jar came from this workflow before it signs
+  attestations: write
 jobs:
   release:
     runs-on: macos-15
@@ -14,6 +16,9 @@ jobs:
       - run: bb lint
       - run: bb fmt
       - run: bb dist "$GITHUB_REF_NAME"
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: target/blackbox-cli.jar
       - run: bb release-notes "$GITHUB_REF_NAME" > target/notes.md
       - run: gh release create "$GITHUB_REF_NAME" target/blackbox-cli.jar target/blackbox-cli.jar.sha256 target/blackbox-cli.json --title "$GITHUB_REF_NAME" --notes-file target/notes.md
         env:

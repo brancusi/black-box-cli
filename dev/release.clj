@@ -125,4 +125,4 @@
         (when-not (= version (:version manifest) said) (fail "the published jar says " said ", its manifest " (:version manifest)))
         (when (not= sha (:sha256 manifest)) (fail "the published jar's SHA-256 isn't the manifest's"))
         (println "published" tag "·" sha "· needs Black Box" (:min_black_box manifest))
-        (println "Next: the owner signs it on the Mac mini (sign-cli.sh" (str tag ")") "; Black Box installs it on every Mac minutes later.")))))
+        (println "The Mac mini checks and signs it by itself; Black Box installs it on every Mac minutes later.")))))

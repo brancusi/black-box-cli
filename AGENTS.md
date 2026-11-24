@@ -126,9 +126,9 @@ checks (`cmd+shift+b` runs test, lint and fmt).
 - **A release:** add what's new to `tutorial/news` (then `bb narrate`), commit, then `bb release X.Y.Z "summary"`
   (`--dry-run` checks first). It dates the CHANGELOG, sets the version, runs the checks, commits, tags and pushes;
   GitHub's release workflow builds `blackbox-cli.jar`, its `.sha256` and the manifest `blackbox-cli.json`, and
-  publishes them; `bb release` waits for it and checks the download. Then tell the owner (or Black Box's agent) to
-  sign it on the mini: `sign-cli.sh vX.Y.Z`. Black Box installs it on every Mac within minutes of the signature
-  (docs/CONTRACT.md, CLI updates); never make or upload a `.sig` from here. When the CLI needs something new from Black Box, raise `min-black-box`
+  publishes them with build provenance; `bb release` waits for it and checks the download. The mini checks and signs
+  it by itself, and Black Box installs it on every Mac within minutes, with nothing to do by hand
+  (docs/CONTRACT.md, CLI updates). Never make or upload a `.sig` from here. When the CLI needs something new from Black Box, raise `min-black-box`
   in version.clj first: Macs on an older Black Box wait for it.
   Black Box pins both in its next build, and editors get the new CLI when that Black Box updates. A Black Box
   release build won't run without a pinned CLI.

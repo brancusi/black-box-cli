@@ -183,10 +183,13 @@ talks to nothing (AGENTS.md rule 4); Black Box does the downloading.
   is the tag without its `v` (`bb dist` refuses otherwise), and the file's bytes never change once published. The
   newest is at `https://github.com/brancusi/black-box-cli/releases/latest/download/blackbox-cli.json`; a version's
   jar at `…/releases/download/v<version>/blackbox-cli.jar`.
-- **The signature (owner, 2026-11-24).** A release is approved by a person on the mini: `sign-cli.sh v<version>`
-  (in Black Box's repo) checks the jar's SHA-256 and size against the manifest and its `--version`, signs the
-  manifest's exact bytes with an Ed25519 key kept in the mini's keychain, and adds `blackbox-cli.json.sig` (the
-  64-byte signature in base64, one line) to the release. The key is never on GitHub, and the release workflow
+- **The signature (owner, 2026-11-24): automatic, no person in the loop.** The mini signs each new release by
+  itself within minutes of it being published (`sign-cli.sh v<version>` in Black Box's repo, run by the mini on its
+  own check). It first checks the jar's build provenance, that it was built by this repository's release workflow
+  from the tag (`gh attestation verify blackbox-cli.jar --repo brancusi/black-box-cli --signer-workflow
+  brancusi/black-box-cli/.github/workflows/release.yml`), then the jar's SHA-256 and size against the manifest and
+  its `--version`. It signs the manifest's exact bytes with an Ed25519 key kept in the mini's keychain, and adds
+  `blackbox-cli.json.sig` (the 64-byte signature in base64, one line) to the release. The key is never on GitHub, and the release workflow
   never makes a `.sig`. Black Box has the public key built in: a release without its `.sig` doesn't exist yet for
   it, and one whose `.sig` doesn't verify is an error (`signature_invalid`).
 - **When Black Box checks.** Every 2 minutes, a HEAD on the latest manifest (the redirect names the version; none
@@ -205,6 +208,6 @@ talks to nothing (AGENTS.md rule 4); Black Box does the downloading.
   `installed`.
 - **`blackbox update`** runs `<Black Box> --cli cli update --format json`: Black Box checks now and answers
   `{state, latest, installed, black_box, min_black_box?, message?}`. `state` is `updated` (installed now; the next
-  command runs it), `current` (nothing newer), `unsigned` (a newer release isn't signed yet), `needs-black-box`
+  command runs it), `current` (nothing newer), `unsigned` (a newer release isn't signed yet: the mini is checking it), `needs-black-box`
   (the newest needs `min_black_box`), or an `error {code, message}` (`signature_invalid`, `download_failed`,
   `checksum_mismatch`, `offline`). An older Black Box without the command is `black-box-too-old`.

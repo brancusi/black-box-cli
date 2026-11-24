@@ -36,10 +36,10 @@
     (let [{:keys [edn]} (update! "{\"state\": \"needs-black-box\", \"latest\": \"9.9.9\", \"installed\": \"0.1.0\", \"black_box\": \"1.0.0\", \"min_black_box\": \"1.2.0\"}" 0)]
       (is (= "1.2.0" (:needs_black_box edn)))
       (is (some #(str/includes? % "needs Black Box 1.2.0") (:help edn)))))
-  (testing "a release not signed yet waits for approval"
+  (testing "a release not signed yet waits for the mini"
     (let [{:keys [edn]} (update! "{\"state\": \"unsigned\", \"latest\": \"9.9.9\", \"installed\": \"0.1.0\", \"black_box\": \"1.0.0\"}" 0)]
       (is (= "unsigned" (:state edn)))
-      (is (some #(str/includes? % "not approved yet") (:help edn)))))
+      (is (some #(str/includes? % "checks and signs") (:help edn)))))
   (testing "a bad signature is an error, and the running blackbox stays"
     (let [{:keys [exit edn]} (update! "{\"error\": {\"code\": \"signature_invalid\", \"message\": \"the signature doesn't verify\"}}" 1)]
       (is (= 1 exit))

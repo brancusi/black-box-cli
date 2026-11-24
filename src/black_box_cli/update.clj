@@ -20,8 +20,8 @@
     "updated" [(str "blackbox " latest " is installed: the next command runs it, and the agent skill was updated")
                "Run `blackbox tutorial new` for what's new"]
     "current" ["This is the newest blackbox; Black Box also checks every few minutes by itself"]
-    "unsigned" [(str "blackbox " latest " is published but not approved yet: it installs within minutes of being"
-                     " signed on the Mac mini (tell the owner if it's waiting)")]
+    "unsigned" [(str "blackbox " latest " was just published: the Mac mini checks and signs each release by itself,"
+                     " then it installs within minutes (if it's still waiting in an hour, tell the owner)")]
     "needs-black-box" [(str "blackbox " latest " needs Black Box " min_black_box " or later: update Black Box"
                             " (it installs blackbox " latest " as soon as it's updated)")]
     ["Run `blackbox update` again; if it keeps failing, tell the owner"]))
