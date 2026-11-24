@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- `blackbox review new <selects|->` (`open`, `list`): a selects review. A cut list with `group:` sections becomes
+  ~/Black Box/reviews/<id>/: a page of the clips playing their proxies, each with its words under it; a click opens
+  the clip with its file's whole transcript (a word jumps there; i/o trim it). `review open` serves it on 127.0.0.1
+  with a key (AGENTS.md rule 4, owner's decision 2026-11-24), and Import into Resolve sends the ticked clips to
+  `online`. English under Italian lines waits for Black Box's translations (ask 12).
+- `online` lays in the recorders synced with each clip, by the sync map: one block of tracks per recorder from A2,
+  as wide as its channels; weak matches (confidence under 0.5) are named, not placed. `--no-audio` to skip.
+- Cut lists take `group:` lines (and a JSON clip's "group").
+- The tutorial has a review lesson.
+
 ## 0.1.7 (2026-11-24)
 
 - A running agent session hears of a new skill: `setup agent` also installs `blackbox setup skill-check` on

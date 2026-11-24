@@ -14,6 +14,7 @@
    [black-box-cli.source :as source]
    [black-box-cli.status :as status]
    [black-box-cli.stills :as stills]
+   [black-box-cli.review :as review]
    [black-box-cli.tutorial :as tutorial]
    [black-box-cli.version :as version]
    [black-box-cli.who :as who]
@@ -41,6 +42,7 @@
   blackbox edl list | edl show <id>
   blackbox edl build <id>        have the mini build a cut as a Resolve project (originals, synced audio, proxies)
   blackbox online <edit>         the edit in Resolve on this Mac, from the source files, with pre- and post-roll
+  blackbox review new <selects>  a selects review page: clips, transcripts, Import into Resolve (open, list)
   blackbox frame <id>            a frame as a JPEG, from the proxy
   blackbox still new <id…>       stills from the originals, full size and graded, rendered by the mini (list, show)
   blackbox look <words…>         what's in the picture; like <frame id> for frames like one
@@ -145,12 +147,15 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["people"] who/people-cmd
    ["whose"] who/whose-cmd
    ["tutorial"] tutorial/tutorial-cmd
+   ["review" "new"] review/new-cmd
+   ["review" "open"] review/open-cmd
+   ["review" "list"] review/list-cmd
    ["setup" "agent"] setup/agent-cmd
    ["setup" "skill-check"] setup/skill-check-cmd})
 
 (def ^:private reads-index
   "The commands that read the index, which bring it up to date first (status/refresh!)."
-  #{["search"] ["line"] ["transcript"] ["footage"] ["edl" "new"] ["online"] ["frame"] ["still" "new"] ["look"] ["like"]
+  #{["search"] ["line"] ["transcript"] ["footage"] ["edl" "new"] ["online"] ["review" "new"] ["frame"] ["still" "new"] ["look"] ["like"]
     ["source"] ["shots"] ["people"] ["whose"]})
 
 (defn- meta!
@@ -187,7 +192,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
             handler (handlers (:path spec))]
         (cond
           help (do (out/text! (flags/help-text spec)) 0)
-          :else (let [ctx (assoc ctx :opts opts :args args)
+          :else (let [ctx (assoc ctx :opts opts :args args :fmt fmt)
                       ctx (assoc ctx :meta (if (= ["index"] (:path spec)) (meta! ctx) (meta/locate ctx)))
                       _ (when (reads-index (:path spec)) (status/refresh! ctx))
                       [m help] (handler ctx)]

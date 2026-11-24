@@ -21,11 +21,13 @@
 
   /…/media_meta/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4 21.9-26.6   a proxy's path works as the file
   C5274.MP4 0:21.9-0:26.6 pre 1 post 3   pre- and post-roll for `online` (seconds; default --pre/--post)
+  group: Sound bites                the clips below are in this group (a selects review's sections)
 
 Line clips get 0.25 s handles and in/out from the words' own times; file and shot clips are cut exactly.
 JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\": \"k7f3q2ab.43\", \"note\": …},
 {\"file\": …, \"in\": …, \"out\": …, \"pre\": 2, \"post\": 2}, {\"proxy\": \"<a proxy's path>\", \"in\": …, \"out\": …},
-{\"shot\": \"k7f3q2ab.s3\", \"whole\": false}]}. A line clip's \"text\", when given, must still be what its lines say.
+{\"shot\": \"k7f3q2ab.s3\", \"whole\": false}]}; any clip can have a \"group\". A line clip's \"text\", when given,
+must still be what its lines say.
 ")
 
 (defn quoted
@@ -79,14 +81,31 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
       (let [[line note] (if-let [i (str/index-of line " # ")]
                           [(str/trim (subs line 0 i)) (str/trim (subs line (+ i 3)))]
                           [line ""])]
-        (if (str/starts-with? (str/lower-case line) "title:")
+        (cond
+          (str/starts-with? (str/lower-case line) "title:")
           [:title (str/trim (subs line 6))]
+
+          (str/starts-with? (str/lower-case line) "group:")
+          [:group (str/trim (subs line 6))]
+
+          :else
           (let [[_ line pre post] (re-matches handles-re line)
                 handles (cond-> {} pre (assoc :pre pre) post (assoc :post post))]
             (some-> (text-clip n line note raw) (update 1 #(if (map? %) (merge % handles) %)))))))))
 
+(defn- in-groups
+  "Each item after a `group:` line carries that group's name, until the next one."
+  [parsed]
+  (second (reduce (fn [[group acc] [kind v :as p]]
+                    (case kind
+                      :group [(not-empty v) acc]
+                      :item [group (conj acc (if group [:item (assoc v :group group)] p))]
+                      [group (conj acc p)]))
+                  [nil []]
+                  parsed)))
+
 (defn- parse-text [text]
-  (let [parsed (keep identity (map-indexed (fn [i raw] (text-item (inc i) raw)) (str/split-lines text)))
+  (let [parsed (in-groups (keep identity (map-indexed (fn [i raw] (text-item (inc i) raw)) (str/split-lines text))))
         by (fn [k] (keep (fn [[kind v]] (when (= k kind) v)) parsed))
         items (vec (by :item))
         problems (vec (by :problem))]
@@ -98,7 +117,8 @@ JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\":
   (when-not (map? cl) (throw (ex-info "each clip is an object" {})))
   (let [s (fn [k] (let [v (get cl k)] (when (some? v) (str v))))
         note (or (s "note") "")
-        handles (cond-> {} (s "pre") (assoc :pre (s "pre")) (s "post") (assoc :post (s "post")))]
+        handles (cond-> {} (s "pre") (assoc :pre (s "pre")) (s "post") (assoc :post (s "post"))
+                        (s "group") (assoc :group (s "group")))]
     (cond
       (or (contains? cl "file") (contains? cl "proxy"))
       (do (when-not (and (s "in") (s "out")) (throw (ex-info "a file clip needs in and out" {})))

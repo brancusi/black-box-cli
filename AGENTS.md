@@ -38,7 +38,9 @@ The footage is irreplaceable. When a rule and a request conflict, stop and ask t
    local tools (`sqlite3`, `ffmpeg`, `mpv`, the Black Box app for picture search, project builds and stills,
    DaVinci Resolve on the same Mac for `online`); it
    sends nothing anywhere itself. `edl build` and `still new` hand a request to the Black Box app on the same Mac;
-   the app, not the CLI, carries it to the mini.
+   the app, not the CLI, carries it to the mini. The one server is `review open`'s (owner, 2026-11-24): it listens
+   on 127.0.0.1 only, for the review page in this Mac's browser, every request carrying the review's key, and it
+   stops itself when the page has been closed for a while.
 5. **Resolve only to make something new; never offloads or the catalog.** It writes `cut.edl`, and `edl build` asks
    Black Box to have the mini build a cut's project. `online` drives DaVinci Resolve on the same Mac, through
    Resolve's own scripting and Python (owner's decision, 2026-11-23): it may start Resolve, create a project, a

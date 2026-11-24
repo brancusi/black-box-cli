@@ -12,10 +12,11 @@ You don't need to learn the commands: say what you want, as in the examples belo
 4. [Find by what's in the picture](#picture)
 5. [B-roll: shots, camera moves and best moments](#shots)
 6. [Rough cuts you can watch at once](#cut)
-7. [Online an edit in Resolve](#online)
-8. [A full project, built by the studio's Mac mini](#project)
-9. [Where did this picture come from?](#source)
-10. [Stills for print and the web](#stills)
+7. [A selects review: choose, then import](#review)
+8. [Online an edit in Resolve](#online)
+9. [A full project, built by the studio's Mac mini](#project)
+10. [Where did this picture come from?](#source)
+11. [Stills for print and the web](#stills)
 
 <a id="start"></a>
 
@@ -159,11 +160,36 @@ Ask for a cut and it's built from the proxies and opens straight away. Each edit
 - Nothing is overwritten: a change makes a new edit, so you can always go back.
 - It plays proxies (960×540) with what's said as subtitles, in your Mac's default video app (Finder: Get Info → Open with → Change All).
 
+<a id="review"></a>
+
+## A selects review: choose, then import
+
+Ask for selects and you get a page in your browser: every clip playing its proxy with its words under it, in sections such as B-roll and Sound bites. Click a clip to see its whole transcript (a word jumps there) and trim its in and out. Tick the ones you want and press Import into Resolve: they arrive as a new timeline from the camera originals, with the recorders synced.
+
+**Ask:**
+
+- *Build me a selects review for b-roll and sound bites of the kiln firing*
+- *Pull selects of Mara talking about the marble, with some quarry b-roll*
+- *Open yesterday's selects review again*
+
+**Behind it:**
+
+- `blackbox review new - --dry-run`: check the selects (a cut list with group: lines)
+- `blackbox review new - --open`: make the review and open it in the browser
+- `blackbox review list`: every review, newest first
+- `blackbox review open kiln`: open one again, with Import working
+
+**Tips:**
+
+- Reviews are kept in ~/Black Box/reviews; review.html opens from Finder to watch and read, but importing needs it opened by your agent.
+- Keys in a clip: space plays, i and o set in and out, x ticks it, ← and → move to the previous or next clip.
+- Italian lines will show their English underneath once Black Box publishes translations.
+
 <a id="online"></a>
 
 ## Online an edit in Resolve
 
-Say "online this" and the edit goes back to the camera originals, 2 s of handles each side, as a new timeline in Resolve on your Mac, ready to grade. The proxies are linked, so it plays smoothly.
+Say "online this" and the edit goes back to the camera originals, 2 s of handles each side, as a new timeline in Resolve on your Mac, ready to grade. The proxies are linked, so it plays smoothly, and the recorders heard with each clip (lavs, the field recorder) come synced under it, each on its own tracks.
 
 **Ask:**
 
@@ -177,6 +203,7 @@ Say "online this" and the edit goes back to the camera originals, 2 s of handles
 - `blackbox online quarry`: the timeline: in the open project, or a new project if Resolve was closed
 - `blackbox online quarry --pre 1 --post 1 --into new-project`: your own handles, in a new project
 - `blackbox online quarry --db local`: in this Mac's own Resolve database
+- `blackbox online quarry --no-audio`: without the synced recorders
 
 **Tips:**
 

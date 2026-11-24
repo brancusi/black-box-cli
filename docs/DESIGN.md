@@ -101,6 +101,13 @@ CHANGELOG.md.
     brought in, links the proxies, and imports cut.edl as a new timeline that may link only to those clips. If the
     EDL doesn't link every clip to its own original, the clips are appended by frame instead (the same frames). auto
     puts it in the open project, or a new one when Resolve had to be started or nothing real is open.
+15. **The recorders come synced, and a selects review imports (owner, 2026-11-24).** `online` lays each clip's
+    recorders under it from the sync map (Black Box's formula: recorder time = camera time + offset_s + drift; only
+    pairs whose overlap covers the clip, confidence 0.5 and up), each recorder on its own block of tracks from A2,
+    as wide as its channels. `review new` turns selects (a cut list with `group:` sections) into
+    ~/Black Box/reviews/<id>/ (review.html with the review's JSON in it, review.json, thumbnails); `review open`
+    serves it on 127.0.0.1 with a key, and its Import sends the ticked clips, trimmed or not, to `online`. English
+    under Italian lines waits for Black Box's translations in media_meta (ask 12).
 
 ## Not this repo's
 

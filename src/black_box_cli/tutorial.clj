@@ -82,16 +82,34 @@
            ["blackbox edl show quarry --play" "an edit's clips, played again"]]
     :tips ["Nothing is overwritten: a change makes a new edit, so you can always go back."
            "It plays proxies (960×540) with what's said as subtitles, in your Mac's default video app (Finder: Get Info → Open with → Change All)."]}
+   {:id "review"
+    :title "A selects review: choose, then import"
+    :what (str "Ask for selects and you get a page in your browser: every clip playing its proxy with its words under "
+               "it, in sections such as B-roll and Sound bites. Click a clip to see its whole transcript (a word jumps "
+               "there) and trim its in and out. Tick the ones you want and press Import into Resolve: they arrive as "
+               "a new timeline from the camera originals, with the recorders synced.")
+    :ask ["Build me a selects review for b-roll and sound bites of the kiln firing"
+          "Pull selects of Mara talking about the marble, with some quarry b-roll"
+          "Open yesterday's selects review again"]
+    :runs [["blackbox review new - --dry-run" "check the selects (a cut list with group: lines)"]
+           ["blackbox review new - --open" "make the review and open it in the browser"]
+           ["blackbox review list" "every review, newest first"]
+           ["blackbox review open kiln" "open one again, with Import working"]]
+    :tips ["Reviews are kept in ~/Black Box/reviews; review.html opens from Finder to watch and read, but importing needs it opened by your agent."
+           "Keys in a clip: space plays, i and o set in and out, x ticks it, ← and → move to the previous or next clip."
+           "Italian lines will show their English underneath once Black Box publishes translations."]}
    {:id "online"
     :title "Online an edit in Resolve"
     :what (str "Say \"online this\" and the edit goes back to the camera originals, 2 s of handles each side, as a new "
-               "timeline in Resolve on your Mac, ready to grade. The proxies are linked, so it plays smoothly.")
+               "timeline in Resolve on your Mac, ready to grade. The proxies are linked, so it plays smoothly, and the "
+               "recorders heard with each clip (lavs, the field recorder) come synced under it, each on its own tracks.")
     :ask ["Online this edit" "Online it with 1 second of handles into a new project"
           "Online yesterday's quarry cut into the project I have open"]
     :runs [["blackbox online quarry --dry-run" "each clip with its handles; Resolve isn't touched"]
            ["blackbox online quarry" "the timeline: in the open project, or a new project if Resolve was closed"]
            ["blackbox online quarry --pre 1 --post 1 --into new-project" "your own handles, in a new project"]
-           ["blackbox online quarry --db local" "in this Mac's own Resolve database"]]
+           ["blackbox online quarry --db local" "in this Mac's own Resolve database"]
+           ["blackbox online quarry --no-audio" "without the synced recorders"]]
     :tips ["Once, in Resolve: Preferences → System → General → External scripting using → Local."
            "The NAS must be mounted (Finder → Go → Connect to Server); clips it can't find are listed as missing."
            "It only adds: new timelines and projects, and a name already taken gets a number. Nothing in Resolve is changed or deleted."]}

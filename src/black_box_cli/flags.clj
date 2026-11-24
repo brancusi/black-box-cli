@@ -254,9 +254,33 @@
     :args [{:arg "id" :doc "a line id (its speaker's voice) or a face id (from frame or like)"}]
     :flags (into [(limit-flag 5 "people")] (output-flags false))
     :examples ["blackbox whose <line id>" "blackbox whose <face id>"]}
+   {:path ["review" "new"] :phase 18
+    :summary "a selects review: a page of the clips on their proxies, each with its words, and Import into Resolve"
+    :args [{:arg "selects" :doc "a cut list (file or - for stdin); `group: B-roll` lines make its sections"}]
+    :flags (-> [{:flag "--title" :value "text" :doc "the review's title (or `title:` in the cut list)"}
+                {:flag "--open" :doc "serve it and open it in the browser now (waits until the page is closed: run it in the background)"}
+                {:flag "--dry-run" :doc "check the selects and show them; write nothing"}
+                version-flag]
+               (into (output-flags false)))
+    :examples ["blackbox review new selects.txt --dry-run" "blackbox review new - --open < selects.txt"]
+    :about (str "The review is kept in ~/Black Box/reviews/<id>/: review.html, review.json and a thumbnail per clip.\n"
+                "Each clip plays its proxy with its words under it (an Italian line with its English under it, when\n"
+                "Black Box publishes translations); a click opens the clip with its file's whole transcript, a word\n"
+                "jumps there, and i/o trim it. Ticked clips go to Resolve with Import: `online`, from the originals,\n"
+                "with pre- and post-roll and the recorders synced. Importing needs the page served (--open, or\n"
+                "`review open`), on 127.0.0.1 only; review.html from Finder plays and reads but can't import.\n")}
+   {:path ["review" "open"] :phase 18
+    :summary "serve a review on this Mac (127.0.0.1) and open it, with Import into Resolve; it waits: run it in the background"
+    :args [{:arg "id" :doc "a review's id (or part of it) from `blackbox review list`"}]
+    :flags (output-flags false)
+    :examples ["blackbox review open <id>"]}
+   {:path ["review" "list"] :phase 18
+    :summary "the selects reviews, newest first"
+    :flags (into [(limit-flag 20 "reviews")] (output-flags))
+    :examples ["blackbox review list"]}
    {:path ["tutorial"] :phase 16
     :summary "what an editor can do with Black Box, lesson by lesson: what to ask, the commands behind it, tips"
-    :args [{:arg "lesson" :optional true :doc "a lesson's id (start, said, people, picture, shots, cut, online, project, source, stills), or all"}]
+    :args [{:arg "lesson" :optional true :doc "a lesson's id (start, said, people, picture, shots, cut, review, online, project, source, stills), or all"}]
     :flags (output-flags false)
     :examples ["blackbox tutorial" "blackbox tutorial online" "blackbox tutorial all"]}
    {:path ["setup" "skill-check"] :phase 17

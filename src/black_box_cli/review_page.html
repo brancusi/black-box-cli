@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selects review</title>
+<link rel="icon" href="data:,">
+<style>
+:root {
+  --bg: #111214; --panel: #1a1c1f; --card: #202327; --line: #2d3136; --text: #e9e9e6; --dim: #9a9ea5;
+  --faint: #6c7178; --accent: #e8b44c; --accent-ink: #1a1408; --pick: #5fb37c; --range: rgba(232, 180, 76, .12);
+  --word: rgba(232, 180, 76, .35); --bad: #e0705f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+header.top { position: sticky; top: 0; z-index: 5; background: rgba(17,18,20,.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); padding: 14px 24px 10px; }
+header.top h1 { font-size: 18px; margin: 0 0 2px; font-weight: 650; letter-spacing: -.01em; }
+header.top .sub { color: var(--dim); font-size: 13px; }
+nav.groups { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+nav.groups button { background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; color: var(--dim); }
+nav.groups button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+main { padding: 18px 24px 120px; }
+section.group h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 22px 0 10px; font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; cursor: pointer; transition: border-color .12s; }
+.card:hover { border-color: #444a52; }
+.card.picked { border-color: var(--pick); box-shadow: 0 0 0 1px var(--pick); }
+.media { position: relative; aspect-ratio: 16 / 9; background: #000; }
+.media video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; pointer-events: none; }
+.media .bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--accent); opacity: 0; transition: opacity .15s; }
+.card:hover .media .bar { opacity: 1; }
+.media .len { position: absolute; right: 8px; bottom: 8px; font-size: 11.5px; font-variant-numeric: tabular-nums; background: rgba(0,0,0,.6); border-radius: 4px; padding: 1px 6px; }
+.media .open { position: absolute; right: 8px; top: 8px; font-size: 11.5px; background: rgba(0,0,0,.6); border-radius: 4px; padding: 2px 8px; opacity: 0; transition: opacity .15s; }
+.card:hover .media .open { opacity: 1; }
+.media .audio { position: absolute; inset: 0; display: grid; place-items: center; color: var(--faint); font-size: 13px; pointer-events: none; }
+.pick { position: absolute; top: 8px; left: 8px; z-index: 2; width: 28px; height: 28px; border-radius: 7px; border: 2px solid rgba(255,255,255,.8); background: rgba(0,0,0,.45); display: grid; place-items: center; color: transparent; font-weight: 800; }
+.picked .pick { background: var(--pick); border-color: var(--pick); color: #0d1f13; }
+.meta { padding: 10px 12px 4px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.meta b { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta span { color: var(--dim); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.note { padding: 0 12px; color: var(--accent); font-size: 12.5px; }
+.lines { padding: 6px 12px 12px; max-height: 168px; overflow: auto; font-size: 13px; }
+.lines p { margin: 0 0 6px; }
+.en { display: block; color: var(--dim); font-size: 12px; font-style: italic; }
+.lang { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .05em; color: var(--faint); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-right: 5px; vertical-align: 1px; }
+.none { color: var(--faint); font-style: italic; }
+footer.bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: rgba(26,28,31,.97); border-top: 1px solid var(--line); padding: 12px 24px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+footer.bar .count { font-weight: 600; min-width: 150px; }
+footer.bar label { color: var(--dim); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+footer.bar input[type=number] { width: 54px; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
+footer.bar select { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
+.go { margin-left: auto; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 9px 18px; font-weight: 700; }
+.go:disabled { opacity: .45; cursor: default; }
+.status { flex-basis: 100%; color: var(--dim); font-size: 13px; min-height: 0; }
+.status:empty { display: none; }
+.status.ok { color: var(--pick); }
+.status.err { color: var(--bad); }
+.ghost { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; color: var(--dim); }
+/* detail */
+.detail { position: fixed; inset: 0; z-index: 10; background: var(--bg); display: none; }
+.detail.on { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); }
+.d-left { padding: 20px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.d-left video { width: 100%; max-height: calc(100vh - 220px); background: #000; border-radius: 8px; }
+.d-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.d-head b { font-size: 16px; }
+.d-head span { color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 26px; background: var(--card); border-radius: 6px; cursor: pointer; }
+.track .rng { position: absolute; top: 0; bottom: 0; background: var(--range); border-left: 2px solid var(--accent); border-right: 2px solid var(--accent); }
+.track .head { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); }
+.d-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.d-tools .keys { color: var(--faint); font-size: 12px; margin-left: auto; }
+.d-right { border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+.d-right .t-head { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+.transcript { overflow: auto; padding: 10px 16px 40vh; }
+.cue { padding: 6px 8px; border-radius: 6px; margin: 0 -8px; }
+.cue.inrange { background: var(--range); }
+.cue .ts { color: var(--faint); font-size: 11.5px; font-variant-numeric: tabular-nums; background: none; border: 0; padding: 0 6px 0 0; }
+.cue .ts:hover { color: var(--accent); }
+.cue .spk { color: var(--faint); font-size: 11.5px; margin-right: 4px; }
+.w { cursor: pointer; border-radius: 3px; }
+.w:hover { text-decoration: underline; text-decoration-color: var(--faint); }
+.w.now { background: var(--word); }
+.d-head .right { display: flex; gap: 12px; align-items: center; }
+kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+@media (max-width: 900px) { .detail.on { grid-template-columns: 1fr; overflow: auto; } .d-right { border-left: 0; } .transcript { max-height: none; padding-bottom: 40px; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 id="title"></h1>
+  <div class="sub" id="sub"></div>
+  <nav class="groups" id="groups"></nav>
+</header>
+<main id="main"></main>
+<footer class="bar">
+  <span class="count" id="count">Nothing selected</span>
+  <button class="ghost" id="all">Select all shown</button>
+  <button class="ghost" id="clear">Clear</button>
+  <label>Pre <input type="number" id="pre" min="0" step="0.5" value="2"> s</label>
+  <label>Post <input type="number" id="post" min="0" step="0.5" value="2"> s</label>
+  <label>Into <select id="into"><option value="auto">open project (new if Resolve is closed)</option><option value="current">open project</option><option value="new-project">new project</option></select></label>
+  <label><input type="checkbox" id="audio" checked> synced recorders</label>
+  <button class="go" id="go" disabled>Import into Resolve</button>
+  <div class="status" id="status"></div>
+</footer>
+<div class="detail" id="detail">
+  <div class="d-left">
+    <div class="d-head"><b id="d-file"></b><div class="right"><span id="d-tc"></span><button class="ghost" id="d-close">Close <kbd>esc</kbd></button></div></div>
+    <video id="d-video" controls playsinline></video>
+    <div class="track" id="d-track"><div class="rng" id="d-rng"></div><div class="head" id="d-head"></div></div>
+    <div class="d-tools">
+      <button class="ghost" id="d-play">Play the clip</button>
+      <button class="ghost" id="d-in">Set in <kbd>i</kbd></button>
+      <button class="ghost" id="d-out">Set out <kbd>o</kbd></button>
+      <button class="ghost" id="d-reset">Reset in/out</button>
+      <button class="ghost" id="d-pick">Select <kbd>x</kbd></button>
+      <button class="ghost" id="d-prev">‹ Prev <kbd>←</kbd></button>
+      <button class="ghost" id="d-next">Next › <kbd>→</kbd></button>
+      <span class="keys"><kbd>space</kbd> play · <kbd>j</kbd>/<kbd>l</kbd> 5 s · click a word to jump</span>
+    </div>
+    <div class="note" id="d-note"></div>
+  </div>
+  <div class="d-right">
+    <div class="t-head"><b>Transcript</b><button class="ghost" id="d-follow">Following</button></div>
+    <div class="transcript" id="d-transcript"></div>
+  </div>
+</div>
+<script type="application/json" id="review-data">/*REVIEW_DATA*/</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("review-data").textContent);
+  var SERVER = location.protocol.indexOf("http") === 0;
+  var TOKEN = new URLSearchParams(location.search).get("t") || "";
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var fmt = function (t) { t = Math.max(0, t || 0); var m = Math.floor(t / 60), s = t - m * 60; return m + ":" + (s < 10 ? "0" : "") + s.toFixed(1); };
+  var mediaURL = function (k) {
+    if (SERVER) return "/media/" + k + "?t=" + encodeURIComponent(TOKEN);
+    return "file://" + D.media[k].split("/").map(encodeURIComponent).join("/");
+  };
+  var thumbURL = function (c) { return c.thumb ? (SERVER ? "/" + c.thumb + "?t=" + encodeURIComponent(TOKEN) : c.thumb) : ""; };
+
+  var picked = {}, ranges = {}, filter = null;
+  var clipBy = {}; D.clips.forEach(function (c) { clipBy[c.n] = c; });
+  var rangeOf = function (c) { return ranges[c.n] || { start: c.start, end: c.end }; };
+  var linesIn = function (c, r) {
+    var f = D.files[c.rel]; if (!f) return [];
+    return f.lines.filter(function (l) { return l.end > r.start && l.start < r.end; });
+  };
+  var lineHTML = function (l) {
+    var lang = l.lang && l.lang !== "en" ? '<span class="lang">' + esc(l.lang.toUpperCase()) + "</span>" : "";
+    return lang + esc(l.text) + (l.en ? '<span class="en">' + esc(l.en) + "</span>" : "");
+  };
+
+  // ---------- header and groups
+  $("title").textContent = D.title; document.title = D.title + " · selects";
+  var groups = D.groups.length ? D.groups : ["Clips"];
+  $("sub").textContent = D.clips.length + " clips · " + fmt(D.clips.reduce(function (a, c) { return a + c.end - c.start; }, 0)) +
+    " · made " + D.made_at.slice(0, 16).replace("T", " ") + " · hover a clip to preview it, click it to open it" + (SERVER ? "" : " · open with `blackbox review open " + D.id + "` to import");
+  var nav = $("groups");
+  if (groups.length > 1) {
+    [null].concat(groups).forEach(function (g) {
+      var b = document.createElement("button"); b.textContent = g || "All";
+      b.addEventListener("click", function () { filter = g; render(); });
+      b.dataset.g = g || ""; nav.appendChild(b);
+    });
+  }
+
+  // ---------- the grid
+  function card(c) {
+    var r = rangeOf(c), lines = linesIn(c, r);
+    var a = document.createElement("article");
+    a.className = "card" + (picked[c.n] ? " picked" : ""); a.dataset.n = c.n;
+    a.innerHTML =
+      '<div class="media"><video preload="none" muted playsinline poster="' + esc(thumbURL(c)) + '"></video>' +
+      (c.audio_only ? '<div class="audio">audio only</div>' : "") +
+      '<button class="pick" title="Tick to import">✓</button><span class="open">Open ↗</span>' +
+      '<span class="len">' + fmt(r.end - r.start) + '</span><div class="bar"></div></div>' +
+      '<div class="meta"><b title="' + esc(c.rel) + '">' + esc(c.file) + "</b><span>" + esc(c.tc_in || "") + " · " +
+      fmt(r.end - r.start) + (ranges[c.n] ? " (trimmed)" : "") + "</span></div>" +
+      (c.note ? '<div class="note">' + esc(c.note) + "</div>" : "") +
+      '<div class="lines">' + (lines.length ? lines.map(function (l) { return "<p>" + lineHTML(l) + "</p>"; }).join("")
+                                            : '<p class="none">No words in this clip.</p>') + "</div>";
+    // Hover previews the clip, silent and looping from in to out; a click anywhere opens it.
+    var v = a.querySelector("video"), bar = a.querySelector(".bar"), hovering = false;
+    v.src = mediaURL(c.media) + "#t=" + r.start + "," + r.end; // preload none: nothing loads until it's played
+    if (!c.audio_only) {
+      a.addEventListener("mouseenter", function () {
+        hovering = true; var rr = rangeOf(c);
+        if (v.currentTime < rr.start || v.currentTime >= rr.end - 0.03) v.currentTime = rr.start;
+        v.play().catch(function () {});
+      });
+      a.addEventListener("mouseleave", function () { hovering = false; v.pause(); });
+      v.addEventListener("timeupdate", function () {
+        var rr = rangeOf(c);
+        if (v.currentTime >= rr.end - 0.03) { v.currentTime = rr.start; if (hovering && cur === null) v.play().catch(function () {}); else v.pause(); }
+        bar.style.width = (100 * Math.max(0, v.currentTime - rr.start) / Math.max(0.1, rr.end - rr.start)) + "%";
+      });
+    }
+    a.querySelector(".pick").addEventListener("click", function (e) { e.stopPropagation(); toggle(c.n); });
+    a.addEventListener("click", function () { openDetail(c.n); });
+    return a;
+  }
+  function shown() { return D.clips.filter(function (c) { return !filter || (c.group || "Clips") === filter; }); }
+  function render() {
+    var main = $("main"); main.innerHTML = "";
+    groups.forEach(function (g) {
+      if (filter && g !== filter) return;
+      var cs = D.clips.filter(function (c) { return (c.group || "Clips") === g; }); if (!cs.length) return;
+      var s = document.createElement("section"); s.className = "group";
+      if (groups.length > 1) s.innerHTML = "<h2>" + esc(g) + " · " + cs.length + "</h2>";
+      var grid = document.createElement("div"); grid.className = "grid";
+      cs.forEach(function (c) { grid.appendChild(card(c)); });
+      s.appendChild(grid); main.appendChild(s);
+    });
+    Array.prototype.forEach.call(nav.children, function (b) { b.classList.toggle("on", (b.dataset.g || null) === filter); });
+    count();
+  }
+  function toggle(n) {
+    if (picked[n]) delete picked[n]; else picked[n] = true;
+    var el = document.querySelector('.card[data-n="' + n + '"]'); if (el) el.classList.toggle("picked", !!picked[n]);
+    if (cur === n) pickLabel();
+    count();
+  }
+  function count() {
+    var ns = Object.keys(picked).map(Number);
+    var len = ns.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
+    $("count").textContent = ns.length ? ns.length + " selected · " + fmt(len) : "Nothing selected";
+    $("go").disabled = !ns.length || !SERVER || busy;
+    if (!SERVER) $("go").title = "Open this review with `blackbox review open " + D.id + "` to import";
+  }
+  $("all").addEventListener("click", function () { shown().forEach(function (c) { picked[c.n] = true; }); render(); });
+  $("clear").addEventListener("click", function () { picked = {}; render(); });
+
+  // ---------- the detail view
+  var cur = null, words = [], follow = true, playClip = false, lastWord = null;
+  var dv = $("d-video");
+  function openDetail(n) {
+    cur = n; var c = clipBy[n], f = D.files[c.rel] || { lines: [], duration: c.duration };
+    $("d-file").textContent = c.file; $("d-note").textContent = c.note || "";
+    var src = mediaURL(c.media);
+    if (dv.dataset.k !== String(c.media)) { dv.dataset.k = c.media; dv.src = src; }
+    dv.currentTime = rangeOf(c).start;
+    words = []; var html = [];
+    f.lines.forEach(function (l, i) {
+      var ws = (l.words && l.words.length ? l.words : [[l.text, l.start, l.end]]).map(function (w) {
+        var k = words.length; words.push({ s: w[1], e: w[2], k: k });
+        return '<span class="w" data-k="' + k + '">' + esc(w[0]) + "</span>";
+      });
+      var lang = l.lang && l.lang !== "en" ? '<span class="lang">' + esc(l.lang.toUpperCase()) + "</span>" : "";
+      html.push('<div class="cue" data-s="' + l.start + '" data-e="' + l.end + '"><button class="ts" data-s="' + l.start + '">' +
+                fmt(l.start) + "</button>" + (l.speaker ? '<span class="spk">' + esc(l.speaker) + "</span>" : "") + lang +
+                ws.join(" ") + (l.en ? '<span class="en">' + esc(l.en) + "</span>" : "") + "</div>");
+    });
+    $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">No transcript for this file.</p>';
+    marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
+    Array.prototype.forEach.call(document.querySelectorAll(".card video"), function (x) { x.pause(); });
+    playClip = true; dv.play().catch(function () {}); // the clip plays once, with sound; space carries on
+    var first = document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
+  }
+  function closeDetail() { dv.pause(); $("detail").classList.remove("on"); cur = null; render(); }
+  function marks() {
+    var c = clipBy[cur], r = rangeOf(c), d = dv.duration || (D.files[c.rel] || {}).duration || c.duration || 1;
+    $("d-rng").style.left = (100 * r.start / d) + "%"; $("d-rng").style.width = (100 * (r.end - r.start) / d) + "%";
+    $("d-tc").textContent = (c.tc_in || "") + " · in " + fmt(r.start) + " · out " + fmt(r.end) + " · " + fmt(r.end - r.start);
+    Array.prototype.forEach.call(document.querySelectorAll(".cue"), function (q) {
+      q.classList.toggle("inrange", +q.dataset.e > r.start && +q.dataset.s < r.end);
+    });
+  }
+  function pickLabel() { $("d-pick").innerHTML = (picked[cur] ? "Selected ✓" : "Select") + " <kbd>x</kbd>"; }
+  function followLabel() { $("d-follow").textContent = follow ? "Following" : "Follow"; }
+  function setRange(which) {
+    var c = clipBy[cur], r = rangeOf(c), t = dv.currentTime, nr = { start: r.start, end: r.end };
+    if (which === "in") nr.start = Math.min(t, r.end - 0.1); else nr.end = Math.max(t, r.start + 0.1);
+    ranges[cur] = nr; marks(); count();
+  }
+  function wordAt(t) {
+    var lo = 0, hi = words.length - 1, best = null;
+    while (lo <= hi) { var mid = (lo + hi) >> 1; if (words[mid].s <= t) { best = mid; lo = mid + 1; } else hi = mid - 1; }
+    return best;
+  }
+  dv.addEventListener("timeupdate", function () {
+    if (cur === null) return;
+    var c = clipBy[cur], r = rangeOf(c), d = dv.duration || 1;
+    $("d-head").style.left = (100 * dv.currentTime / d) + "%";
+    if (playClip && dv.currentTime >= r.end) { dv.pause(); playClip = false; }
+    var k = wordAt(dv.currentTime);
+    if (k !== lastWord) {
+      if (lastWord !== null) { var o = document.querySelector('.w[data-k="' + lastWord + '"]'); if (o) o.classList.remove("now"); }
+      if (k !== null && dv.currentTime <= words[k].e + 0.6) {
+        var w = document.querySelector('.w[data-k="' + k + '"]');
+        if (w) { w.classList.add("now"); if (follow && !dv.paused) w.scrollIntoView({ block: "center", behavior: "smooth" }); }
+        lastWord = k;
+      } else lastWord = null;
+    }
+  });
+  dv.addEventListener("loadedmetadata", function () { if (cur !== null) marks(); });
+  // timeupdate comes about every quarter second; while a clip plays to its out, watch every frame instead.
+  (function watchOut() {
+    if (playClip && cur !== null && !dv.paused && dv.currentTime >= rangeOf(clipBy[cur]).end - 0.02) { dv.pause(); playClip = false; }
+    requestAnimationFrame(watchOut);
+  })();
+  $("d-transcript").addEventListener("click", function (e) {
+    var ts = e.target.closest(".ts"); if (ts) { dv.currentTime = +ts.dataset.s; dv.play(); return; }
+    var w = e.target.closest(".w"); if (w) { dv.currentTime = words[+w.dataset.k].s; dv.play(); }
+  });
+  $("d-transcript").addEventListener("wheel", function () { if (follow) { follow = false; followLabel(); } }, { passive: true });
+  $("d-follow").addEventListener("click", function () { follow = true; followLabel(); });
+  $("d-track").addEventListener("click", function (e) {
+    var b = this.getBoundingClientRect(); dv.currentTime = (dv.duration || 0) * (e.clientX - b.left) / b.width;
+  });
+  $("d-play").addEventListener("click", function () { dv.currentTime = rangeOf(clipBy[cur]).start; playClip = true; dv.play(); });
+  $("d-in").addEventListener("click", function () { setRange("in"); });
+  $("d-out").addEventListener("click", function () { setRange("out"); });
+  $("d-reset").addEventListener("click", function () { delete ranges[cur]; marks(); count(); });
+  $("d-pick").addEventListener("click", function () { toggle(cur); });
+  var step = function (d) {
+    var list = shown(), i = list.findIndex(function (c) { return c.n === cur; });
+    var next = list[i + d]; if (next) openDetail(next.n);
+  };
+  $("d-prev").addEventListener("click", function () { step(-1); });
+  $("d-next").addEventListener("click", function () { step(1); });
+  $("d-close").addEventListener("click", closeDetail);
+  document.addEventListener("keydown", function (e) {
+    if (cur === null || e.metaKey || e.ctrlKey || e.altKey || /INPUT|SELECT/.test(e.target.tagName)) return;
+    var k = e.key;
+    if (k === "Escape") closeDetail();
+    else if (k === " ") { e.preventDefault(); if (dv.paused) dv.play(); else dv.pause(); }
+    else if (k === "i") setRange("in");
+    else if (k === "o") setRange("out");
+    else if (k === "x" || k === "Enter") toggle(cur);
+    else if (k === "j") dv.currentTime = Math.max(0, dv.currentTime - 5);
+    else if (k === "l") dv.currentTime = dv.currentTime + 5;
+    else if (k === "ArrowLeft" || k === "[") { e.preventDefault(); step(-1); }
+    else if (k === "ArrowRight" || k === "]") { e.preventDefault(); step(1); }
+  });
+
+  // ---------- importing
+  var busy = false;
+  function status(text, kind) { var s = $("status"); s.textContent = text; s.className = "status" + (kind ? " " + kind : ""); }
+  $("go").addEventListener("click", function () {
+    var clips = D.clips.filter(function (c) { return picked[c.n]; }).map(function (c) {
+      var r = rangeOf(c); return { n: c.n, start: r.start, end: r.end };
+    });
+    busy = true; count(); status("Building the timeline in Resolve from the camera originals… (Resolve may start first)");
+    fetch("/api/import?t=" + encodeURIComponent(TOKEN), {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ clips: clips, pre: +$("pre").value, post: +$("post").value, into: $("into").value, audio: $("audio").checked })
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      busy = false; count();
+      if (res.error) { status("Not imported: " + res.error.message + (res.help && res.help.length ? " — " + res.help[0] : ""), "err"); return; }
+      var r = res.resolve || {};
+      status("Done: \"" + r.timeline + "\" in \"" + r.project + "\" · " + r.clips + " clips" +
+             (r.audio_placed ? " · recorders " + r.audio_placed : "") + (Array.isArray(res.warnings) && res.warnings.length ? " · " + res.warnings.length + " warning(s): " + res.warnings.join("; ") : "") +
+             " · edit " + res.id, "ok");
+    }).catch(function (e) { busy = false; count(); status("Not imported: the review's server didn't answer (" + e + "). Run `blackbox review open " + D.id + "` again.", "err"); });
+  });
+  if (SERVER) {
+    var ping = function () { fetch("/api/ping?t=" + encodeURIComponent(TOKEN), { method: "POST" }).catch(function () {}); };
+    ping(); setInterval(ping, 20000);
+  } else {
+    $("pre").disabled = $("post").disabled = $("into").disabled = $("audio").disabled = true;
+  }
+  render();
+})();
+</script>
+</body>
+</html>

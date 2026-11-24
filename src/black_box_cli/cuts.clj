@@ -191,7 +191,7 @@ td{vertical-align:top;padding:6px 10px 6px 0;border-top:1px solid #34373b}td.t{w
               (str/replace #"^-+|-+$" ""))]
     (or (not-empty (subs s 0 (min 40 (count s)))) "cut")))
 
-(defn- new-folder!
+(defn new-folder!
   "A folder for the cut that didn't exist before: <stamp>-<slug>, or with -2, -3 … in the same second."
   [cuts-dir name]
   (fs/create-dirs cuts-dir)

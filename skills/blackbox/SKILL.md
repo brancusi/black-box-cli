@@ -1,6 +1,6 @@
 ---
 name: blackbox
-description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, and who is heard or seen — make rough cuts (edits) that play straight away, and online an edit: rebuild it in DaVinci Resolve from the camera originals, ready to grade. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip, to show or play something, to read a transcript, to make selects, a rough cut or an EDL, to "online" an edit or take it to source or Resolve, or for a Black Box tutorial or what Black Box can do.
+description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, and who is heard or seen — make rough cuts (edits) that play straight away, build a selects review page (clips with their transcripts, ticked and imported into Resolve), and online an edit: rebuild it in DaVinci Resolve from the camera originals, ready to grade. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip, to show or play something, to read a transcript, to make selects, a rough cut or an EDL, to build a selects review (b-roll, sound bites, options to choose from), to "online" an edit or take it to source or Resolve, or for a Black Box tutorial or what Black Box can do.
 ---
 <!-- Installed by `blackbox setup agent` and replaced when it runs again. Delete this line to keep your own edits. -->
 
@@ -187,6 +187,26 @@ camera was. `playing` says what happened and counts both; the `help` line has th
 with `open`. If the render fails, mpv plays `cut.mpv.edl` instead (it can stutter at cuts); if mpv isn't
 installed either, say `brew install ffmpeg`.
 
+## Selects review: clips to choose from, then into Resolve
+
+When the user asks for selects to look through ("build me a selects review for b-roll and sound bites of …",
+"pull selects of …", "show me options for …"):
+
+1. Find candidates with search, shots, look and people. Write a cut list with a `group:` line before each section
+   (`group: Sound bites`, `group: B-roll`) and a note on each clip (` # why it's here`). Sound bites as runs of lines
+   (`k7f3q2ab.41..k7f3q2ab.43`, so in and out follow the words), b-roll as shots' best moments or file ranges. Give
+   them more than they need (10 to 30), the best first in each group.
+2. `blackbox review new - --dry-run` checks it.
+3. `blackbox review new - --open` **in the background** (your shell tool's background mode): it makes the review
+   in `~/Black Box/reviews/<id>/` and opens it in their browser, serving it until the page has been closed for
+   5 minutes. Tell them in a line or two what's in it.
+
+On the page each clip plays its proxy with its words under it (an Italian line gets its English under it once Black
+Box publishes translations). Clicking a clip opens it with its file's whole transcript: a word jumps there, `i` and
+`o` trim the in and out. They tick clips and press Import into Resolve, which runs `online` on them (below): a new
+timeline from the originals, with pre- and post-roll and the synced recorders. `blackbox review list` and
+`blackbox review open <id>` (in the background) bring one back.
+
 ## Taking a cut to DaVinci Resolve (only when asked)
 
 Only when the user wants the cut in Resolve:
@@ -198,7 +218,8 @@ Only when the user wants the cut in Resolve:
   post-roll (`--pre`, `--post`, or ` pre 1 post 3` at the end of a clip's line in the cut list; clamped to the
   file), and Resolve on this Mac imports the originals, links the proxies and imports the edit's EDL as a new
   timeline: in the open project, or a new project when Resolve wasn't running (`--into current|new-project`;
-  `--db local` for this Mac's database). It takes seconds (about 15 s more when it has to start Resolve). A cut
+  `--db local` for this Mac's database). The recorders heard with each clip come with it, synced by the sync map,
+  each on its own tracks from A2 (`--no-audio` to leave them out). It takes seconds (about 15 s more when it has to start Resolve). A cut
   list works too (`blackbox online -`): it's saved as an edit first. `resolve` says where it went; `missing` lists
   originals Resolve couldn't find (the NAS not mounted: `--originals <the folder holding media/>`). If it says
   `resolve-scripting-off`, the user sets Resolve → Preferences → System → General → External scripting → Local.

@@ -157,7 +157,7 @@
                                     :shot (shot-segment ctx it)
                                     (file-segment ctx it))]
                   (cond-> acc
-                    s (update :segments conj (merge s (select-keys it [:pre :post])))
+                    s (update :segments conj (merge s (select-keys it [:pre :post :group])))
                     warning (update :warnings conj (str where ": " warning))))
                 (catch clojure.lang.ExceptionInfo e
                   (if-let [err (out/error-of e)]
@@ -240,7 +240,7 @@
              :length (tc/round-to (cuts/length s) 1)
              :text (out/cut (:text s) full cut-text-limit)))
 
-(defn- read-cut
+(defn read-cut
   "The cut list in `args` as {:text :title :segments :warnings :version}, or error.code invalid-cutlist listing every
   problem."
   [{:keys [opts args] :as ctx} command]
