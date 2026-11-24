@@ -1,11 +1,12 @@
 scope: video only
-count: 3
-total: 3
-hours: 0.04
-files[3]{file,day,length,lines,speakers,rel,start_tc,language}:
-  C5274.MP4,2026-09-16,"0:32.5",4,1,media/2026/09/16/src/fx3/C5274.MP4,"03:06:51:08",multi
-  C5900.MP4,2026-10-02,"1:00.0",1,1,media/2026/10/02/src/fx3/C5900.MP4,null,multi
-  C5900.MP4,2026-10-03,"1:00.0",1,1,media/2026/10/03/src/a7s/C5900.MP4,null,multi
+count: 4
+total: 4
+hours: 0.05
+files[4]{file,day,length,lines,speakers,rel,start_tc,language,device,res,fps,slow_motion,codec,bitrate,make,model,lens,gamma}:
+  C5274.MP4,2026-09-16,"0:32.5",4,1,media/2026/09/16/src/fx3/C5274.MP4,"03:06:51:08",multi,FX3,4K,23.976,null,h264,150,Sony,ILME-FX3,Invented 24-70mm F2.8,s-log3-cine
+  C5280.MP4,2026-09-16,"0:12.0",0,0,media/2026/09/16/src/fx3/C5280.MP4,null,null,FX3,4K,119.88,5x,h264,150,Sony,ILME-FX3A,Invented 24-70mm F2.8,s-log3-cine
+  C5900.MP4,2026-10-02,"1:00.0",1,1,media/2026/10/02/src/fx3/C5900.MP4,null,multi,FX3,4K,59.94,null,hevc,200,Sony,ILME-FX3,Invented 24-70mm F2.8,null
+  C5900.MP4,2026-10-03,"1:00.0",1,1,media/2026/10/03/src/a7s/C5900.MP4,null,multi,A7S III,1080p,119.88,conform,h264,100,Sony,ILME-7SM3,Invented 24-70mm F2.8,s-log3
 help[2]:
   Run `blackbox transcript <file>` to read one
   Run `blackbox search <words> --day YYYY-MM-DD` to search one day

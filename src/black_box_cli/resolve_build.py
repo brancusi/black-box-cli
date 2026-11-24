@@ -253,19 +253,21 @@ def main(plan_path):
         if subtitle_item is None:
             subtitles_note = "Resolve didn't import the subtitles"
     edl_note = None
-    if subtitle_item is not None:
+    if subtitle_item is not None or plan.get("by_frames"):
         # Subtitles first, on the empty timeline: Resolve appends a subtitle clip at the timeline's end, keeping each
         # line's time from there (and crashes if given frames for one), so only an empty timeline puts them at its
         # start. Then each clip goes down at its own frame, as the EDL would have put it; a missing one leaves its gap.
-        method = "subtitles"
+        # A cut with a clip that has no timecode (nothing said in it) is placed this way too, with or without lines.
+        method = "subtitles" if subtitle_item is not None else "frames"
         timeline = media_pool.CreateEmptyTimeline(name)
         if timeline is None:
             raise Fail("resolve-failed", f"Resolve couldn't create the timeline {name}")
         project.SetCurrentTimeline(timeline)
-        if timeline.GetTrackCount("subtitle") == 0:
-            timeline.AddTrack("subtitle")
-        media_pool.AppendToTimeline([{"mediaPoolItem": subtitle_item, "trackIndex": 1}])
-        subtitles_placed = len(timeline.GetItemListInTrack("subtitle", 1) or [])
+        if subtitle_item is not None:
+            if timeline.GetTrackCount("subtitle") == 0:
+                timeline.AddTrack("subtitle")
+            media_pool.AppendToTimeline([{"mediaPoolItem": subtitle_item, "trackIndex": 1}])
+            subtitles_placed = len(timeline.GetItemListInTrack("subtitle", 1) or [])
         start = timeline.GetStartFrame()
         for c in plan["clips"]:
             if c["source_path"] in have:
@@ -280,6 +282,9 @@ def main(plan_path):
     ok = (timeline is not None and len(placed) == len([c for c in clips if c["video"]])
           and all(file_path(t.GetMediaPoolItem()) == c["source_path"]
                   for t, c in zip(placed, [c for c in clips if c["video"]])))
+    if not ok and method == "frames":
+        raise Fail("resolve-failed", f"Resolve placed {len(placed)} of {len([c for c in clips if c['video']])} "
+                                     f"clips on the timeline {name}")
     if not ok and method == "subtitles":
         if timeline is not None:
             media_pool.DeleteTimelines([timeline])  # this run's own, seconds old, and wrong

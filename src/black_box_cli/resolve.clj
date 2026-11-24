@@ -142,6 +142,8 @@
                :fps (fps-setting rate)
                :proxies (boolean proxies)
                :subtitles (some-> subtitles str)
+               ;; a clip without timecode (no transcript) can't be found by the EDL's: place them all by frame
+               :by_frames (boolean (some #(nil? (:clock_kind %)) segments))
                :clips (mapv (fn [s [in out] record]
                               (array-map :source_path (original s originals)
                                          :proxy (when (video? s) (:play_path s))

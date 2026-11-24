@@ -8,6 +8,7 @@
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
    [black-box-cli.people :as people]
+   [black-box-cli.probe :as probe]
    [black-box-cli.shots :as shots]
    [black-box-cli.sync :as sync]
    [black-box-cli.tc :as tc]
@@ -36,7 +37,7 @@
 (defn- scope
   "The SQL condition on transcripts `t` for the scope flags in `opts`, and its parameters."
   [opts]
-  (let [{:keys [day month path video]} opts
+  (let [{:keys [day month path video rels]} opts
         dates (concat (map (fn [d] (let [[y m dd] (str/split d #"-")] (str "%/" y "/" m "/" dd "/%"))) day)
                       (map (fn [mo] (let [[y m] (str/split mo #"-")] (str "%/" y "/" m "/%"))) month))
         params (into {:version (version-of opts)}
@@ -47,19 +48,36 @@
                 path (conj "t.rel LIKE :path")
                 video (conj (str "(" (str/join " OR " (map-indexed (fn [i _] (str "lower(t.source_name) LIKE :v" i))
                                                                    video-exts))
-                                 ")")))]
+                                 ")"))
+                rels (conj "t.rel IN (SELECT value FROM json_each(:rels))"))]
     {:where (str/join " AND " where)
      :params (cond-> params
                path (assoc :path (str "%" (nfc path) "%"))
+               rels (assoc :rels (json/generate-string (sort rels)))
                video (into (map-indexed (fn [i e] [(keyword (str "v" i)) (str "%." e)]) video-exts)))}))
 
 (defn scope-words
   "The scope flags in words, for a command's head."
-  [{:keys [day month path video]}]
+  [{:keys [day month path video] :as opts}]
   (let [parts (cond-> (vec (concat day month))
                 path (conj (str "path~" path))
-                video (conj "video only"))]
+                video (conj "video only")
+                true (into (probe/words opts)))]
     (if (seq parts) (str/join ", " parts) "everything")))
+
+(defn in-scope?
+  "Whether the original at `rel` is in the scope flags' days, months, path and filters (for what isn't in the
+  transcripts' index: frames, shots, facts). `video?` says whether it's video when its extension can't."
+  ([opts rel] (in-scope? opts rel nil))
+  ([{:keys [day month path video rels]} rel video?]
+   (let [d (or (day-of rel) "")]
+     (boolean
+      (and (or (and (empty? day) (empty? month))
+               (some #{d} day)
+               (some #(str/starts-with? d %) month))
+           (or (nil? path) (str/includes? rel (nfc path)))
+           (or (not video) video? (some #(str/ends-with? (str/lower-case rel) (str "." %)) video-exts))
+           (or (nil? rels) (contains? rels rel)))))))
 
 (defn proxy-of
   "The clip's proxy in media_meta, or nil: <rel>.proxy.mp4, or for audio an exact copy at <rel>. Never the NAS."
@@ -301,27 +319,59 @@
 
 ;; ------------------------------------------------------------------------------------------------ transcript
 
+(defn- source-root
+  "Where the originals are, as the transcripts say (the NAS: shown, never opened): a source_path less its rel."
+  [path]
+  (when-let [{:keys [source_path rel]} (db/one path "SELECT source_path, rel FROM transcripts
+                                                   WHERE source_path LIKE '%/' || rel LIMIT 1;")]
+    (subs source_path 0 (- (count source_path) (count rel)))))
+
+(defn- from-facts
+  "An original without a transcript (nothing said in it: slow motion records no sound), from its camera facts, as
+  a transcript row stands for a file: no lines, no timecode (`clock_kind` nil), its source path under the NAS root
+  the transcripts give."
+  [path f]
+  {:rel (:rel f) :source_name (:name f) :source_sha256 (:sha256 f) :duration (:duration f) :rate (:rate f)
+   :clock_kind nil :start_tc nil :tod_s nil
+   :source_path (some-> (source-root path) (str (:rel f)))})
+
+(defn original-row
+  "The original at `rel` as a transcript row stands for it: its transcript of `version`, else its camera facts
+  (no lines, no timecode), else nil."
+  [path version rel]
+  (or (db/one path "SELECT * FROM transcripts WHERE version = :version AND rel = :rel;" {:version version :rel rel})
+      (some->> (get (probe/facts path) rel) (from-facts path))))
+
 (defn find-file
-  "One indexed transcript by file name or part of its path, narrowed by the scope flags."
-  [path opts name]
-  (let [q (str/trim (nfc name))
-        {:keys [where params]} (scope opts)
-        rows (db/query path (str "SELECT t.* FROM transcripts t WHERE " where
-                                 " AND (t.source_name = :q OR t.rel LIKE :like) ORDER BY t.rel;")
-                       (assoc params :q q :like (str "%" q "%")))
-        exact (filter #(or (= q (:source_name %)) (str/ends-with? (:rel %) (str "/" q))) rows)
-        rows (if (seq exact) exact rows)]
-    (cond
-      (empty? rows)
-      (out/fail! "not-found" (str "no transcript for '" name "' (" (version-of opts) ")")
-                 {:help ["Run `blackbox footage` to list the files" "Run `blackbox search <words>` to find a file"]})
+  "One indexed transcript by file name or part of its path, narrowed by the scope flags. With `facts?`, an
+  original nothing is said in is found by its camera facts when it has no transcript (a row without `:id`)."
+  ([path opts name] (find-file path opts name false))
+  ([path opts name facts?]
+   (let [q (str/trim (nfc name))
+         {:keys [where params]} (scope opts)
+         rows (db/query path (str "SELECT t.* FROM transcripts t WHERE " where
+                                  " AND (t.source_name = :q OR t.rel LIKE :like) ORDER BY t.rel;")
+                        (assoc params :q q :like (str "%" q "%")))
+         exact (filter #(or (= q (:source_name %)) (str/ends-with? (:rel %) (str "/" q))) rows)
+         rows (if (seq exact) exact rows)
+         rows (if (or (seq rows) (not facts?))
+                rows
+                (mapv #(from-facts path %)
+                      (filter #(in-scope? opts (:rel %) (= "video" (:kind %)))
+                              (probe/find-original (vals (probe/facts path)) q))))]
+     (cond
+       (empty? rows)
+       (out/fail! "not-found" (if facts?
+                                (str "no file '" name "' (no transcript in " (version-of opts) ", no camera facts)")
+                                (str "no transcript for '" name "' (" (version-of opts) ")"))
+                  {:help ["Run `blackbox footage` to list the files" "Run `blackbox search <words>` to find a file"]})
 
-      (next rows)
-      (out/fail! "ambiguous" (str (count rows) " files match '" name "': " (str/join ", " (map :rel (take 8 rows)))
-                                  (when (> (count rows) 8) " …"))
-                 {:help ["Use more of the path, e.g. `09/16/src/fx3/C5274.MP4`, or add --day YYYY-MM-DD"]})
+       (next rows)
+       (out/fail! "ambiguous" (str (count rows) " files match '" name "': " (str/join ", " (map :rel (take 8 rows)))
+                                   (when (> (count rows) 8) " …"))
+                  {:help ["Use more of the path, e.g. `09/16/src/fx3/C5274.MP4`, or add --day YYYY-MM-DD"]})
 
-      :else (first rows))))
+       :else (first rows)))))
 
 (defn transcript-cmd
   "`blackbox transcript <file>`."
@@ -383,12 +433,25 @@
                                   FROM transcripts t WHERE " where " ORDER BY t.rel;")
                        params)
         rows (if person (vec (with-person path (:id person) rows)) rows)
+        facts (probe/facts path)
+        ;; with the camera facts, the files nothing is said in too (slow motion records no sound)
+        rows (if (or person (empty? facts))
+               rows
+               (let [have (set (map :rel rows))]
+                 (->> (vals facts)
+                      (remove #(have (:rel %)))
+                      (filter #(in-scope? opts (:rel %) (= "video" (:kind %))))
+                      (map (fn [f] {:source_name (:name f) :rel (:rel f) :duration (:duration f) :n 0 :speakers 0}))
+                      (concat rows)
+                      (sort-by :rel)
+                      vec)))
         head (cond-> (array-map :scope (scope-words opts)) person (assoc :person (:name person)))]
     (if (empty? rows)
-      [(merge head (array-map :count 0 :total 0 :result (if person
-                                                          (str "0 files where " (:name person) " is heard or seen in scope")
-                                                          "0 files with transcripts in scope")))
-       ["Run `blackbox` to see which months are indexed"]]
+      [(merge head (array-map :count 0 :total 0 :result (cond person (str "0 files where " (:name person) " is heard or seen in scope")
+                                                              (seq facts) "0 files in scope"
+                                                              :else "0 files with transcripts in scope")))
+       (cond-> ["Run `blackbox` to see which months are indexed"]
+         (probe/asked? opts) (conj "Loosen --device, --fps, --res… (`blackbox footage --fields file,device,res,fps` shows what's there)"))]
       (let [shown (if (:full opts) rows (take (:limit opts) rows))
             row (fn [r] (apply array-map
                                (concat [:file (:source_name r)
@@ -399,6 +462,7 @@
                                         :rel (:rel r)
                                         :start_tc (:start_tc r)
                                         :language (:language r)]
+                                       (when (seq facts) (mapcat identity (probe/fields (get facts (:rel r)))))
                                        (when person
                                          [:heard (ranges-length (:heard r))
                                           :seen (ranges-length (:seen r))
@@ -408,8 +472,11 @@
                 (array-map :count (count shown)
                            :total (count rows)
                            :hours (tc/round-to (/ (reduce + (map #(or (:duration %) 0.0) rows)) 3600.0) 2)
-                           :files (mapv #(out/pick (row %) (if person [:file :day :length :heard :seen]
-                                                               [:file :day :length :lines])
+                           :files (mapv #(out/pick (row %) (cond person [:file :day :length :heard :seen]
+                                                                 (empty? facts) [:file :day :length :lines]
+                                                                 (or (:fps opts) (:slow-motion opts))
+                                                                 [:file :day :length :lines :device :res :fps :slow_motion]
+                                                                 :else [:file :day :length :lines :device :res :fps])
                                                    opts)
                                         shown)))
          (cond-> []

@@ -13,6 +13,7 @@
    [black-box-cli.out :as out]
    [black-box-cli.people :as people]
    [black-box-cli.prints :as prints]
+   [black-box-cli.probe :as probe]
    [black-box-cli.shots :as shots]
    [black-box-cli.sync :as sync]
    [black-box-cli.version :as version]
@@ -91,7 +92,8 @@
         names (stage "people" #(people/build! args))
         voices (stage "prints" #(prints/build! args))
         synced (stage "sync" #(sync/build! args))
-        logged (stage "shots" #(shots/build! args))]
+        logged (stage "shots" #(shots/build! args))
+        facts (stage "probe" #(probe/build! args))]
     (array-map :index (out/home-path path home)
                :transcripts (archive/version-of opts)
                :added (:added res)
@@ -111,7 +113,8 @@
                :people (or names "none: media_meta has no people folder")
                :prints (or voices "none: media_meta has no prints folder")
                :sync (or synced "none: media_meta has no sync folder")
-               :shots (or logged "none: media_meta has no shots folder"))))
+               :shots (or logged "none: media_meta has no shots folder")
+               :probe (or facts "none: media_meta has no probe folder"))))
 
 (defn build!
   "Builds the index under the lock (waiting for another build to finish when `wait`), records it, and returns what
@@ -135,7 +138,7 @@
   (let [m (build! (cond-> ctx (:progress opts) (assoc :progress out/progress!)) true)
         res m
         pics (:frames m)
-        skipped? (some #(and (map? %) (pos? (:skipped % 0))) [pics (:prints m) (:sync m) (:shots m)])]
+        skipped? (some #(and (map? %) (pos? (:skipped % 0))) [pics (:prints m) (:sync m) (:shots m) (:probe m)])]
     [m
      (cond-> []
        (or (pos? (:skipped res)) skipped?)
@@ -154,7 +157,8 @@
      {:source "people" :dir (p "people") :published (fs/exists? (p "people" people/marker))}
      {:source "prints" :dir (p "prints") :published (fs/exists? (p "prints" prints/marker))}
      {:source "sync" :dir (p "sync") :published (fs/exists? (p "sync" sync/marker))}
-     {:source "shots" :dir (p "shots" shots/version) :published (fs/exists? (p "shots" shots/marker))}]))
+     {:source "shots" :dir (p "shots" shots/version) :published (fs/exists? (p "shots" shots/marker))}
+     {:source "probe" :dir (p "probe" (probe/version-in (p "probe"))) :published (fs/exists? (p "probe" probe/marker))}]))
 
 (defn- count-files
   "How many json files under `dir` match the `find` tests in `more`."
@@ -226,6 +230,7 @@
       (= "prints" source) (str (:voices v) " voices, " (:faces v) " faces")
       (= "sync" source) (str (:days v) " days, " (:pairs v) " pairs")
       (= "shots" source) (str (:shots v) " shots in " (:clips v) " clips")
+      (= "probe" source) (str (:files v) " files: " (:video v) " video, " (:audio v) " audio")
       :else "")))
 
 (defn age-words

@@ -58,7 +58,8 @@
     (is (= 2 exit))
     (is (= (str "error:\n  code: usage\n  message: unknown flag --bogus for `blackbox search`\nhelp[2]:\n"
                 "  Valid flags for `blackbox search`: --all, --limit <n>, --person <name>, --every-device, --month <YYYY-MM>, --day <YYYY-MM-DD>, "
-                "--path <text>, --video, --transcripts <version>, --format <toon|json|edn>, --fields <a,b>, --full "
+                "--path <text>, --video, --transcripts <version>, --device <name>, --fps <n>, --slow-motion, --res <4k>, "
+                "--codec <name>, --bitrate <mbps>, --format <toon|json|edn>, --fields <a,b>, --full "
                 "(--help always allowed)\n"
                 "  Run `blackbox search --help` for the options\n")
            out))))

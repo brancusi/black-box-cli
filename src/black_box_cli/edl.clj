@@ -119,10 +119,13 @@
         f (if-let [i (str/last-index-of f "/proxies/")] (subs f (+ i (count "/proxies/"))) f)]
     (str/replace f #"\.proxy\.[A-Za-z0-9]+$" "")))
 
+(def ^:private no-timecode
+  "no transcript, so no timecode: cut.edl counts it from 0:00 (`online` places it by frame)")
+
 (defn- file-segment
   "A file (or its proxy) from in to out, exactly."
   [{:keys [path opts] :as ctx} {:keys [file note] t-in-s :in t-out-s :out}]
-  (let [t (archive/find-file path (select-keys opts [:transcripts]) (proxy->file file))
+  (let [t (archive/find-file path (select-keys opts [:transcripts]) (proxy->file file) true)
         t-in (cutlist/parse-time t-in-s)
         t-out (cutlist/parse-time t-out-s)
         dur (:duration t)]
@@ -130,21 +133,24 @@
       (out/fail! "bad-clip" (str "out " t-out-s " isn't after in " t-in-s)))
     (when (and dur (>= t-in dur))
       (out/fail! "bad-clip" (str "in " t-in-s " is past the end of " (:source_name t) " (" (tc/hms dur) ")")))
-    (range-segment ctx t t-in (if dur (min t-out dur) t-out) note)))
+    (cond-> (range-segment ctx t t-in (if dur (min t-out dur) t-out) note)
+      (nil? (:id t))
+      (update 1 #(str/join "; " (remove nil? [% no-timecode]))))))
 
 (defn- shot-segment
   "A shot from the shot logs: its best moment, or all of it when `whole`. Its file's transcript gives the
   timecode cut.edl needs; the note says what the shot is unless the cut list gives one."
   [{:keys [path version home] :as ctx} {:keys [shot whole note]}]
   (let [r (shots/lookup path home shot)
-        t (or (db/one path "SELECT * FROM transcripts WHERE version = :version AND rel = :rel;"
-                      {:version version :rel (:rel r)})
-              (out/fail! "not-found" (str "no transcript for " (:rel r) ", which cut.edl needs for its timecode")))
+        t (or (archive/original-row path version (:rel r))
+              (out/fail! "not-found" (str "no transcript or camera facts for " (:rel r)
+                                          ", which cut.edl needs for its timecode")))
         [a b] (if whole [(:start r) (:end r)] (shots/best r))
         b (if (:duration t) (min b (:duration t)) b)]
     (when (<= b a)
       (out/fail! "bad-clip" (str (:id r) " has no length")))
-    (range-segment ctx t a b (if (str/blank? note) (str (:id r) ": " (:action r)) note))))
+    (cond-> (range-segment ctx t a b (if (str/blank? note) (str (:id r) ": " (:action r)) note))
+      (nil? (:id t)) (update 1 #(str/join "; " (remove nil? [% no-timecode]))))))
 
 (defn segments
   "The cut list's clips as segments, in order: {:segments :warnings :problems}. Any problem means nothing is
@@ -333,8 +339,7 @@
         version (archive/version-of opts)
         doc (json/parse-string (slurp (str (fs/path folder "cut.json"))) true)
         found (map-indexed (fn [i cl]
-                             (if-let [t (db/one path "SELECT * FROM transcripts WHERE version = :version AND rel = :rel;"
-                                                {:version version :rel (:rel cl)})]
+                             (if-let [t (archive/original-row path version (:rel cl))]
                                [(segment meta t (select-keys cl [:start :end :text :why :pre :post])) nil]
                                [nil (str "clip " (inc i) " (" (:source_name cl) "): not in this Mac's index")]))
                            (:clips doc))
@@ -460,6 +465,7 @@
                                              :by (case (:method res)
                                                    "edl" "the EDL, imported"
                                                    "subtitles" "frames, placed after the subtitles"
+                                                   "frames" "frames (a clip has no timecode)"
                                                    "frames, appended")
                                              :originals_imported (:imported res)
                                              :originals_reused (:reused res)

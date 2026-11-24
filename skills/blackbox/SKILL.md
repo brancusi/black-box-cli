@@ -1,6 +1,6 @@
 ---
 name: blackbox
-description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, and who is heard or seen — build selects as a review page (watch, read along, select, import into Resolve), make rough cuts (edits) that play straight away, online an edit in DaVinci Resolve from the camera originals with the recorders synced, and pull full-size stills. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip; to build or pull selects, sound bites or options; to cut, play or show something; to read a transcript; to "online" an edit or take it to Resolve; for stills; or "teach me about Black Box", a tutorial, what Black Box can do or what's new.
+description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, who is heard or seen, and what shot it (camera, slow motion, frame rate, resolution) — build selects as a review page (watch, read along, select, import into Resolve), make rough cuts (edits) that play straight away, online an edit in DaVinci Resolve from the camera originals with the recorders synced, and pull full-size stills. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip; to build or pull selects, sound bites or options; to cut, play or show something; to read a transcript; to "online" an edit or take it to Resolve; for stills; or "teach me about Black Box", a tutorial, what Black Box can do or what's new.
 ---
 <!-- Installed by `blackbox setup agent` and replaced when it runs again. Delete this line to keep your own edits. -->
 
@@ -22,6 +22,7 @@ an error, 2 a command line to fix (the valid flags are listed).
 | "cut me …", "make an edit / a rough cut / a string-out of …", "play / show me …" | find clips, then `blackbox edl new - --play` (Rough cuts) |
 | "online this", "put it in Resolve", "go to source" | `blackbox online <edit id>` |
 | a still for print or the web | `blackbox still new …`, then `still show <id> --wait` in the background |
+| "slow motion from the FX3", "only 4K", "Osmo footage", "shot at 60" | the filters on `footage`, `look`, `shots`, `search` (Find by camera, below) |
 | "where is this picture from?" | `blackbox source <picture>` |
 | "update Black Box's CLI", "get the latest blackbox" | `blackbox update` |
 
@@ -78,7 +79,8 @@ how many files are `pending` (new, not read yet) or `offline`. If `health` is:
    matches); narrow with `--all` (every word), `--day 2026-09-18`, `--path fx3`, `--video`.
 2. `blackbox line k7f3q2ab.41` or `blackbox transcript C5274.MP4` to read around a hit and check the thought is
    complete.
-3. `blackbox footage --month 2026-09` lists the files in scope (day, length, lines).
+3. `blackbox footage --month 2026-09` lists the files in scope (day, length, lines, and the camera, resolution
+   and frame rate when Black Box has read them).
 
 Line ids look like `k7f3q2ab.41`: the clip, then the line. They're the same on every Mac and after every
 `index`, so they can be kept. Speaker labels (S1, S2) are per file, not people: for people, see below.
@@ -87,6 +89,31 @@ One moment is often heard on several devices: a camera and the recorders on peop
 has synced them, `search` shows such a moment once, with the same line on the other devices in `also`
 (`--every-device` lists each; `--fields id,text,also,check` always works). A `check` means the devices' transcripts name different speakers: look before
 putting the words in someone's mouth.
+
+## Find by camera, frame rate and resolution
+
+Black Box reads every original's own metadata on the mini (never its folder name): the camera or recorder that
+made it, the rate it was shot at, slow motion, resolution, codec and bitrate. `footage`, `search`, `look`, `like`
+and `shots` all narrow by it, with each other and with `--month`, `--day` and `--path`:
+
+- `--device fx3`: the camera or recorder by name, model or make (`fx3`, `a7s`, `osmo`, `iphone`, `sony`,
+  `dji mic`, `zoom`; repeatable: either).
+- `--slow-motion`: shot faster than it plays: S&Q or a phone's slo-mo (plays slow as it is), or a high-frame-rate
+  file at 90 fps and up (the editor conforms it).
+- `--fps 120`: the rate it was shot at (120 finds 119.88, 24 finds 23.976; `50+` at least 50).
+- `--res 4k`: 8k, 6k, 5k, 4k, 2.7k, 1080p, 720p, sd (`4k+` at least 4K; repeatable).
+- `--codec hevc` (h264, hevc, prores, or a profile like 422), `--bitrate 100+` (Mb/s).
+
+"Slow motion from the FX3": `blackbox footage --device fx3 --slow-motion` lists the files with `fps` and
+`slow_motion` (`5x`: plays 5 times slower as it is; `conform`: a high-frame-rate file to conform); `--fields
+file,day,device,res,fps,slow_motion,codec,bitrate,lens,gamma` shows more. Then `look <what> --device fx3
+--slow-motion` or `shots <what> --slow-motion` finds the moment. Slow motion records no sound, so `footage` lists
+files nothing is said in too (`lines` 0), and a cut list takes them by file name (`C5280.MP4 0:04-0:09`):
+`cut.edl` has no timecode for them (a warning says so), and `online` places such a cut by frame. `search` only
+finds what was said, so a filter there narrows to files with speech.
+
+`error.code no-probe` means this Mac's index has no camera facts yet: run `blackbox index`. If `index` counts many
+`probe` files `skipped`, Dropbox keeps them online-only: in Finder, make `media_meta/probe` available offline.
 
 ## Who: people by voice and face
 

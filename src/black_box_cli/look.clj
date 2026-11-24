@@ -162,19 +162,6 @@
 
 (defn- nfc [s] (Normalizer/normalize (str s) Normalizer$Form/NFC))
 
-(defn- in-scope?
-  "Whether a frames file's original is in the scope of --month, --day, --path and --video."
-  [{:keys [month day path video]} {:keys [rel]}]
-  (let [d (or (archive/day-of rel) "")]
-    (and (or (empty? month) (some #(str/starts-with? d %) month))
-         (or (empty? day) (some #(= d %) day))
-         (or (nil? path) (str/includes? rel (nfc path)))
-         (or (not video) (some #(str/ends-with? (str/lower-case rel) (str "." %)) archive/video-exts)))))
-
-(defn- scope-words [{:keys [day month path video]}]
-  (let [parts (cond-> (vec (concat day month)) path (conj (str "path~" path)) video (conj "video only"))]
-    (if (seq parts) (str/join ", " parts) "everything")))
-
 (defn- query-vector
   "Black Box's vector for `words`, checked against the frames' model and label (decision 6)."
   [env words files dim]
@@ -225,7 +212,7 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
 (defn- search
   "`look` and `like`: every frame in scope scored against `q`, the best shown."
   [{:keys [meta home env opts] :as ctx} {:keys [db bin rows dim]} files q query exclude]
-  (let [scope-files (filterv #(in-scope? opts %) files)
+  (let [scope-files (filterv #(archive/in-scope? opts (:rel %)) files)
         m (frames/read-floats bin)
         _ (when (not= (alength m) (* rows dim))
             (out/fail! "index-error" "the picture index's vectors don't match it" {:help ["Run `blackbox index --rebuild`"]}))
@@ -273,7 +260,7 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
                  (review-page! (:pages (index/paths ctx)) query rows jpegs)))]
     (when (and page (:open opts)) (tools/spawn! ["/usr/bin/open" page]))
     [(apply array-map (concat [:query query
-                               :scope (scope-words opts)
+                               :scope (archive/scope-words opts)
                                :frames_searched (reduce + (map :count scope-files))
                                :count (count shown)
                                :frames (if (seq shown) shown "no frames in scope")]
@@ -318,7 +305,7 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
 
 (defn- shots-scope
   "The SQL conditions on shots `s` and clips `c` for the flags in `opts`, and their parameters."
-  [{:keys [month day path camera framing clean file]}]
+  [{:keys [month day path camera framing clean file rels]}]
   (let [dates (concat (map (fn [d] (let [[y m dd] (str/split d #"-")] (str "%/" y "/" m "/" dd "/%"))) day)
                       (map (fn [mo] (let [[y m] (str/split mo #"-")] (str "%/" y "/" m "/%"))) month))
         dkeys (map-indexed (fn [i _] (keyword (str "d" i))) dates)
@@ -329,15 +316,17 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
               file (conj "(c.rel LIKE :file_end OR c.rel LIKE :file_part)")
               camera (conj "lower(s.camera) LIKE :camera")
               (seq framing) (conj (str "lower(s.framing) IN (" (str/join ", " (map #(str ":" (name %)) fkeys)) ")"))
-              clean (conj "s.issues = '[]'"))
+              clean (conj "s.issues = '[]'")
+              rels (conj "c.rel IN (SELECT value FROM json_each(:rels))"))
      :params (cond-> (merge (zipmap dkeys dates) (zipmap fkeys (map (comp str/lower-case str/trim) framing)))
                path (assoc :path (str "%" (nfc path) "%"))
                file (assoc :file_end (str "%/" (nfc (str/trim file))) :file_part (str "%" (nfc (str/trim file)) "%"))
-               camera (assoc :camera (str "%" (str/lower-case (str/trim camera)) "%")))}))
+               camera (assoc :camera (str "%" (str/lower-case (str/trim camera)) "%"))
+               rels (assoc :rels (json/generate-string (sort rels))))}))
 
 (defn- shots-scope-words [{:keys [camera framing clean file] :as opts}]
   (let [parts (cond-> []
-                (not= "everything" (scope-words opts)) (conj (scope-words opts))
+                (not= "everything" (archive/scope-words opts)) (conj (archive/scope-words opts))
                 file (conj (str "file~" file))
                 camera (conj (str "camera~" camera))
                 (seq framing) (conj (str "framing " (str/join "/" framing)))
@@ -373,7 +362,7 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
   (let [path (index/require-index! ctx)
         db (shots/require! path home)
         terms (vec (remove str/blank? (:words args)))
-        _ (when (and (empty? terms) (not (some opts [:camera :framing :clean :file :month :day :path])))
+        _ (when (and (empty? terms) (not (some opts [:camera :framing :clean :file :month :day :path :rels])))
             (out/fail! "usage" "no words and no filter: that would be every shot"
                        {:help ["Run `blackbox shots <words>`, or narrow with --camera, --framing, --file or --day"]}))
         {:keys [where params]} (shots-scope opts)

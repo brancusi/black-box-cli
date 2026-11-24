@@ -38,16 +38,29 @@
 (def ^:private person-flag
   {:flag "--person" :value "name" :doc "only where this person is heard (search) or heard or seen (footage)"})
 
+(def ^:private media-flags
+  "The camera and technical filters (black-box-cli.probe): what made a file, how it was shot."
+  [{:flag "--device" :value "name" :repeat true
+    :doc "only files from this camera or recorder (its name, model or make: fx3, osmo, iphone, sony; repeatable)"}
+   {:flag "--fps" :value "n" :doc "only files shot at this rate (120 finds 119.88; 50+ at least 50)"}
+   {:flag "--slow-motion" :doc "only slow motion: shot faster than it plays (S&Q, a phone's slo-mo) or at 90 fps and up"}
+   {:flag "--res" :value "4k" :repeat true :doc "only this resolution: 8k, 6k, 5k, 4k, 2.7k, 1080p, 720p, sd (4k+ at least; repeatable)"}
+   {:flag "--codec" :value "name" :doc "only this codec or profile: h264, hevc, prores, 422…"}
+   {:flag "--bitrate" :value "mbps" :doc "only this bitrate in Mb/s (100+ at least, 50- at most, 100 within 10%)"}])
+
 (def ^:private picture-flags
   "look's and like's: how many, how many from one clip, the scope (no transcript version), the review page."
-  [(limit-flag 20 "frames")
-   {:flag "--per-clip" :value "n" :parse :int :default 1 :doc "at most n frames from one clip (default 1; 0: no limit)"}
-   {:flag "--month" :value "YYYY-MM" :repeat true :doc "only this month (repeatable)"}
-   {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "only this day (repeatable)"}
-   {:flag "--path" :value "text" :doc "only files whose path contains this, e.g. src/fx3"}
-   {:flag "--video" :doc "only video files"}
-   {:flag "--html" :doc "also write a page of the frames (prints its path)"}
-   {:flag "--open" :doc "write the page and open it in the browser"}])
+  (vec
+   (concat
+    [(limit-flag 20 "frames")
+     {:flag "--per-clip" :value "n" :parse :int :default 1 :doc "at most n frames from one clip (default 1; 0: no limit)"}
+     {:flag "--month" :value "YYYY-MM" :repeat true :doc "only this month (repeatable)"}
+     {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "only this day (repeatable)"}
+     {:flag "--path" :value "text" :doc "only files whose path contains this, e.g. src/fx3"}
+     {:flag "--video" :doc "only video files"}]
+    media-flags
+    [{:flag "--html" :doc "also write a page of the frames (prints its path)"}
+     {:flag "--open" :doc "write the page and open it in the browser"}])))
 
 (def commands
   "Every command: its words, the phase that built it, a summary, arguments, flags and examples."
@@ -76,7 +89,7 @@
                 (limit-flag 20 "lines")
                 person-flag
                 {:flag "--every-device" :doc "a line heard on several devices once per device (default: once, with `also`)"}]
-               (into (scope-flags))
+               (into (scope-flags)) (into media-flags)
                (into (output-flags)))
     :examples ["blackbox search marble"
                "blackbox search \"hammer drill\" --month 2026-09"
@@ -98,10 +111,15 @@
     :flags (-> [(limit-flag 40 "lines")] (into (scope-flags false)) (into (output-flags false)))
     :examples ["blackbox transcript C5274.MP4" "blackbox transcript C5274.MP4 --full"]}
    {:path ["footage"] :phase 2
-    :summary "the files with transcripts in scope: day, length, lines"
-    :flags (-> [(limit-flag 50 "files") person-flag] (into (scope-flags)) (into (output-flags)))
+    :summary "the files in scope: day, length, lines, and the camera, resolution and frame rate"
+    :flags (-> [(limit-flag 50 "files") person-flag] (into (scope-flags)) (into media-flags) (into (output-flags)))
     :examples ["blackbox footage --month 2026-09" "blackbox footage --video --fields all"
-               "blackbox footage --person <name> --fields file,day,heard,seen,heard_at,seen_at"]}
+               "blackbox footage --device fx3 --slow-motion" "blackbox footage --res 4k+ --fps 50+ --month 2026-11"
+               "blackbox footage --person <name> --fields file,day,heard,seen,heard_at,seen_at"]
+    :about (str "Black Box reads each original's own metadata on the mini (media_meta/probe): the camera or recorder,\n"
+                "the rate it was shot at, slow motion, resolution, codec, bitrate. fps is the shooting rate; slow_motion\n"
+                "is 5x for S&Q that plays slow as it is, conform for a high-frame-rate file to conform. Files nothing is\n"
+                "said in (slow motion records no sound) are listed too, with 0 lines; a cut list takes them by name.\n")}
    {:path ["edl" "new"] :phase 3
     :summary "a cut list → a rough cut for mpv (proxies only) and cut.edl for Resolve"
     :args [{:arg "cutlist" :doc "a cut list file, or - for stdin"}]
@@ -239,6 +257,7 @@
                 {:flag "--month" :value "YYYY-MM" :repeat true :doc "only this month (repeatable)"}
                 {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "only this day (repeatable)"}
                 {:flag "--path" :value "text" :doc "only files whose path contains this, e.g. src/fx3"}]
+               (into media-flags)
                (into (output-flags)))
     :examples ["blackbox shots hands carving stone" "blackbox shots boat lagoon --camera pan --framing wide"
                "blackbox shots --file C5274.MP4 --day 2026-09-16" "blackbox shots workshop --clean --fields all"]

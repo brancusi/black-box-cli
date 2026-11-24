@@ -110,12 +110,6 @@ CHANGELOG.md.
     ~/Black Box/reviews/<id>/ (review.html with the review's JSON in it, review.json, thumbnails); `review open`
     serves it on 127.0.0.1 with a key, and its Import sends the ticked clips, trimmed or not, to `online`. English
     under Italian lines waits for Black Box's translations in media_meta (ask 12).
-17. **`online` puts what's said on the subtitle track (owner, 2026-11-24).** Every word in each clip's range,
-    handles included, as an .srt beside the EDL. Resolve 21.1 has no call to write subtitle items and crashes when
-    given frames for a subtitle clip, and it appends one at the timeline's end, keeping each line's time from there;
-    so the subtitles go first onto an empty timeline, and then each clip at its own frame (where the frames before it
-    end, as the plan counts them), its recorders at their clip's frame and exactly its length. Without anything
-    said, the EDL is imported as before.
 16. **Black Box updates the CLI between its own releases (owner, 2026-11-24).** A release is live on every Mac
     minutes after it's published, with no one signing anything by hand: `bb release` builds it here and publishes it with
     a manifest, waiting on nothing (GitHub only re-runs the tests in the background); it signs the manifest as it publishes
@@ -124,9 +118,22 @@ CHANGELOG.md.
     version.clj; raise it when the CLI needs something new from Black Box), and Black Box never runs a CLI older
     than the one it carries, so neither runs ahead of the other. The CLI still talks to nothing: Black Box
     downloads, and `blackbox update` only asks it to check now (docs/CONTRACT.md, CLI updates).
+17. **`online` puts what's said on the subtitle track (owner, 2026-11-24).** Every word in each clip's range,
+    handles included, as an .srt beside the EDL. Resolve 21.1 has no call to write subtitle items and crashes when
+    given frames for a subtitle clip, and it appends one at the timeline's end, keeping each line's time from there;
+    so the subtitles go first onto an empty timeline, and then each clip at its own frame (where the frames before it
+    end, as the plan counts them), its recorders at their clip's frame and exactly its length. Without anything
+    said, the EDL is imported as before.
+18. **Footage is found by what shot it, from the files' own metadata (owner, 2026-11-24; Black Box ask 14).**
+    Black Box reads each original's camera, rates, resolution, codec and bitrate on the mini into
+    `media_meta/probe`; never a folder name, never a location. The CLI indexes the newest file per original and
+    narrows every finding command by it (`--device`, `--fps`, `--slow-motion`, `--res`, `--codec`, `--bitrate`).
+    Slow motion records no sound, so a file with facts but no transcript is still footage: `footage` lists it, a
+    cut list takes it by name (its original's path from the root the transcripts give), and with no timecode in
+    the facts, `cut.edl` counts it from 0:00 and `online` places any cut holding one by frame.
 
 ## Not this repo's
 
-Making proxies, transcripts, embeddings, people, prints, the sync map or shot logs; Black Box itself; the studio's pipeline;
+Making proxies, transcripts, embeddings, people, prints, the sync map, shot logs or camera facts; Black Box itself; the studio's pipeline;
 Resolve beyond new timelines and projects on the same Mac (`online`; the mini's project builds are Black Box's,
 this CLI only asks); anything on the NAS.

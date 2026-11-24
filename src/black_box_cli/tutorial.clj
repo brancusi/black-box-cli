@@ -90,11 +90,13 @@
     :what (str "Every clip is logged shot by shot: framing, camera move, what happens, its best few seconds and any "
                "issues (shake, focus).")
     :ask ["Find close-ups of hands carving stone, nothing shaky" "Slow pans over the quarry for b-roll"
-          "What's the best moment of C5274?"]
+          "What's the best moment of C5274?" "Slow motion from the FX3, only 4K"]
     :runs [["blackbox shots hands carving stone --framing close --clean" "close shots with no issues logged"]
            ["blackbox shots --camera pan --month 2026-09" "every pan that month"]
-           ["blackbox shots --file C5274.MP4" "one clip's shots in order, with its summary"]]
+           ["blackbox shots --file C5274.MP4" "one clip's shots in order, with its summary"]
+           ["blackbox footage --device fx3 --slow-motion --res 4k" "FX3 slow motion in 4K, from the files' own metadata"]]
     :tips ["The logs are a model's reading: look at the frame before trusting a description."
+           "--device, --slow-motion, --fps, --res, --codec and --bitrate narrow footage, look, shots and search by what shot it."
            "In a cut, a shot plays its best moment (k7f3q2ab.s3) or all of it (k7f3q2ab.s3 whole)."]}
    {:id "cut"
     :punch "Ask for a cut. Watch it seconds later."
@@ -246,7 +248,11 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.12" :date "2026-11-24"
+  [{:version "0.1.13" :date "2026-11-24"
+    :items [{:title "Slow motion from the FX3" :lesson "shots" :run "blackbox footage --device fx3 --slow-motion"
+             :what (str "Find footage by the camera that shot it, its frame rate, slow motion and resolution, read from each "
+                        "file's own metadata. Silent slow-motion clips can go straight into a cut.")}]}
+   {:version "0.1.12" :date "2026-11-24"
     :items [{:title "Subtitles in Resolve" :lesson "online" :run "blackbox online quarry"
              :what "Importing selects or an edit puts what's said on the timeline's subtitle track, handles included: copy lines straight from it."}]}
    {:version "0.1.11" :date "2026-11-24"

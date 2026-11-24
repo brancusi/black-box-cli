@@ -116,7 +116,6 @@
       (is (= [["C5274.MP4" "0:26.5" "0:29.5"] ["C5900.MP4" "0:00.0" "0:30.0"]]
              (mapv (juxt :file :in :out) (:cut edn)))
           "its best moment, or all of it"))
-    (testing "what can't be cut says why"
-      (is (= ["clip 1 (line 2): no shot r54qb74c.s9 in the shot logs"
-              "clip 2 (line 3): no transcript for media/2026/09/16/src/fx3/C5280.MP4, which cut.edl needs for its timecode"]
+    (testing "what can't be cut says why; a shot in a file nothing is said in is cut by its camera facts"
+      (is (= ["clip 1 (line 2): no shot r54qb74c.s9 in the shot logs"]
              (-> (cut run-in "title: X\nr54qb74c.s9\nsqlknzuz.s1\n") :edn :error :problems))))))

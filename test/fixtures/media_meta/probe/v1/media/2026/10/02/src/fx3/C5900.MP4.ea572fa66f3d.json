@@ -1,0 +1,61 @@
+{
+ "schema": "media-mgmt.probe/1",
+ "source": {
+  "rel": "media/2026/10/02/src/fx3/C5900.MP4",
+  "sha256": "ea572fa66f3d2527e1ff2bde51941dfcb03d2fc9fc0c3146b3cf4394c628553d",
+  "size": 1,
+  "name": "C5900.MP4",
+  "kind": "video"
+ },
+ "camera": {
+  "make": "Sony",
+  "model": "ILME-FX3",
+  "name": "FX3",
+  "serial": null,
+  "lens": "Invented 24-70mm F2.8",
+  "firmware": null,
+  "from": "metadata"
+ },
+ "video": {
+  "codec": "hevc",
+  "profile": "Main 4:2:2 10",
+  "width": 3840,
+  "height": 2160,
+  "resolution": "4K",
+  "scan": "progressive",
+  "fps": 59.94,
+  "fps_exact": "60000/1001",
+  "vfr": false,
+  "capture_fps": 59.94,
+  "slow_motion": null,
+  "bit_depth": 10,
+  "chroma": "4:2:2",
+  "bitrate_bps": 200000000,
+  "color": {
+   "primaries": null,
+   "transfer": null,
+   "matrix": null,
+   "gamma": null,
+   "gamut": null
+  },
+  "rotation": 0
+ },
+ "audio": {
+  "codec": "pcm_s24be",
+  "channels": 2,
+  "sample_rate": 48000,
+  "streams": 1
+ },
+ "duration_s": 20.0,
+ "recorded_at": "2026-09-16T10:00:00",
+ "producer": {
+  "tool": "media-mgmt",
+  "version": "0.0.0",
+  "label": "v1",
+  "sources": [
+   "ffprobe",
+   "exiftool"
+  ],
+  "made_at": "2026-11-24T00:00:00Z"
+ }
+}

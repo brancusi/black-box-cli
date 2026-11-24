@@ -2,8 +2,8 @@ scope: 2026-10
 count: 1
 total: 2
 hours: 0.03
-files[1]{file,day,length,lines}:
-  C5900.MP4,2026-10-02,"1:00.0",1
+files[1]{file,day,length,lines,device,res,fps}:
+  C5900.MP4,2026-10-02,"1:00.0",1,FX3,4K,59.94
 help[3]:
   Run the same with `--limit 2` for all 2 files
   Run `blackbox transcript <file>` to read one

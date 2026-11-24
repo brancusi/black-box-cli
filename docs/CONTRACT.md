@@ -19,6 +19,7 @@ Files Dropbox keeps online-only are skipped unread and counted (`skipped`), neve
 | `people/` | names per clip: voices by speaker label, faces by face track (`media-mgmt.people/1`) | `registry/<stamp>.json` names `assignments/<stamp>.jsonl`; only the newest registry is read, and its assignments must match its `assignments_sha256` |
 | `prints/` | voice and face prints, float32 (`media-mgmt.prints/1`) | `<model>/<rel>.<stamp>.prints.json`; only the newest stamp of each (model, rel) is read |
 | `shots/` | what happens in each shot of a clip (`blackbox.shots/1`), by a model from the proxy with its sound | `<model label>/<prompt version>/<rel>.shots.json`; the CLI reads `gemini-3.1-pro/v1`; marker `.blackbox-shots-root`; never redone in place |
+| `probe/` | each original's camera or recorder, rates, slow motion, resolution, codec and bitrate, from its own metadata (`media-mgmt.probe/1`) | `v<N>/<rel>.<sha256[:12]>.json`, the newest N read (a new version republishes everything; `v1` stays as it was); marker `.media-mgmt-probe-root`; written once, a changed original gets a new file beside the old one (the CLI keeps the newest per rel) |
 | `sync/` | which recorder files were heard with each camera file, and the offset (`media-mgmt.sync/1`) | `<YYYY>/<MM>/<DD>.<stamp>.sync.jsonl`; only the newest stamp of each day is read; a pair joins on (rel, sha256) |
 
 `<rel>` is the original's path relative to the NAS media share, e.g. `media/2026/09/16/src/fx3/C5274.MP4`. Its
@@ -60,6 +61,33 @@ date folders give `day` and `month`.
   `issues` is `[]` for none.
 - A log whose `clip.rel` isn't its own path, or that isn't this schema, is skipped and counted. Shot ids are
   `<clip>.s<n>`, n its place in the log.
+
+### Camera facts JSON (`media-mgmt.probe/1`)
+
+```json
+{"schema": "media-mgmt.probe/1",
+ "source": {"rel": "media/2026/09/16/src/fx3/C5280.MP4", "sha256": "…", "size": 1, "name": "C5280.MP4", "kind": "video"},
+ "camera": {"make": "Sony", "model": "ILME-FX3A", "name": "FX3", "serial": null, "lens": "…", "firmware": null,
+            "from": "metadata"},
+ "video": {"codec": "h264", "profile": "High 4:2:2 Intra", "width": 3840, "height": 2160, "resolution": "4K",
+           "scan": "progressive", "fps": 23.976, "fps_exact": "24000/1001", "vfr": false, "capture_fps": 119.88,
+           "slow_motion": 5.0, "bit_depth": 10, "chroma": "4:2:2", "bitrate_bps": 150000000,
+           "color": {"primaries": null, "transfer": null, "matrix": null, "gamma": "s-log3-cine", "gamut": "s-gamut3-cine"},
+           "rotation": 0},
+ "audio": {"codec": "pcm_s16be", "channels": 2, "sample_rate": 48000, "streams": 1},
+ "duration_s": 12.0, "recorded_at": "…",
+ "producer": {"tool": "media-mgmt", "version": "…", "label": "v1", "sources": ["ffprobe", "exiftool"], "made_at": "…"}}
+```
+
+- Black Box's spec is media-mgmt `docs/probe.md`. `camera.name` is the short name people say (FX3, A7S III, Osmo
+  Pocket 3, iPhone 17 Pro, DJI Mic, Zoom F8n Pro…); `from` is `metadata`, `file name` or `matching video` (a camera's own WAV, named after its clip), or null with every camera
+  field when the file doesn't say. `video` is null for audio files.
+- `fps` is the rate it plays at, `capture_fps` the rate it was shot at (equal for normal footage), `slow_motion`
+  capture over the rate it's meant to play at (S&Q, a phone's slo-mo), null when it isn't; a high-frame-rate file
+  without S&Q has `capture_fps` 119.88 and `slow_motion` null.
+- `resolution` comes from the long edge: 8K, 6K, 5K, 4K, 2.7K, 1080p, 720p, SD.
+- No location is ever written. A file whose `source.rel` isn't its own path, whose name's sha isn't its
+  `source.sha256`'s start, or that isn't this schema, is skipped and counted.
 
 ### Frames JSON (`media-mgmt.embeddings/1`)
 

@@ -46,7 +46,8 @@
       (is (= "ok" (:health st)))
       (is (= "just now" (:age st)))
       (is (= [["transcripts" "ok" "4 files"] ["frames" "ok" "7 frames in 3 files"] ["people" "ok" "3 people, 6 names"]
-              ["prints" "ok" "3 voices, 4 faces"] ["sync" "ok" "1 days, 1 pairs"] ["shots" "ok" "5 shots in 3 clips"]]
+              ["prints" "ok" "3 voices, 4 faces"] ["sync" "ok" "1 days, 1 pairs"] ["shots" "ok" "5 shots in 3 clips"]
+              ["probe" "ok" "5 files: 4 video, 1 audio"]]
              (mapv (juxt :source :state :holds) (:sources st)))))
     (testing "the home view says it too"
       (is (= "ok" (-> (run) :index :health))))
@@ -100,5 +101,5 @@
     (is (= 0 exit))
     (is (str/starts-with? out "{") "stdout is still the one answer")
     (is (= "{\"stage\":\"transcripts\",\"state\":\"start\"}" (first lines)))
-    (is (= "{\"stage\":\"shots\",\"state\":\"done\"}" (last lines)))
-    (is (= 12 (count lines)))))
+    (is (= "{\"stage\":\"probe\",\"state\":\"done\"}" (last lines)))
+    (is (= 14 (count lines)))))

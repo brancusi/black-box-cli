@@ -128,16 +128,6 @@
 
 ;; ------------------------------------------------------------------------------------------------ like
 
-(defn- in-scope?
-  "Whether `rel` is in the scope flags' days, months and path."
-  [{:keys [day month path video]} rel]
-  (let [d (archive/day-of rel)]
-    (and (or (and (empty? day) (empty? month))
-             (some #{d} day)
-             (some #(and d (str/starts-with? d %)) month))
-         (or (nil? path) (str/includes? rel path))
-         (or (not video) (some #(str/ends-with? (str/lower-case rel) (str "." %)) archive/video-exts)))))
-
 (defn- first-lines
   "The first line id of each (rel, transcript sha256, speaker) in the transcripts' index: {[rel sha label] id}."
   [path]
@@ -173,7 +163,7 @@
                              :rel (:rel q)))))
         per-clip (:per-clip opts)
         ranked (->> (prints/like m dim (:row p) prints (:clip p))
-                    (filter #(in-scope? opts (:rel (first %))))
+                    (filter #(archive/in-scope? opts (:rel (first %))))
                     (keep (fn [x] (some->> (row x) (vector (:clip (first x)))))))
         picked (loop [[[clip r] & more :as xs] ranked seen {} out []]
                  (if (or (empty? xs) (>= (count out) (:limit opts)))

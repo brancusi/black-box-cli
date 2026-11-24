@@ -9,6 +9,7 @@
    [black-box-cli.index :as index]
    [black-box-cli.look :as look]
    [black-box-cli.meta :as meta]
+   [black-box-cli.probe :as probe]
    [black-box-cli.out :as out]
    [black-box-cli.setup :as setup]
    [black-box-cli.source :as source]
@@ -200,6 +201,8 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
           :else (let [ctx (assoc ctx :opts opts :args args :fmt fmt)
                       ctx (assoc ctx :meta (if (= ["index"] (:path spec)) (meta! ctx) (meta/locate ctx)))
                       _ (when (reads-index (:path spec)) (status/refresh! ctx))
+                      ;; --device, --fps, --res…: the originals they keep, for the command to narrow to
+                      ctx (cond-> ctx (probe/asked? opts) (probe/narrow (:index (index/paths ctx))))
                       [m help] (handler ctx)]
                   (when m (out/emit! m help fmt)) ; nil: a command that prints itself, or nothing (skill-check)
                   0)))

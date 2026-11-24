@@ -1,0 +1,56 @@
+{
+ "schema": "media-mgmt.probe/1",
+ "source": {
+  "rel": "media/2026/09/16/src/fx3/C5280.MP4",
+  "sha256": "bc0fcf97c7ae0dfe8c4fd54ceee076d52e4b7cdd8d8381f7346be6995ec32c3d",
+  "size": 1,
+  "name": "C5280.MP4",
+  "kind": "video"
+ },
+ "camera": {
+  "make": "Sony",
+  "model": "ILME-FX3A",
+  "name": "FX3",
+  "serial": null,
+  "lens": "Invented 24-70mm F2.8",
+  "firmware": null,
+  "from": "metadata"
+ },
+ "video": {
+  "codec": "h264",
+  "profile": "High 4:2:2 Intra",
+  "width": 3840,
+  "height": 2160,
+  "resolution": "4K",
+  "scan": "progressive",
+  "fps": 23.976,
+  "fps_exact": "24000/1001",
+  "vfr": false,
+  "capture_fps": 119.88,
+  "slow_motion": 5.0,
+  "bit_depth": 10,
+  "chroma": "4:2:2",
+  "bitrate_bps": 150000000,
+  "color": {
+   "primaries": null,
+   "transfer": null,
+   "matrix": null,
+   "gamma": "s-log3-cine",
+   "gamut": "s-gamut3-cine"
+  },
+  "rotation": 0
+ },
+ "audio": null,
+ "duration_s": 12.0,
+ "recorded_at": "2026-09-16T10:00:00",
+ "producer": {
+  "tool": "media-mgmt",
+  "version": "0.0.0",
+  "label": "v1",
+  "sources": [
+   "ffprobe",
+   "exiftool"
+  ],
+  "made_at": "2026-11-24T00:00:00Z"
+ }
+}

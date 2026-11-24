@@ -1,0 +1,38 @@
+{
+ "schema": "media-mgmt.probe/1",
+ "source": {
+  "rel": "media/2026/09/16/audio/DJI_01.WAV",
+  "sha256": "2d5135e7c53f6765cc908253efa8a90cd5325db10e0f05040662a8a3d39b15d3",
+  "size": 1,
+  "name": "DJI_01.WAV",
+  "kind": "audio"
+ },
+ "camera": {
+  "make": null,
+  "model": null,
+  "name": "DJI Mic",
+  "serial": null,
+  "lens": null,
+  "firmware": null,
+  "from": "file name"
+ },
+ "video": null,
+ "audio": {
+  "codec": "pcm_s24le",
+  "channels": 1,
+  "sample_rate": 48000,
+  "streams": 1
+ },
+ "duration_s": 60.0,
+ "recorded_at": "2026-09-16T10:00:00",
+ "producer": {
+  "tool": "media-mgmt",
+  "version": "0.0.0",
+  "label": "v1",
+  "sources": [
+   "ffprobe",
+   "exiftool"
+  ],
+  "made_at": "2026-11-24T00:00:00Z"
+ }
+}

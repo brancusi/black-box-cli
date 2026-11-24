@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.12:** Subtitles in Resolve ([more](#whats-new))
+**What's new in 0.1.13:** Slow motion from the FX3 ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -130,16 +130,19 @@ Every clip is logged shot by shot: framing, camera move, what happens, its best 
 - *Find close-ups of hands carving stone, nothing shaky*
 - *Slow pans over the quarry for b-roll*
 - *What's the best moment of C5274?*
+- *Slow motion from the FX3, only 4K*
 
 **Behind it:**
 
 - `blackbox shots hands carving stone --framing close --clean`: close shots with no issues logged
 - `blackbox shots --camera pan --month 2026-09`: every pan that month
 - `blackbox shots --file C5274.MP4`: one clip's shots in order, with its summary
+- `blackbox footage --device fx3 --slow-motion --res 4k`: FX3 slow motion in 4K, from the files' own metadata
 
 **Tips:**
 
 - The logs are a model's reading: look at the frame before trusting a description.
+- --device, --slow-motion, --fps, --res, --codec and --bitrate narrow footage, look, shots and search by what shot it.
 - In a cut, a shot plays its best moment (k7f3q2ab.s3) or all of it (k7f3q2ab.s3 whole).
 
 <a id="cut"></a>
@@ -286,6 +289,10 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.13 (2026-11-24)
+
+- **Slow motion from the FX3:** Find footage by the camera that shot it, its frame rate, slow motion and resolution, read from each file's own metadata. Silent slow-motion clips can go straight into a cut. `blackbox footage --device fx3 --slow-motion`
 
 ### 0.1.12 (2026-11-24)
 
