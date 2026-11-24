@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Releases are signed as they're published: `bb release` signs the manifest (Ed25519, the key only in the releasing
+  Mac's keychain; `bb release-key` makes it once) and publishes `blackbox-cli.json.sig`. Black Box, with the public
+  key `docs/release-key.pub` built in, installs only a signed release. Nothing is done by hand.
+  `bb release X.Y.Z --sign` signs a release published before this.
 - `bb release` builds and publishes from the releasing Mac and waits on nothing: GitHub's release workflow is gone
   (GitHub only re-runs the tests in the background on each push). `bb release X.Y.Z --check` checks a published
   release's download.

@@ -126,7 +126,10 @@ checks (`cmd+shift+b` runs test, lint and fmt).
 - **A release:** add what's new to `tutorial/news` (then `bb narrate`), commit, then `bb release X.Y.Z "summary"`
   (`--dry-run` checks first). It dates the CHANGELOG, sets the version, runs the checks, commits, tags, builds
   `blackbox-cli.jar`, its `.sha256` and the manifest `blackbox-cli.json`, pushes, publishes them on GitHub and checks
-  the download, all from this Mac. Nothing waits on GitHub: its check workflow re-runs the tests in the background. The mini checks and signs
+  the download, all from this Mac, and signs the manifest with the release key in this Mac's keychain (`bb
+  release-key` makes it once; its public half is `docs/release-key.pub`). Nothing waits on GitHub: its check
+  workflow re-runs the tests in the background. The private key never leaves the keychain: never print, copy or
+  commit it. The mini checks and signs
   it by itself, and Black Box installs it on every Mac within minutes, with nothing to do by hand
   (docs/CONTRACT.md, CLI updates). Never make or upload a `.sig` from here. When the CLI needs something new from Black Box, raise `min-black-box`
   in version.clj first: Macs on an older Black Box wait for it.

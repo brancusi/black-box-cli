@@ -62,8 +62,7 @@ index up to date first when Dropbox has brought new files into `media_meta` (a f
 Mac takes a minute or two). Black Box may also keep it up to date itself.
 
 Black Box keeps `blackbox` and this skill up to date by itself, minutes after a release. `blackbox update` asks it
-to check now. A release waits while it's `unsigned` (for a few minutes, while the Mac mini checks and signs it by
-itself) or when it needs a newer Black Box (`needs_black_box` says which). When you're told this skill was updated, re-read it and tell the user what's new (`blackbox tutorial new`).
+to check now. A release isn't installed when it's `unsigned` (tell the owner) or when it needs a newer Black Box (`needs_black_box` says which). When you're told this skill was updated, re-read it and tell the user what's new (`blackbox tutorial new`).
 
 `blackbox status` says more: each source (transcripts, frames, people, prints, sync, shots), what it holds, and
 how many files are `pending` (new, not read yet) or `offline`. If `health` is:
