@@ -1,6 +1,6 @@
 ---
 name: blackbox
-description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, and who is heard or seen — and make rough cuts that open straight away in mpv, then EDLs for DaVinci Resolve. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip, to show or play something, to read a transcript, or to make selects, a rough cut or an EDL.
+description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, and who is heard or seen — make rough cuts (edits) that play straight away, and online an edit: rebuild it in DaVinci Resolve from the camera originals, ready to grade. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip, to show or play something, to read a transcript, to make selects, a rough cut or an EDL, to "online" an edit or take it to source or Resolve, or for a Black Box tutorial or what Black Box can do.
 ---
 <!-- Installed by `blackbox setup agent` and replaced when it runs again. Delete this line to keep your own edits. -->
 
@@ -8,8 +8,9 @@ description: Search the studio's footage archive with the `blackbox` command —
 
 Run it as `~/.local/bin/blackbox` (it works whether or not `~/.local/bin` is on the PATH). Output is TOON by
 default (`--format json` or `--format edn`); after the output, `help[n]:` lines suggest next commands. Every
-command has `--help`. Nothing prompts. Errors come on stdout as `error:` with a `code`; exit 1 is an error, 2 a
-command line to fix (the valid flags are listed).
+command has `--help`. Nothing prompts. The CLI may be newer than this skill: `blackbox --help` lists every
+command it has, and `blackbox tutorial` explains them. Errors come on stdout as `error:` with a `code`; exit 1 is
+an error, 2 a command line to fix (the valid flags are listed).
 
 ## Teaching it: "give me a tutorial"
 
@@ -191,8 +192,9 @@ installed either, say `brew install ffmpeg`.
 Only when the user wants the cut in Resolve:
 
 - **Online it: a timeline on this Mac, from the source files, ready to grade.** When the user says "online
-  this", "go to source" or "put it in Resolve": `blackbox online <edit id>` (`--dry-run` first shows each clip with
-  its pre- and post-roll). Each clip goes back from its proxy to the camera original, gets 2 s of pre- and
+  this", "online that edit", "go to source" or "put it in Resolve": `blackbox online <edit id>`. "This" or "that
+  edit" is the last edit made or played in the conversation; with none, run `blackbox edl list` and confirm which
+  one (by title) before touching Resolve. `--dry-run` first shows each clip with its pre- and post-roll. Each clip goes back from its proxy to the camera original, gets 2 s of pre- and
   post-roll (`--pre`, `--post`, or ` pre 1 post 3` at the end of a clip's line in the cut list; clamped to the
   file), and Resolve on this Mac imports the originals, links the proxies and imports the edit's EDL as a new
   timeline: in the open project, or a new project when Resolve wasn't running (`--into current|new-project`;

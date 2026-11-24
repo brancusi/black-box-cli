@@ -16,7 +16,7 @@
 (deftest home-view-names-itself-and-media-meta
   (let [{:keys [exit out]} (s/cli)]
     (is (= 0 exit))
-    (is (str/starts-with? out "bin: ~/.local/bin/blackbox\ndescription: "))
+    (is (re-find #"^bin: ~/.local/bin/blackbox\nversion: \d+\.\d+\.\d+\ndescription: " out))
     (is (str/includes? out (str "media_meta: " s/fixture-meta))))
   (testing "no media_meta anywhere: said plainly, with the fix"
     (let [{:keys [exit out]} (s/cli* {} [])]

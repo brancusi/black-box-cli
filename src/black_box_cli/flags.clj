@@ -258,6 +258,11 @@
     :args [{:arg "lesson" :optional true :doc "a lesson's id (start, said, people, picture, shots, cut, online, project, source, stills), or all"}]
     :flags (output-flags false)
     :examples ["blackbox tutorial" "blackbox tutorial online" "blackbox tutorial all"]}
+   {:path ["setup" "skill-check"] :phase 17
+    :summary "for the hook `setup agent` installs: tells a running session when a newer skill was installed"
+    :flags [{:flag "--agent" :value "claude|codex" :default "claude" :doc "whose skill to check (default claude)"}]
+    :examples ["blackbox setup skill-check --agent claude < hook.json"]
+    :about "Reads the hook's JSON on stdin; prints nothing, or one line telling the agent to re-read the skill.\n"}
    {:path ["setup" "agent"] :phase 6
     :summary "install the Agent Skill and the session hook"
     :flags (output-flags false)

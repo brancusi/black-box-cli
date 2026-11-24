@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.7 (2026-11-24)
+
+- A running agent session hears of a new skill: `setup agent` also installs `blackbox setup skill-check` on
+  SessionStart and UserPromptSubmit (Claude Code and Codex). It notes which skill a session started with and, when
+  a newer one has been installed since (Black Box runs `setup agent` when it updates), adds one line at the next
+  prompt telling the agent to re-read it; otherwise it prints nothing. The installed skill carries the version that
+  wrote it.
+- The skill's description names onlining an edit and the tutorial, so "online that edit" or "give me the Black Box
+  tutorial" loads it in a new session; "that edit" is the last one made or played (or confirmed from `edl list`).
+  It also says the CLI may be newer than the skill (`blackbox --help`, `blackbox tutorial`).
+- The home view shows the CLI's `version` and points to `blackbox tutorial`.
+
 ## 0.1.6 (2026-11-23)
 
 - `blackbox tutorial [lesson|all]`: what an editor can do with Black Box, lesson by lesson (what to ask in plain

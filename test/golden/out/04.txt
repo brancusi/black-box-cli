@@ -1,4 +1,5 @@
 bin: <bin>
+version: <version>
 description: "Search the footage archive by what was said and what's in the picture, and build rough cuts and EDLs for Resolve."
 index:
   path: <local>/search/transcripts.sqlite
@@ -13,7 +14,8 @@ months[2]{month,files,hours,lines}:
   2026-10,2,0,2
   2026-09,2,0.4,6
 recent_edls: none yet
-help[3]:
+help[4]:
   Run `blackbox search <words> [--month YYYY-MM]` to find what was said
   Run `blackbox footage --month YYYY-MM` to list the files of a month
   Run `blackbox edl new <cutlist|->` to build an EDL (see `blackbox edl new --help`)
+  Run `blackbox tutorial` for everything it can do, lesson by lesson

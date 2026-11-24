@@ -33,13 +33,14 @@
     (assoc (cli* {} (concat ["--meta" fixture-meta "--local" local] args)) :local local)))
 
 (defn normalise
-  "Output written the way the goldens are: <local>, <meta>, ~, <bin>, <stamp>-, <now>, %<len>%."
+  "Output written the way the goldens are: <local>, <meta>, ~, <bin>, <version>, <stamp>-, <now>, %<len>%."
   [text {:keys [local home]}]
   (cond-> text
     local (str/replace local "<local>")
     true (str/replace fixture-meta "<meta>")
     home (str/replace home "~")
     true (-> (str/replace #"(?m)^bin: .*$" "bin: <bin>")
+             (str/replace #"(?m)^version: \d+\.\d+\.\d+$" "version: <version>")
              (str/replace #"%\d+%<meta>" "%<len>%<meta>")
              (str/replace #"\d{8}T\d{6}Z-" "<stamp>-")
              (str/replace #"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z" "<now>"))))

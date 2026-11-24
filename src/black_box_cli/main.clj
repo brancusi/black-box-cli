@@ -98,11 +98,13 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
         meta-line (if m (out/home-path m (:home ctx)) "not found")
         no-meta "Pass --meta <the media_meta folder>, or make Dropbox's media_meta available on this Mac"]
     (if-not months
-      (out/emit! (array-map :bin (bin ctx) :description description :index index :media_meta meta-line)
+      (out/emit! (array-map :bin (bin ctx) :version version/version :description description :index index
+                            :media_meta meta-line)
                  [(if m "Run `blackbox index` to build the search index from the transcripts" no-meta)]
                  fmt)
       (let [recent (take 3 (cuts/edls (index/paths ctx)))]
         (out/emit! (array-map :bin (bin ctx)
+                              :version version/version
                               :description description
                               :index index
                               :media_meta meta-line
@@ -114,7 +116,8 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
                      (not m) (conj no-meta)
                      true (conj "Run `blackbox search <words> [--month YYYY-MM]` to find what was said"
                                 "Run `blackbox footage --month YYYY-MM` to list the files of a month"
-                                "Run `blackbox edl new <cutlist|->` to build an EDL (see `blackbox edl new --help`)"))
+                                "Run `blackbox edl new <cutlist|->` to build an EDL (see `blackbox edl new --help`)"
+                                "Run `blackbox tutorial` for everything it can do, lesson by lesson"))
                    fmt)))
     0))
 
@@ -142,7 +145,8 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["people"] who/people-cmd
    ["whose"] who/whose-cmd
    ["tutorial"] tutorial/tutorial-cmd
-   ["setup" "agent"] setup/agent-cmd})
+   ["setup" "agent"] setup/agent-cmd
+   ["setup" "skill-check"] setup/skill-check-cmd})
 
 (def ^:private reads-index
   "The commands that read the index, which bring it up to date first (status/refresh!)."
@@ -187,7 +191,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
                       ctx (assoc ctx :meta (if (= ["index"] (:path spec)) (meta! ctx) (meta/locate ctx)))
                       _ (when (reads-index (:path spec)) (status/refresh! ctx))
                       [m help] (handler ctx)]
-                  (out/emit! m help fmt)
+                  (when m (out/emit! m help fmt)) ; nil: a command that prints itself, or nothing (skill-check)
                   0)))
 
       (flags/group-of word)

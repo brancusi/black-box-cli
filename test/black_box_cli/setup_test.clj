@@ -7,11 +7,20 @@
    [black-box-cli.flags :as flags]
    [black-box-cli.setup :as setup]
    [black-box-cli.support :as s]
+   [black-box-cli.version :as version]
    [cheshire.core :as json]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]))
 
 (def ^:private hook-command "\"$HOME/.local/bin/blackbox\" 2>/dev/null || true")
+
+(defn- check-command [agent]
+  (str "\"$HOME/.local/bin/blackbox\" setup skill-check --agent " agent " 2>/dev/null || true"))
+
+(defn- hooks-of [agent]
+  {"hooks" {"SessionStart" [{"hooks" [{"type" "command" "command" hook-command "timeout" 10}]}
+                            {"hooks" [{"type" "command" "command" (check-command agent) "timeout" 10}]}]
+            "UserPromptSubmit" [{"hooks" [{"type" "command" "command" (check-command agent) "timeout" 10}]}]}})
 
 (defn- home-with
   "A temporary home with this CLI at ~/.local/bin/blackbox (as bbin installs it) and the agents' folders named."
@@ -33,19 +42,21 @@
 
 (deftest a-fresh-mac-gets-the-skill-and-the-hook
   (let [home (home-with ".claude" ".codex")]
-    (is (= [["claude" "skill" "installed"] ["claude" "hook" "installed"]
-            ["codex" "skill" "installed"] ["codex" "hook" "installed; Codex runs it once [features] hooks = true"]]
+    (is (= [["claude" "skill" "installed"] ["claude" "hook" "installed"] ["claude" "skill check" "installed"]
+            ["codex" "skill" "installed"] ["codex" "hook" "installed; Codex runs it once [features] hooks = true"]
+            ["codex" "skill check" "installed; Codex runs it once [features] hooks = true"]]
            (results (setup! home))))
     (is (= "~/.local/bin/blackbox" (:bin (setup! home))))
     (let [skill (slurp (file home ".claude" "skills" "blackbox" "SKILL.md"))]
       (is (str/includes? skill setup/marker))
       (is (= skill (slurp (file home ".agents" "skills" "blackbox" "SKILL.md")))))
-    (is (= {"hooks" {"SessionStart" [{"hooks" [{"type" "command" "command" hook-command "timeout" 10}]}]}}
-           (json/parse-string (slurp (file home ".claude" "settings.json")))
-           (json/parse-string (slurp (file home ".codex" "hooks.json")))))
+    (is (= (hooks-of "claude") (json/parse-string (slurp (file home ".claude" "settings.json")))))
+    (is (= (hooks-of "codex") (json/parse-string (slurp (file home ".codex" "hooks.json")))))
     (testing "a second run changes nothing"
       (is (= [["claude" "skill" "already installed"] ["claude" "hook" "already installed"]
-              ["codex" "skill" "already installed"] ["codex" "hook" "already installed; Codex runs it once [features] hooks = true"]]
+              ["claude" "skill check" "already installed"]
+              ["codex" "skill" "already installed"] ["codex" "hook" "already installed; Codex runs it once [features] hooks = true"]
+              ["codex" "skill check" "already installed; Codex runs it once [features] hooks = true"]]
              (results (setup! home))))
       (is (empty? (fs/glob (fs/path home ".claude") "*.before-blackbox-*"))))))
 
@@ -61,8 +72,8 @@
     (let [after (slurp settings)
           [copy & more] (fs/glob (fs/path home ".claude") "settings.json.before-blackbox-*")]
       (is (= ["model" "hooks" "env"] (map second (re-seq #"(?m)^  \"(\w+)\"" after))) "the file's own order")
-      (is (= ["other" hook-command] (map #(-> % (get "hooks") first (get "command"))
-                                         (get-in (json/parse-string after) ["hooks" "SessionStart"]))))
+      (is (= ["other" hook-command (check-command "claude")] (map #(-> % (get "hooks") first (get "command"))
+                                                                  (get-in (json/parse-string after) ["hooks" "SessionStart"]))))
       (is (= before (slurp (str copy))))
       (is (nil? more)))))
 
@@ -76,7 +87,9 @@
     (let [res (setup! home)]
       (is (= [["claude" "skill" "left as it is: edited by hand (no marker line)"]
               ["claude" "hook" "left as it is: not JSON this can read"]
-              ["codex" "skill" "skipped: not set up on this Mac"] ["codex" "hook" "skipped: not set up on this Mac"]]
+              ["claude" "skill check" "left as it is: not JSON this can read"]
+              ["codex" "skill" "skipped: not set up on this Mac"] ["codex" "hook" "skipped: not set up on this Mac"]
+              ["codex" "skill check" "skipped: not set up on this Mac"]]
              (results res)))
       (is (str/starts-with? (first (:help res)) "To take the new skill, delete ~/.claude/skills/blackbox/SKILL.md")))
     (is (= "my own notes\n" (slurp skill)))
@@ -94,6 +107,28 @@
           (json/generate-string {"hooks" {"SessionStart" [{"hooks" [{"type" "command" "command" hook-command}]}]}}))
     (is (= [["claude" "skill" "updated"] ["claude" "hook" "already installed"]] (take 2 (results (setup! home)))))
     (is (str/includes? (slurp skill) setup/marker))))
+
+(deftest a-running-session-hears-of-a-new-skill
+  (let [home (home-with ".claude")
+        skill (file home ".claude" "skills" "blackbox" "SKILL.md")
+        check (fn [event id]
+                (:out (s/cli* {:home home :stdin (json/generate-string {:session_id id :hook_event_name event})}
+                              ["setup" "skill-check" "--agent" "claude"])))]
+    (setup! home)
+    (is (str/includes? (slurp skill) (str "<!-- blackbox skill " version/version " -->")))
+    (is (= "" (check "SessionStart" "s1")) "a session starts: nothing said")
+    (is (= "" (check "UserPromptSubmit" "s1")) "the same skill: nothing said")
+    (spit skill (str/replace (slurp skill) #"<!-- blackbox skill \S+ -->" "<!-- blackbox skill 9.9.9 -->"))
+    (let [said (check "UserPromptSubmit" "s1")]
+      (is (str/includes? said "updated (to 9.9.9)"))
+      (is (str/includes? said "re-read ~/.claude/skills/blackbox/SKILL.md")))
+    (is (= "" (check "UserPromptSubmit" "s1")) "said once")
+    (is (= "" (check "UserPromptSubmit" "s2")) "a session it didn't see start: it notes the skill, says nothing")
+    (is (= "" (check "SessionStart" "s3")) "a new session reads the new skill")
+    (testing "no input, or no skill: nothing, and exit 0"
+      (is (= {:exit 0 :out ""} (select-keys (s/cli* {:home home :stdin ""} ["setup" "skill-check"]) [:exit :out])))
+      (fs/delete skill)
+      (is (= "" (check "UserPromptSubmit" "s1"))))))
 
 (deftest only-for-this-cli
   (let [home (str (fs/create-temp-dir {:prefix "bbcli-home-"}))
@@ -121,7 +156,7 @@
 (deftest the-skill-names-real-commands
   (let [text (setup/skill-text "~/.local/bin/blackbox")
         lines (->> (re-seq #"`(blackbox [^`]*)`" text) (map second)
-                   (remove #(re-find #"[<…]" %)))]
+                   (remove #(re-find #"[<…]|^blackbox --help$" %)))]
     (is (str/includes? text setup/marker))
     (is (< 15 (count lines)))
     (testing "each `blackbox …` in the skill reads as a command line"
@@ -135,5 +170,5 @@
                 (is (map? (flags/parse spec tokens)))))))))
     (testing "and every command but setup is in it"
       (doseq [{:keys [path]} flags/commands
-              :when (not= ["setup" "agent"] path)]
+              :when (not= "setup" (first path))]
         (is (str/includes? text (str "blackbox " (str/join " " path))) (str/join " " path))))))
