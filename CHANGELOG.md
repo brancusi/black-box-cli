@@ -4,7 +4,9 @@
 
 - Releases reach every Mac within minutes, without waiting for a Black Box release (once Black Box has ask 13):
   each release carries a manifest, `blackbox-cli.json` (version, SHA-256, size and `min_black_box`, the oldest
-  Black Box it works with), which Black Box checks every few minutes. `blackbox update` asks Black Box to check now.
+  Black Box it works with), which Black Box checks every few minutes. A release installs once the owner has signed
+  it on the Mac mini (the key never on GitHub). `blackbox update` asks Black Box to check now (`unsigned`: waiting
+  for that approval).
   The home view says how this blackbox was installed (`installed`: bundled or updated, and Black Box's version).
 - The selects review never shifts: selecting a clip (in the gallery or an open clip) moves nothing. The selected
   clips' strip keeps one height (the wheel scrolls it sideways), the open clip's video box takes the clip's own

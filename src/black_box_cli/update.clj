@@ -1,7 +1,8 @@
 (ns black-box-cli.update
   "`blackbox update`: asks Black Box on this Mac to install the newest blackbox now. Black Box does the download
-  (the CLI talks to nothing but local tools, AGENTS.md rule 4): it takes a release only when this Mac's Black Box
-  is at least the release's `min_black_box`, and never runs one older than the copy it carries (docs/CONTRACT.md)."
+  (the CLI talks to nothing but local tools, AGENTS.md rule 4): it takes a release only once it's signed on the
+  mini and when this Mac's Black Box is at least the release's `min_black_box`, and never runs one older than the
+  copy it carries (docs/CONTRACT.md)."
   (:require
    [black-box-cli.app :as app]
    [black-box-cli.out :as out]
@@ -19,6 +20,8 @@
     "updated" [(str "blackbox " latest " is installed: the next command runs it, and the agent skill was updated")
                "Run `blackbox tutorial new` for what's new"]
     "current" ["This is the newest blackbox; Black Box also checks every few minutes by itself"]
+    "unsigned" [(str "blackbox " latest " is published but not approved yet: it installs within minutes of being"
+                     " signed on the Mac mini (tell the owner if it's waiting)")]
     "needs-black-box" [(str "blackbox " latest " needs Black Box " min_black_box " or later: update Black Box"
                             " (it installs blackbox " latest " as soon as it's updated)")]
     ["Run `blackbox update` again; if it keeps failing, tell the owner"]))
@@ -29,8 +32,9 @@
   (let [[ans err] (app/ask env ["cli" "update"])]
     (when err
       (out/fail! (:code err) (str "Black Box couldn't update blackbox: " (:message err))
-                 {:help (if (= "black-box-too-old" (:code err))
-                          ["This Black Box doesn't update blackbox by itself yet: update Black Box, which carries the newest it has"]
+                 {:help (case (:code err)
+                          "black-box-too-old" ["This Black Box doesn't update blackbox by itself yet: update Black Box, which carries the newest it has"]
+                          "signature_invalid" ["The newest release's signature doesn't verify, so it wasn't installed and this blackbox keeps running: tell the owner"]
                           (app/help-for (:code err) "blackbox updates"))}))
     [(apply array-map
             (concat [:state (:state ans)

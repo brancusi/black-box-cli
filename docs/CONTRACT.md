@@ -178,27 +178,33 @@ Black Box keeps `blackbox` and its skill up to date on every Mac by itself, betw
 talks to nothing (AGENTS.md rule 4); Black Box does the downloading.
 
 - **The manifest.** Every release carries `blackbox-cli.json` beside the jar and its `.sha256`, built by `bb dist`
-  in GitHub's release workflow:
-  `{schema: "black-box-cli.release/1", version, jar: "blackbox-cli.jar", sha256, size, min_black_box}`. The newest
-  is always at `https://github.com/brancusi/black-box-cli/releases/latest/download/blackbox-cli.json`; a version's
+  in GitHub's release workflow from the tag:
+  `{schema: "black-box-cli.release/1", version, jar: "blackbox-cli.jar", sha256, size, min_black_box}`. `version`
+  is the tag without its `v` (`bb dist` refuses otherwise), and the file's bytes never change once published. The
+  newest is at `https://github.com/brancusi/black-box-cli/releases/latest/download/blackbox-cli.json`; a version's
   jar at `…/releases/download/v<version>/blackbox-cli.jar`.
-- **When Black Box checks.** Every 2 minutes, with the manifest's ETag (`If-None-Match`; GitHub answers 304 when
-  nothing changed), and at once when it starts, after its own update, when the Mac wakes, and when asked by
-  `blackbox update`.
-- **What it may install.** A release whose `min_black_box` is at most Black Box's own version, and whose version
-  is newer than both the one installed and the one Black Box carries in its bundle. Otherwise it keeps what it has;
-  a release that needs a newer Black Box is taken as soon as Black Box itself is updated. Black Box never runs a CLI
-  older than the one it carries.
-- **Installing.** Download the jar, check its SHA-256 against the manifest and that `bb <jar> --version` says the
-  manifest's version, put it in a folder of its own (the previous one kept), point the launcher at it, then run
-  `blackbox setup agent` (the skill, with the version the skill-check hook compares). Anything that fails leaves the
-  last good one running.
+- **The signature (owner, 2026-11-24).** A release is approved by a person on the mini: `sign-cli.sh v<version>`
+  (in Black Box's repo) checks the jar's SHA-256 and size against the manifest and its `--version`, signs the
+  manifest's exact bytes with an Ed25519 key kept in the mini's keychain, and adds `blackbox-cli.json.sig` (the
+  64-byte signature in base64, one line) to the release. The key is never on GitHub, and the release workflow
+  never makes a `.sig`. Black Box has the public key built in: a release without its `.sig` doesn't exist yet for
+  it, and one whose `.sig` doesn't verify is an error (`signature_invalid`).
+- **When Black Box checks.** Every 2 minutes, a HEAD on the latest manifest (the redirect names the version; none
+  of it counts against GitHub's API limit; a 404 is nothing newer), and at once when it starts, after its own
+  update, when the Mac wakes, and when asked by `blackbox update`.
+- **What it may install.** A signed release whose `min_black_box` is at most Black Box's own version, and whose
+  version is newer than both the one installed and the one Black Box carries in its bundle. Otherwise it keeps what
+  it has; a release that needs a newer Black Box is taken as soon as Black Box itself is updated. Black Box never
+  runs a CLI older than the one it carries (the floor, and the first install without a network).
+- **Installing.** Download the jar, check its SHA-256 and size against the manifest and that `bb <jar> --version`
+  says the manifest's version, put it in a folder of its own (the previous one kept), point the launcher at it,
+  then run `blackbox setup agent` (the skill, with the version the skill-check hook compares). Anything that fails
+  leaves the last good one running.
 - **The launcher** (`~/.local/bin/blackbox`, `# black-box: bundled-cli`) also sets `BLACKBOX_CLI_SOURCE`
   (`bundled` or `updated`) and `BLACKBOX_APP_VERSION` (Black Box's version); the home view shows them as
   `installed`.
 - **`blackbox update`** runs `<Black Box> --cli cli update --format json`: Black Box checks now and answers
   `{state, latest, installed, black_box, min_black_box?, message?}`. `state` is `updated` (installed now; the next
-  command runs it), `current` (nothing newer), `needs-black-box` (the newest needs `min_black_box`) or an
-  `error {code, message}` (`download_failed`, `checksum_mismatch`, `offline`). An older Black Box without the
-  command is `black-box-too-old`.
-
+  command runs it), `current` (nothing newer), `unsigned` (a newer release isn't signed yet), `needs-black-box`
+  (the newest needs `min_black_box`), or an `error {code, message}` (`signature_invalid`, `download_failed`,
+  `checksum_mismatch`, `offline`). An older Black Box without the command is `black-box-too-old`.

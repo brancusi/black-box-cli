@@ -124,4 +124,5 @@
             said (out "bb" (str (fs/path dir "blackbox-cli.jar")) "--version")]
         (when-not (= version (:version manifest) said) (fail "the published jar says " said ", its manifest " (:version manifest)))
         (when (not= sha (:sha256 manifest)) (fail "the published jar's SHA-256 isn't the manifest's"))
-        (println "published" tag "·" sha "· Black Box installs it on Macs with Black Box" (:min_black_box manifest) "or later")))))
+        (println "published" tag "·" sha "· needs Black Box" (:min_black_box manifest))
+        (println "Next: the owner signs it on the Mac mini (sign-cli.sh" (str tag ")") "; Black Box installs it on every Mac minutes later.")))))
