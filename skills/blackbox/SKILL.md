@@ -18,7 +18,7 @@ an error, 2 a command line to fix (the valid flags are listed).
 |---|---|
 | "teach me about Black Box", a tour, a tutorial | `blackbox tutorial --open` |
 | "what's new in Black Box?" | `blackbox tutorial new` (and offer `--open`: its What's new plays the new parts) |
-| "build me selects / a selects review of …", "pull sound bites and b-roll of …", "show me options for …" | find clips, then `blackbox review new - --open` in the background (Selects review, below) |
+| "build me selects / a selects review of …", "pull sound bites and b-roll of …", "show me options for …" | find clips, then `blackbox review new - --open` (Selects review, below) |
 | "cut me …", "make an edit / a rough cut / a string-out of …", "play / show me …" | find clips, then `blackbox edl new - --play` (Rough cuts) |
 | "online this", "put it in Resolve", "go to source" | `blackbox online <edit id>` |
 | a still for print or the web | `blackbox still new …`, then `still show <id> --wait` in the background |
@@ -260,10 +260,16 @@ When the user asks for selects ("build me selects for …", "a selects review of
    C5274.MP4 0:26.5-0:30  # wide, the kiln at dusk
    ```
 3. `blackbox review new - --dry-run` checks it (every problem listed, nothing written).
-4. `blackbox review new - --open` **in the background** (your shell tool's background mode): it makes the review
-   in `~/Black Box/reviews/<id>/` (clips without a proxy are left out, under `warnings`) and opens it in their
-   browser, serving it on this Mac until the page has been closed for 5 minutes. Don't wait for it; tell them in a
-   line or two what's in it, by group.
+4. `blackbox review new - --open`: it makes the review in `~/Black Box/reviews/<id>/` (clips without a proxy are
+   left out, under `warnings`), opens it in their browser and returns at once. Tell them in a line or two what's
+   in it, by group.
+
+One review server on this Mac (127.0.0.1, port 7387) serves every review, each at its own address, so an editor
+can have several open in tabs and move between them. `review open` and `--open` start it when it isn't running
+(on its own, apart from your shell) and otherwise leave it be. **Never stop it, and never stop an earlier
+`review open`**: older reviews in other tabs need it. It stops itself after a day with no page open; a page whose
+server stopped says so and reconnects once any review is opened again. `blackbox review serve` runs the server in
+the foreground, only to see why it won't start (`error.code review-server`).
 
 What they can do on the page, if they ask: move the mouse across a clip to scrub through it, in to out; click it to open it with sound and
 its file's whole transcript (a word jumps there; `i` and `o` set the in and out; ← → move between clips). `s`
@@ -273,8 +279,9 @@ to `online` (below): a new timeline from the camera originals, with the handles,
 project) and Recorders (synced or off) chosen in the bar at the bottom; a toast says how it went. `?` lists the
 keys. An Italian line will get its English under it once Black Box publishes translations.
 
-`blackbox review list` lists them; `blackbox review open <id>` (in the background) serves one again, with Import
-working. review.html opened from Finder plays and reads but can't import.
+`blackbox review list` lists them; `blackbox review open <id>` opens one again, with Import working. review.html
+opened from Finder plays and reads but can't import. Reviews are kept until someone deletes them: to free space,
+delete review folders in `~/Black Box/reviews/` in Finder (blackbox never does).
 
 ## Taking a cut to DaVinci Resolve (only when asked)
 

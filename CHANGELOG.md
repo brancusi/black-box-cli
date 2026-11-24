@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Selects reviews stay open: one review server on this Mac (127.0.0.1:7387) serves every review at its own
+  address, so editors can keep several in tabs, and opening another never closes one. `review open` and
+  `review new --open` start it on its own when it isn't running and return at once (no background task to wait
+  on or stop); its key is kept, so a review's address works across restarts, and a page whose server stopped says
+  so and reconnects by itself. It stops after a day with no page calling. `blackbox review serve` runs it in the
+  foreground, to see why it won't start. Reviews are kept in `~/Black Box/reviews` until someone deletes them.
+
 ## 0.1.15 (2026-11-24)
 
 - A crash in Resolve after importing selects: the subtitles' .srt was left in the edit's bin as a subtitle item, and

@@ -133,6 +133,14 @@ CHANGELOG.md.
     the facts carry; without one, `cut.edl` counts it from 0:00 and `online` places any cut holding one by frame.
     Each original's facts come from the newest version folder that has it, so a version being republished
     overlays the last.
+19. **One review server serves every review, and nothing closes a review (owner, 2026-11-24).** Editors keep
+    several selects reviews open in tabs. A server per review on a random port died with its page's quiet or its
+    agent's task, and its tab could never reconnect. Now one server on 127.0.0.1:7387 (a free port when that's
+    taken) serves each review at `/<id>/`, with a key kept in Application Support, so an address keeps working
+    across restarts. `review open` starts it in a session of its own (perl's setsid, which macOS has) when it
+    isn't running and returns at once; a newer blackbox replaces an older one's server on the same port. It stops
+    itself after a day with no page calling; a page whose server stopped says so and reconnects. Reviews, like
+    edits, are kept until a person deletes them.
 
 ## Not this repo's
 

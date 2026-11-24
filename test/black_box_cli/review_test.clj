@@ -8,6 +8,7 @@
    [black-box-cli.review :as review]
    [black-box-cli.support :as s]
    [black-box-cli.tools :as tools]
+   [black-box-cli.version :as version]
    [cheshire.core :as json]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]))
@@ -101,28 +102,35 @@
 (deftest the-server
   (let [{:keys [run local home env dir]} (runner)
         {:keys [id]} (run selects "review" "new" "-")
-        folder (str (fs/path local "reviews" id))
+        other (:id (run "title: Other selects\nC5274.MP4 0:01-0:03\n" "review" "new" "-"))
         ctx {:home home :env env :meta s/fixture-meta :local local :opts {} :fmt :edn}
-        {:keys [url port stop]} (review/start! ctx folder)
-        token (second (re-find #"\?t=(\w+)" url))
+        {:keys [port token stop]} (review/start! ctx 0)
         get* #(http/get (str "http://127.0.0.1:" port %1) (merge {:throw false} %2))]
     (try
-      (is (str/starts-with? url (str "http://127.0.0.1:" port "/?t=")))
+      (is (= (str "http://127.0.0.1:" port "/" id "/?t=" token) (review/url port token id)))
       (testing "the key and the host"
-        (is (= 403 (:status (get* "/" {}))))
-        (is (= 403 (:status (get* "/?t=nope" {}))))
-        (is (str/starts-with? (raw-status port (str "/?t=" token) "elsewhere.example") "HTTP/1.1 403")
-            "a page elsewhere that points a name at 127.0.0.1 is refused")
-        (let [r (get* (str "/?t=" token) {})]
-          (is (= 200 (:status r)))
-          (is (str/includes? (:body r) "Kiln selects"))))
+        (is (= 403 (:status (get* (str "/" id "/") {}))))
+        (is (= 403 (:status (get* (str "/" id "/?t=nope") {}))))
+        (is (str/starts-with? (raw-status port (str "/" id "/?t=" token) "elsewhere.example") "HTTP/1.1 403")
+            "a page elsewhere that points a name at 127.0.0.1 is refused"))
+      (testing "every review, each at its own address"
+        (let [a (get* (str "/" id "/?t=" token) {})
+              b (get* (str "/" other "/?t=" token) {})]
+          (is (= [200 200] [(:status a) (:status b)]))
+          (is (str/includes? (:body a) "Kiln selects"))
+          (is (str/includes? (:body b) "Other selects")))
+        (is (= 404 (:status (get* (str "/nope/?t=" token) {}))))
+        (is (= 404 (:status (get* (str "/..%2F/?t=" token) {}))))
+        (is (= 302 (:status (get* (str "/" id "?t=" token) {:client (http/client {:follow-redirects :never})}))) "without its slash"))
+      (testing "the key outlives the server: the state file keeps it"
+        (is (= token (:token (json/parse-string (slurp (str (fs/path local "review-server.json"))) true)))))
       (testing "the proxy, in ranges; only the review's own"
-        (let [r (get* (str "/media/0?t=" token) {:headers {"range" "bytes=0-3"} :as :bytes})]
+        (let [r (get* (str "/" id "/media/0?t=" token) {:headers {"range" "bytes=0-3"} :as :bytes})]
           (is (= 206 (:status r)))
           (is (= 4 (count (:body r)))))
-        (is (= 404 (:status (get* (str "/media/7?t=" token) {})))))
+        (is (= 404 (:status (get* (str "/" id "/media/7?t=" token) {})))))
       (testing "Import: the chosen clips, trimmed, to online"
-        (let [r (http/post (str "http://127.0.0.1:" port "/api/import?t=" token)
+        (let [r (http/post (str "http://127.0.0.1:" port "/" id "/api/import?t=" token)
                            {:throw false :headers {"content-type" "application/json"}
                             :body (json/generate-string {:clips [{:n 1 :start 21 :end 24}] :pre 1 :post 1
                                                          :into "current" :audio true})})
@@ -134,17 +142,46 @@
           (is (= [480 599] ((juxt :in_frame :out_frame) (first (:clips plan)))) "21-24 s with 1 s each side, at 23.976")
           (is (= 1 (count (:audio plan))) "the recorder the sync map puts with it")))
       (testing "an Import with nothing chosen says so"
-        (let [r (http/post (str "http://127.0.0.1:" port "/api/import?t=" token)
+        (let [r (http/post (str "http://127.0.0.1:" port "/" id "/api/import?t=" token)
                            {:throw false :body (json/generate-string {:clips []})})]
           (is (= "usage" (get-in (json/parse-string (:body r) true) [:error :code])))))
+      (testing "/health says what it is"
+        (is (= "black-box-cli.review" (:server (json/parse-string (:body (get* (str "/health?t=" token) {})) true)))))
       (finally (stop)))))
 
-(deftest open-and-wait
-  (let [{:keys [run]} (runner)
+(deftest open-returns-and-keeps-the-server
+  (let [{:keys [run local home env]} (runner)
         {:keys [id]} (run selects "review" "new" "-")
-        opened (atom nil)]
-    (with-redefs [tools/spawn! (fn [argv] (reset! opened argv))
-                  review/start! (fn [_ _] {:url "http://127.0.0.1:1/?t=k" :done (doto (promise) (deliver true))})]
-      (let [out (run nil "review" "open" id)]
-        (is (= "http://127.0.0.1:1/?t=k" (:url out)))
-        (is (= ["/usr/bin/open" "http://127.0.0.1:1/?t=k"] @opened))))))
+        other (:id (run "title: Other selects\nC5274.MP4 0:01-0:03\n" "review" "new" "-"))
+        opened (atom [])
+        started (atom [])
+        servers (atom [])]
+    (with-redefs [tools/spawn! (fn [argv] (swap! opened conj argv))
+                  review/self-argv (fn [_] ["blackbox"])
+                  ;; the detached server, run in this process instead: `review serve` as the spawn would
+                  tools/spawn-detached! (fn [argv _]
+                                          (swap! started conj argv)
+                                          (let [ctx {:home home :env env :meta s/fixture-meta :local local :opts {} :fmt :edn}
+                                                {:keys [port token stop]} (review/start! ctx 0)]
+                                            (swap! servers conj stop)
+                                            (spit (str (fs/path local "review-server.json"))
+                                                  (json/generate-string {:token token :port port :cli version/version}))))]
+      (try
+        (let [a (run nil "review" "open" id)
+              b (run nil "review" "open" other)]
+          (testing "it returns at once with the page's address, started once"
+            (is (= 0 (:exit a)))
+            (is (str/includes? (:server a) "started"))
+            (is (str/includes? (:server b) "already running"))
+            (is (= 1 (count @started)) "the second review uses the running server: the first page stays open")
+            (is (some #{"serve"} (first @started)))
+            (is (= [["/usr/bin/open" (:url a)] ["/usr/bin/open" (:url b)]] @opened))
+            (is (str/includes? (:url a) (str "/" id "/?t=")))
+            (is (some #(str/includes? % "never stop") (:help a)))))
+        (finally (doseq [stop @servers] (stop)))))))
+
+(deftest the-server-starts-the-way-it-was-run
+  (is (= ["/bin/sh" "--local" "/l"]
+         (review/self-argv {:env {"BLACKBOX_BIN" "/bin/sh"} :argv ["review" "open" "x"] :local "/l"}))
+      "Black Box's launcher, with where things are")
+  (is (= ["/bin/sh"] (review/self-argv {:env {"BLACKBOX_BIN" "/bin/sh"} :argv []}))))

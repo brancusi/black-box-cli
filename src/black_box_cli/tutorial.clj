@@ -126,8 +126,10 @@
     :runs [["blackbox review new - --dry-run" "check the selects (a cut list with group: lines)"]
            ["blackbox review new - --open" "make the review and open it in the browser"]
            ["blackbox review list" "every review, newest first"]
-           ["blackbox review open kiln" "open one again, with Import working"]]
-    :tips ["Reviews are kept in ~/Black Box/reviews; review.html opens from Finder to watch and read, but importing needs it opened by your agent."
+           ["blackbox review open kiln" "open one again, with Import working"]
+           ["blackbox review serve" "the review server itself, in the foreground: only to see why it won't start"]]
+    :tips ["Keep as many reviews open in tabs as you like: one server on your Mac serves them all, and opening another never closes one."
+           "Reviews are kept in ~/Black Box/reviews until you delete them there; review.html opens from Finder to watch and read, but importing needs it opened by your agent."
            "Move the mouse across a clip to scrub through it. Keys: ? lists them all. s selects the clip you're on (they gather at the top, in timeline order), i imports them; in an open clip i and o set in and out as in Resolve, shift+I imports, and ← and → move between clips."
            "Italian lines will show their English underneath once Black Box publishes translations."]}
    {:id "online"
@@ -248,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.15" :date "2026-11-24"
+  [{:version "0.1.16" :date "2026-11-24"
+    :items [{:title "Many reviews, all open" :lesson "review" :run "blackbox review open kiln"
+             :what "Keep as many selects reviews open in tabs as you like and move between them: opening a new one never closes an older one."}]}
+   {:version "0.1.15" :date "2026-11-24"
     :items [{:title "Safer imports" :lesson "online" :run "blackbox online quarry"
              :what "The subtitles go straight onto the timeline and leave nothing in the bin to drag, so pulling a bin's clips into your edit is safe."}]}
    {:version "0.1.14" :date "2026-11-24"

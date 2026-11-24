@@ -270,10 +270,10 @@ body.in-detail header.top { padding-top: 8px; }
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var fmt = function (t) { t = Math.max(0, t || 0); var m = Math.floor(t / 60), s = t - m * 60; return m + ":" + (s < 10 ? "0" : "") + s.toFixed(1); };
   var mediaURL = function (k) {
-    if (SERVER) return "/media/" + k + "?t=" + encodeURIComponent(TOKEN);
+    if (SERVER) return "media/" + k + "?t=" + encodeURIComponent(TOKEN);
     return "file://" + D.media[k].split("/").map(encodeURIComponent).join("/");
   };
-  var thumbURL = function (c) { return c.thumb ? (SERVER ? "/" + c.thumb + "?t=" + encodeURIComponent(TOKEN) : c.thumb) : ""; };
+  var thumbURL = function (c) { return c.thumb ? (SERVER ? c.thumb + "?t=" + encodeURIComponent(TOKEN) : c.thumb) : ""; };
 
   var picked = {}, order = [], ranges = {}, filter = null, hoverN = null;
   var clipBy = {}; D.clips.forEach(function (c) { clipBy[c.n] = c; });
@@ -587,7 +587,7 @@ body.in-detail header.top { padding-top: 8px; }
     var clips = order.map(function (n) { var r = rangeOf(clipBy[n]); return { n: n, start: r.start, end: r.end }; });
     busy = true; count(); status("Building the timeline in Resolve from the camera originals… (Resolve may start first)");
     toast("Importing " + clips.length + " clip" + (clips.length > 1 ? "s" : "") + " into Resolve…", "From the camera originals" + ($("audio").checked ? ", with the synced recorders" : "") + ". Resolve may start first.");
-    fetch("/api/import?t=" + encodeURIComponent(TOKEN), {
+    fetch("api/import?t=" + encodeURIComponent(TOKEN), {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ clips: clips, pre: +$("pre").value, post: +$("post").value, into: $("into").value, audio: $("audio").checked })
     }).then(function (r) { return r.json(); }).then(function (res) {
@@ -606,7 +606,16 @@ body.in-detail header.top { padding-top: 8px; }
     }).catch(function (e) { busy = false; count(); toast("Not imported", "The review's server didn't answer: ask your agent to open it again.", "err", 12000); status("Not imported: the review's server didn't answer (" + e + "). Run `blackbox review open " + D.id + "` again.", "err"); });
   }
   if (SERVER) {
-    var ping = function () { fetch("/api/ping?t=" + encodeURIComponent(TOKEN), { method: "POST" }).catch(function () {}); };
+    // One review server serves every review; when it isn't running, this page waits for it and carries on.
+    var lost = false;
+    var ping = function () {
+      fetch("api/ping?t=" + encodeURIComponent(TOKEN), { method: "POST" }).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        if (lost) { lost = false; status("Reconnected to the review server.", "ok"); }
+      }).catch(function () {
+        if (!lost) { lost = true; status("The review server isn't running: ask your agent to run `blackbox review open " + D.id + "`. This page reconnects by itself.", "err"); }
+      });
+    };
     ping(); setInterval(ping, 20000);
   } else {
     $("pre").disabled = $("post").disabled = $("into").disabled = $("audio").disabled = true;

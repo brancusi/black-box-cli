@@ -44,6 +44,21 @@
       .start)
   nil)
 
+(defn spawn-detached!
+  "Starts `argv` in a session of its own (through perl's setsid, which macOS has), so it outlives this command and
+  whatever ran it, its output appended to `log`. Tests replace this."
+  [argv log]
+  (let [argv (if (fs/executable? "/usr/bin/perl")
+               (into ["/usr/bin/perl" "-MPOSIX" "-e" "POSIX::setsid(); exec @ARGV or die $!" "--"] argv)
+               argv)]
+    (fs/create-dirs (fs/parent log))
+    (-> (ProcessBuilder. ^java.util.List (vec argv))
+        (.redirectInput (ProcessBuilder$Redirect/from (File. "/dev/null")))
+        (.redirectOutput (ProcessBuilder$Redirect/appendTo (File. (str log))))
+        (.redirectError (ProcessBuilder$Redirect/appendTo (File. (str log))))
+        .start)
+    nil))
+
 (defn online-only?
   "Whether `path` is a Dropbox placeholder: empty, or flagged dataless."
   [path]

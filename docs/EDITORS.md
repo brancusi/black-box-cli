@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.15:** Safer imports ([more](#whats-new))
+**What's new in 0.1.16:** Many reviews, all open ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -187,10 +187,12 @@ Ask for selects and you get a page in your browser: every clip playing its proxy
 - `blackbox review new - --open`: make the review and open it in the browser
 - `blackbox review list`: every review, newest first
 - `blackbox review open kiln`: open one again, with Import working
+- `blackbox review serve`: the review server itself, in the foreground: only to see why it won't start
 
 **Tips:**
 
-- Reviews are kept in ~/Black Box/reviews; review.html opens from Finder to watch and read, but importing needs it opened by your agent.
+- Keep as many reviews open in tabs as you like: one server on your Mac serves them all, and opening another never closes one.
+- Reviews are kept in ~/Black Box/reviews until you delete them there; review.html opens from Finder to watch and read, but importing needs it opened by your agent.
 - Move the mouse across a clip to scrub through it. Keys: ? lists them all. s selects the clip you're on (they gather at the top, in timeline order), i imports them; in an open clip i and o set in and out as in Resolve, shift+I imports, and ← and → move between clips.
 - Italian lines will show their English underneath once Black Box publishes translations.
 
@@ -289,6 +291,10 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.16 (2026-11-24)
+
+- **Many reviews, all open:** Keep as many selects reviews open in tabs as you like and move between them: opening a new one never closes an older one. `blackbox review open kiln`
 
 ### 0.1.15 (2026-11-24)
 

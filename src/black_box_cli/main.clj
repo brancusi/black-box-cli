@@ -155,6 +155,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["review" "new"] review/new-cmd
    ["review" "open"] review/open-cmd
    ["review" "list"] review/list-cmd
+   ["review" "serve"] review/serve-cmd
    ["update"] update/update-cmd
    ["setup" "agent"] setup/agent-cmd
    ["setup" "skill-check"] setup/skill-check-cmd})
@@ -232,7 +233,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
         (try
           (let [[opts words] (parse-globals args)]
             (check-format! opts)
-            (let [ctx (merge ctx (select-keys opts [:meta :local]))]
+            (let [ctx (merge ctx (select-keys opts [:meta :local]) {:argv args})]
               (cond
                 (empty? words) (home-view ctx fmt)
                 (contains? #{"--help" "-h" "help"} (first words)) (do (out/text! help-text) 0)

@@ -278,7 +278,7 @@
     :summary "a selects review: a page of the clips on their proxies, each with its words, and Import into Resolve"
     :args [{:arg "selects" :doc "a cut list (file or - for stdin); `group: B-roll` lines make its sections"}]
     :flags (-> [{:flag "--title" :value "text" :doc "the review's title (or `title:` in the cut list)"}
-                {:flag "--open" :doc "serve it and open it in the browser now (waits until the page is closed: run it in the background)"}
+                {:flag "--open" :doc "open it in the browser now, from the review server (returns at once)"}
                 {:flag "--dry-run" :doc "check the selects and show them; write nothing"}
                 version-flag]
                (into (output-flags false)))
@@ -288,12 +288,23 @@
                 "Black Box publishes translations); a click opens the clip with its file's whole transcript, a word\n"
                 "jumps there, and i/o trim it. Selected clips (s) go to Resolve with Import (i): `online`, from the originals,\n"
                 "with pre- and post-roll and the recorders synced. Importing needs the page served (--open, or\n"
-                "`review open`), on 127.0.0.1 only; review.html from Finder plays and reads but can't import.\n")}
+                "`review open`), on 127.0.0.1 only; review.html from Finder plays and reads but can't import.\n"
+                "Reviews are never deleted by blackbox: delete a folder in Finder to free its space.\n")}
    {:path ["review" "open"] :phase 18
-    :summary "serve a review on this Mac (127.0.0.1) and open it, with Import into Resolve; it waits: run it in the background"
+    :summary "open a review in the browser, with Import into Resolve; returns at once"
     :args [{:arg "id" :doc "a review's id (or part of it) from `blackbox review list`"}]
     :flags (output-flags false)
-    :examples ["blackbox review open <id>"]}
+    :examples ["blackbox review open <id>"]
+    :about (str "One review server on this Mac (127.0.0.1, port 7387) serves every review, each at its own address,\n"
+                "so several can be open in tabs at once. `review open` starts it when it isn't running, apart from\n"
+                "the command, and returns; a running one is kept, so pages already open keep working (one made by an\n"
+                "older blackbox is replaced on the same port and its pages reconnect). It stops itself after 24 hours\n"
+                "with no page calling. Never stop it to open another review.\n")}
+   {:path ["review" "serve"] :phase 18
+    :summary "the review server itself, in this process (`review open` starts it on its own; this shows why it won't)"
+    :flags (into [{:flag "--port" :value "n" :parse :int :default 7387 :doc "the port (default 7387; a free one when it's taken)"}]
+                 (output-flags false))
+    :examples ["blackbox review serve"]}
    {:path ["review" "list"] :phase 18
     :summary "the selects reviews, newest first"
     :flags (into [(limit-flag 20 "reviews")] (output-flags))

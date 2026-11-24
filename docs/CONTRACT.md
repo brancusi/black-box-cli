@@ -107,6 +107,8 @@ Black Box); image vectors are float32-exact before storage.
 | Cuts | `<local>/cuts/<UTC stamp>-<slug>/`: `cut.mpv.edl`, `cut.edl`, `cut.srt`, `cut.json`, `cut.html`; `build.json` once `edl build` has sent it | a new folder each time, files created new |
 | Frames for `frame` | a temp folder | never in `media_meta` |
 | Stills (`still new`) | `<local>/stills/<UTC stamp>-<look>/`: `request.json`, then the stills Black Box brings back (`<name>.jpg`, `<name>.tif`); copies in the `--out` folder when one is named | a new folder each request, files created new; Black Box writes the stills; copies never over a file |
+| Selects reviews | `~/Black Box/reviews/<UTC stamp>-<slug>/`: `review.json`, `review.html`, `thumbs/<n>.jpg` | a new folder each time, files created new; never deleted by the CLI (people delete them in Finder) |
+| The review server's state | `~/Library/Application Support/black-box-cli/review-server.json`: `{token, port, cli, pid}`, and `review-server.log` | the key is made once and kept, so open pages work across restarts; replaced by rename |
 | Rendered cuts (`--play`) | `<local>/previews/<cut id>-<hash of cut.mpv.edl>.mp4` (cache) | made once from the proxies; renamed into place |
 | The skill and hook (`setup agent`) | `~/.claude/skills/blackbox/`, `~/.claude/settings.json`; Codex's `~/.agents/skills/blackbox/`, `~/.codex/hooks.json` (settings copied aside first) | never over a hand-edited file |
 

@@ -7,6 +7,7 @@
   from the originals, with the recorders synced. Nothing in media_meta is written; the page only reads proxies."
   (:require
    [babashka.fs :as fs]
+   [babashka.http-client :as hc]
    [black-box-cli.cuts :as cuts]
    [black-box-cli.db :as db]
    [black-box-cli.edl :as edl]
@@ -17,6 +18,7 @@
    [black-box-cli.resolve :as resolve]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
+   [black-box-cli.version :as version]
    [cheshire.core :as json]
    [clojure.java.io :as io]
    [clojure.string :as str]
@@ -128,80 +130,206 @@
         {:error {:code code :message message} :help (vec help)}
         (throw e)))))
 
+(def default-port
+  "Where the review server listens unless that port is taken: the same every time, so a review's address keeps
+  working across restarts."
+  7387)
+
+(def idle-hours
+  "The review server stops itself after this long with no request from any page; `review open` starts it again."
+  24)
+
+(defn- read-state [path]
+  (try (json/parse-string (slurp path) true) (catch Exception _ nil)))
+
+(defn- write-state!
+  "The server's state file (this CLI's own, in Application Support): written beside it, then moved into place."
+  [path m]
+  (fs/create-dirs (fs/parent path))
+  (let [tmp (str path ".new-" (.pid (java.lang.ProcessHandle/current)))]
+    (spit tmp (json/generate-string m))
+    (fs/move tmp path {:replace-existing true :atomic-move true})))
+
+(defn- token-of
+  "This Mac's review key, kept in the state file so open pages keep working after the server restarts; made once."
+  [path]
+  (or (:token (read-state path))
+      (let [t (apply str (repeatedly 32 #(rand-nth "0123456789abcdef")))]
+        (write-state! path {:token t})
+        t)))
+
+(defn- review-folder
+  "The folder of review `id` (exactly its folder's name), or nil."
+  [dir id]
+  (when (and id (re-matches #"[A-Za-z0-9][A-Za-z0-9._-]*" id))
+    (let [f (fs/path dir id)]
+      (when (fs/exists? (fs/path f "review.json")) (str f)))))
+
 (defn start!
-  "Serves the review in `folder` on 127.0.0.1, on a free port: the page, its proxies (only those the review names)
-  and thumbnails, and /api/import. Every request needs the review's token (a link opened elsewhere can't use it) and
-  this host. It stops itself 5 minutes after the page stops calling (30 if it's never opened). {:url :port :stop
-  :done}, `done` a promise delivered when it stops."
-  [ctx folder]
-  (let [doc (json/parse-string (slurp (str (fs/path folder "review.json"))) true)
-        media (vec (:media doc))
-        token (apply str (repeatedly 32 #(rand-nth "0123456789abcdef")))
-        port (atom nil)
-        seen (atom {:at (System/currentTimeMillis) :opened false})
-        done (promise)
-        json-ok (fn [m] {:status 200 :headers {"content-type" "application/json" "cache-control" "no-store"}
-                         :body (json/generate-string m)})
-        handler (fn [{:keys [uri request-method headers query-string body]}]
-                  (let [q (query-params query-string)]
-                    (cond
-                      (not (#{(str "127.0.0.1:" @port) (str "localhost:" @port)} (get headers "host")))
-                      {:status 403 :body "not this host"}
+  "Serves every review in this Mac's reviews folder on 127.0.0.1 at /<id>/: its page, its proxies (only those it
+  names), thumbnails, /<id>/api/import and /<id>/api/ping; /health says it's this server. Every request needs this
+  Mac's review key and this host. On `port` (default-port; 0 for any), or any free port when that's taken. It stops
+  itself after idle-hours with no request, or on POST /api/stop. {:port :token :stop :done}."
+  ([ctx] (start! ctx default-port))
+  ([ctx port]
+   (let [{:keys [reviews review-server]} (index/paths ctx)
+         token (token-of review-server)
+         bound (atom nil)
+         seen (atom (System/currentTimeMillis))
+         done (promise)
+         stopper (atom nil)
+         json-ok (fn [m] {:status 200 :headers {"content-type" "application/json" "cache-control" "no-store"}
+                          :body (json/generate-string m)})
+         handler
+         (fn [{:keys [uri request-method headers query-string body]}]
+           (let [q (query-params query-string)
+                 [_ id rest*] (re-matches #"/([^/]+)(/.*)?" uri)
+                 folder (review-folder reviews id)]
+             (cond
+               (not (#{(str "127.0.0.1:" @bound) (str "localhost:" @bound)} (get headers "host")))
+               {:status 403 :body "not this host"}
 
-                      (not= token (get q "t"))
-                      {:status 403 :body "This review's link has a key: open it with `blackbox review open`."}
+               (not= token (get q "t"))
+               {:status 403 :body "This review's link has a key: open it with `blackbox review open <id>`."}
 
-                      (and (= :get request-method) (= "/" uri))
-                      {:status 200 :headers {"content-type" "text/html; charset=utf-8" "cache-control" "no-store"}
-                       :body (page doc)} ; this CLI's page, so a review made earlier gets its fixes
+               :else
+               (do
+                 (reset! seen (System/currentTimeMillis))
+                 (cond
+                   (and (= :get request-method) (= "/health" uri))
+                   (json-ok {:server "black-box-cli.review" :cli version/version :pid (.pid (java.lang.ProcessHandle/current))})
 
-                      (and (= :get request-method) (re-matches #"/media/\d+" uri))
-                      (let [k (parse-long (subs uri 7))]
-                        (if-let [p (get media k)]
-                          (if (fs/exists? p) (file-response p (get headers "range")) {:status 404 :body "not on this Mac"})
-                          {:status 404}))
+                   (and (= :post request-method) (= "/api/stop" uri))
+                   (do (future (Thread/sleep 100) (@stopper)) {:status 204})
 
-                      (and (= :get request-method) (re-matches #"/thumbs/\d+\.jpg" uri))
-                      (let [p (fs/path folder (subs uri 1))]
-                        (if (fs/exists? p) (file-response p (get headers "range")) {:status 404}))
+                   (nil? folder) {:status 404 :body "no such review on this Mac"}
 
-                      (and (= :post request-method) (= "/api/ping" uri))
-                      (do (reset! seen {:at (System/currentTimeMillis) :opened true}) {:status 204})
+                   (nil? rest*) {:status 302 :headers {"location" (str "/" id "/?t=" token)}}
 
-                      (and (= :post request-method) (= "/api/import" uri))
-                      (do (swap! seen assoc :at (System/currentTimeMillis))
-                          (json-ok (try (import! ctx doc (json/parse-string (slurp body) true))
-                                        (catch Exception e
-                                          {:error {:code "import-failed" :message (str (.getSimpleName (class e)) ": " (ex-message e))}
-                                           :help ["Tell your agent what it says; it can run `blackbox online` on the clips instead"]}))))
+                   :else
+                   (let [doc (json/parse-string (slurp (str (fs/path folder "review.json"))) true)
+                         media (vec (:media doc))]
+                     (cond
+                       (and (= :get request-method) (= "/" rest*))
+                       {:status 200 :headers {"content-type" "text/html; charset=utf-8" "cache-control" "no-store"}
+                        :body (page doc)} ; this CLI's page, so a review made earlier gets its fixes
 
-                      :else {:status 404})))
-        server (http/run-server handler {:ip "127.0.0.1" :port 0 :legacy-return-value? false})
-        _ (reset! port (http/server-port server))
-        stop (fn [] (when-not (realized? done) (http/server-stop! server) (deliver done true)))]
-    (future
-      (loop []
-        (Thread/sleep 5000)
-        (let [{:keys [at opened]} @seen
-              idle (- (System/currentTimeMillis) at)]
-          (if (> idle (if opened (* 5 60 1000) (* 30 60 1000)))
-            (stop)
-            (when-not (realized? done) (recur))))))
-    {:url (str "http://127.0.0.1:" @port "/?t=" token) :port @port :stop stop :done done}))
+                       (and (= :get request-method) (re-matches #"/media/\d+" rest*))
+                       (if-let [p (get media (parse-long (subs rest* 7)))]
+                         (if (fs/exists? p) (file-response p (get headers "range")) {:status 404 :body "not on this Mac"})
+                         {:status 404})
 
-(defn- serve!
-  "Serves the review in `folder`, opens it in the browser and waits until it stops; prints `m` first."
-  [{:keys [fmt] :as ctx} folder m help]
-  (let [{:keys [url done]} (start! ctx folder)]
-    (out/emit! (assoc m :url url :serving "until the page has been closed for 5 minutes") help (or fmt :toon))
-    (tools/spawn! ["/usr/bin/open" url])
-    @done
-    [nil nil]))
+                       (and (= :get request-method) (re-matches #"/thumbs/\d+\.jpg" rest*))
+                       (let [p (fs/path folder (subs rest* 1))]
+                         (if (fs/exists? p) (file-response p (get headers "range")) {:status 404}))
+
+                       (and (= :post request-method) (= "/api/ping" rest*))
+                       {:status 204}
+
+                       (and (= :post request-method) (= "/api/import" rest*))
+                       (json-ok (try (import! ctx doc (json/parse-string (slurp body) true))
+                                     (catch Exception e
+                                       {:error {:code "import-failed" :message (str (.getSimpleName (class e)) ": " (ex-message e))}
+                                        :help ["Tell your agent what it says; it can run `blackbox online` on the clips instead"]})))
+
+                       :else {:status 404})))))))
+         run (fn [p] (http/run-server handler {:ip "127.0.0.1" :port p :legacy-return-value? false}))
+         server (try (run port) (catch java.net.BindException _ (run 0)))
+         _ (reset! bound (http/server-port server))
+         stop (fn [] (when-not (realized? done) (http/server-stop! server) (deliver done true)))]
+     (reset! stopper stop)
+     (future
+       (loop []
+         (Thread/sleep 5000)
+         (if (> (- (System/currentTimeMillis) @seen) (* idle-hours 3600 1000))
+           (stop)
+           (when-not (realized? done) (recur)))))
+     {:port @bound :token token :stop stop :done done})))
+
+(defn url
+  "Review `id`'s address on the server at `port` with `token`."
+  [port token id]
+  (str "http://127.0.0.1:" port "/" id "/?t=" token))
+
+(defn- health
+  "What the server at `port` says it is, with `token`, or nil when nothing (or something else) answers."
+  [port token]
+  (try
+    (let [r (hc/get (str "http://127.0.0.1:" port "/health?t=" token)
+                    {:throw false :timeout 2000 :client (hc/client {:connect-timeout 1000})})]
+      (when (= 200 (:status r))
+        (let [m (json/parse-string (:body r) true)]
+          (when (= "black-box-cli.review" (:server m)) m))))
+    (catch Exception _ nil)))
+
+(defn- post-stop! [port token]
+  (try (hc/post (str "http://127.0.0.1:" port "/api/stop?t=" token)
+                {:throw false :timeout 2000 :client (hc/client {:connect-timeout 1000})})
+       (catch Exception _ nil)))
+
+(defn self-argv
+  "The command line that runs this blackbox: Black Box's launcher ($BLACKBOX_BIN), else this process's own, less
+  the arguments it was given; with the global flags that say where things are."
+  [{:keys [env argv meta local]}]
+  (let [base (or (when-let [b (get env "BLACKBOX_BIN")] (when (fs/executable? b) [b]))
+                 (let [info (.info (java.lang.ProcessHandle/current))
+                       cmd (.orElse (.command info) nil)
+                       all (vec (.orElse (.arguments info) (into-array String [])))
+                       n (count argv)]
+                   (when (and cmd (>= (count all) n) (= (vec argv) (subvec all (- (count all) n))))
+                     (into [cmd] (subvec all 0 (- (count all) n))))))]
+    (when base
+      (cond-> base
+        meta (into ["--meta" (str meta)])
+        local (into ["--local" (str local)])))))
+
+(defn ensure-server!
+  "The review server on this Mac, running this CLI's version: {:port :token :started bool}. A running one is kept
+  (it serves every review, so pages already open keep working); an older version's is asked to stop and replaced on
+  the same port. A new one is started on its own, apart from this command and whatever ran it, so it outlives both."
+  [ctx]
+  (let [{:keys [review-server]} (index/paths ctx)
+        token (token-of review-server)
+        {:keys [port]} (read-state review-server)
+        port (or port default-port)
+        running (health port token)]
+    (if (= version/version (:cli running))
+      {:port port :token token :started false}
+      (do
+        (when running
+          (post-stop! port token)
+          (loop [i 0] (when (and (< i 30) (health port token)) (Thread/sleep 100) (recur (inc i)))))
+        (let [argv (or (self-argv ctx)
+                       (out/fail! "review-server" "couldn't tell how to start the review server (no $BLACKBOX_BIN)"
+                                  {:help ["Run `blackbox review serve` in the background yourself, then open the review again"]}))]
+          (tools/spawn-detached! (into argv ["review" "serve" "--port" (str port)])
+                                 (str (fs/path (fs/parent review-server) "review-server.log")))
+          (loop [i 0]
+            (let [{p :port} (read-state review-server)]
+              (cond
+                (and p (= version/version (:cli (health p token)))) {:port p :token token :started true}
+                (< i 100) (do (Thread/sleep 100) (recur (inc i)))
+                :else (out/fail! "review-server" "the review server didn't start within 10 s"
+                                 {:help [(str "See " (out/home-path (str (fs/path (fs/parent review-server) "review-server.log")) (:home ctx)))
+                                         "Run `blackbox review serve` yourself to see why"]})))))))))
+
+(defn- open!
+  "Review `id` in the browser, from the review server (started when it isn't running): what to print about it."
+  [ctx id]
+  (let [{:keys [port token started]} (ensure-server! ctx)
+        u (url port token id)]
+    (tools/spawn! ["/usr/bin/open" u])
+    {:url u :server (str (if started "started" "already running") " on 127.0.0.1:" port
+                         ", for every review; pages already open keep working")}))
+
+(def ^:private open-help
+  ["Tell the user it's open: tick clips, click one for its transcript, then Import into Resolve"
+   "Earlier reviews stay open and working in their tabs; never stop the review server"])
 
 ;; ------------------------------------------------------------------------------------------------ commands
 
 (defn- review-help [id]
-  [(str "Run `blackbox review open " id "` in the background: it opens the page in the browser, with Import into Resolve")
+  [(str "Run `blackbox review open " id "`: it opens the page in the browser, with Import into Resolve")
    "Without it, review.html opens straight from Finder to watch and read (importing needs `review open`)"])
 
 (defn new-cmd
@@ -251,7 +379,7 @@
             _ (cuts/write-new! (fs/path folder "review.html") (page doc))
             m (apply array-map (concat head [:id id :folder (out/home-path folder home) :page "review.html" :review rows]))]
         (if (:open opts)
-          (serve! ctx folder m ["Tell the user it's open: tick clips, click one for its transcript, then Import into Resolve"])
+          [(merge m (open! ctx id)) open-help]
           [m (review-help id)])))))
 
 (defn- reviews [ctx]
@@ -271,13 +399,27 @@
     (first hits)))
 
 (defn open-cmd
-  "`blackbox review open <id>`: serves a review and opens it, until its page has been closed for 5 minutes."
+  "`blackbox review open <id>`: opens a review in the browser from the review server, and returns at once."
   [{:keys [home args] :as ctx}]
   (let [folder (find-review ctx (:id args))
         doc (json/parse-string (slurp (str (fs/path folder "review.json"))) true)]
-    (serve! ctx folder
-            (array-map :id (:id doc) :title (:title doc) :clips (count (:clips doc)) :folder (out/home-path folder home))
-            ["Tell the user it's open: tick clips, click one for its transcript, then Import into Resolve"])))
+    [(merge (array-map :id (:id doc) :title (:title doc) :clips (count (:clips doc)) :folder (out/home-path folder home))
+            (open! ctx (str (fs/file-name folder))))
+     open-help]))
+
+(defn serve-cmd
+  "`blackbox review serve`: the review server itself, in this process, until it stops (`review open` starts it on its
+  own; this is for seeing why it won't)."
+  [{:keys [opts] :as ctx}]
+  (let [{:keys [review-server]} (index/paths ctx)
+        {:keys [port token done]} (start! ctx (or (:port opts) default-port))]
+    (write-state! review-server {:token token :port port :cli version/version
+                                 :pid (.pid (java.lang.ProcessHandle/current))})
+    (out/emit! (array-map :serving (str "127.0.0.1:" port) :reviews (out/home-path (:reviews (index/paths ctx)) (:home ctx))
+                          :stops (str "after " idle-hours " h with no page calling"))
+               [] (or (:fmt ctx) :toon))
+    @done
+    [nil nil]))
 
 (defn list-cmd
   "`blackbox review list`."
