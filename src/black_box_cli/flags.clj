@@ -266,7 +266,7 @@
     :about (str "The review is kept in ~/Black Box/reviews/<id>/: review.html, review.json and a thumbnail per clip.\n"
                 "Each clip plays its proxy with its words under it (an Italian line with its English under it, when\n"
                 "Black Box publishes translations); a click opens the clip with its file's whole transcript, a word\n"
-                "jumps there, and i/o trim it. Ticked clips go to Resolve with Import: `online`, from the originals,\n"
+                "jumps there, and i/o trim it. Selected clips (s) go to Resolve with Import (i): `online`, from the originals,\n"
                 "with pre- and post-roll and the recorders synced. Importing needs the page served (--open, or\n"
                 "`review open`), on 127.0.0.1 only; review.html from Finder plays and reads but can't import.\n")}
    {:path ["review" "open"] :phase 18

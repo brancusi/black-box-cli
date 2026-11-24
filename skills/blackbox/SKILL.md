@@ -1,6 +1,6 @@
 ---
 name: blackbox
-description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, and who is heard or seen — make rough cuts (edits) that play straight away, build a selects review page (clips with their transcripts, ticked and imported into Resolve), and online an edit: rebuild it in DaVinci Resolve from the camera originals, ready to grade. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip, to show or play something, to read a transcript, to make selects, a rough cut or an EDL, to build a selects review (b-roll, sound bites, options to choose from), to "online" an edit or take it to source or Resolve, or for a Black Box tutorial or what Black Box can do.
+description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, and who is heard or seen — build selects as a review page (watch, read along, select, import into Resolve), make rough cuts (edits) that play straight away, online an edit in DaVinci Resolve from the camera originals with the recorders synced, and pull full-size stills. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip; to build or pull selects, sound bites or options; to cut, play or show something; to read a transcript; to "online" an edit or take it to Resolve; for stills; or "teach me about Black Box", a tutorial, what Black Box can do or what's new.
 ---
 <!-- Installed by `blackbox setup agent` and replaced when it runs again. Delete this line to keep your own edits. -->
 
@@ -12,12 +12,25 @@ command has `--help`. Nothing prompts. The CLI may be newer than this skill: `bl
 command it has, and `blackbox tutorial` explains them. Errors come on stdout as `error:` with a `code`; exit 1 is
 an error, 2 a command line to fix (the valid flags are listed).
 
+## What they ask for, and what you run
+
+| They say | You run |
+|---|---|
+| "teach me about Black Box", a tour, a tutorial | `blackbox tutorial --open` |
+| "what's new in Black Box?" | `blackbox tutorial new` (and offer `--open`: its What's new plays the new parts) |
+| "build me selects / a selects review of …", "pull sound bites and b-roll of …", "show me options for …" | find clips, then `blackbox review new - --open` in the background (Selects review, below) |
+| "cut me …", "make an edit / a rough cut / a string-out of …", "play / show me …" | find clips, then `blackbox edl new - --play` (Rough cuts) |
+| "online this", "put it in Resolve", "go to source" | `blackbox online <edit id>` |
+| a still for print or the web | `blackbox still new …`, then `still show <id> --wait` in the background |
+| "where is this picture from?" | `blackbox source <picture>` |
+
 ## Teaching it: "teach me about Black Box", "give me a tutorial"
 
-When someone asks to be taught Black Box, for a tour or a tutorial, or what's new, run `blackbox tutorial --open`
-first: it plays an animated tutorial in their browser (every lesson, a panel of workflows and every command, and
-what's new in this version). Then offer to go through any part with them. For what's new in words, `blackbox
-tutorial new`.
+When someone asks to be taught Black Box, for a tour or a tutorial, run `blackbox tutorial --open` first: it
+plays a two-minute animated, narrated tutorial in their browser (a scene for each thing Black Box does, beside a
+panel of workflows, every command, and what's new). Tell them it's open and to press Start (browsers play sound
+only after a click), then offer to go through any part with them or try one on their own footage. For what's new
+in words, `blackbox tutorial new`; when this skill tells you it was updated, tell them in a line what's new.
 
 When they'd rather be taught here, or ask how to do one thing, run `blackbox tutorial` and teach from it. Give the overview in a few lines (the lessons and one thing to ask in each), then go a lesson at
 a time with `blackbox tutorial <id>` (`blackbox tutorial online`, say), or straight to the one they asked about.
@@ -33,7 +46,8 @@ also read the same lessons in docs/EDITORS.md.
 - **This Mac's index and frames:** `~/Library/Caches/black-box-cli/` (a cache: `blackbox index` rebuilds it).
   **Edits:** `~/Black Box/edits/<id>/`, each with `edit.mp4` (the edit rendered from the proxies), `cut.edl` and
   `cut.json` (every clip's source file and timecode), kept for good. Earlier ones in
-  `~/Library/Application Support/black-box-cli/cuts/` are still listed.
+  `~/Library/Application Support/black-box-cli/cuts/` are still listed. **Selects reviews:**
+  `~/Black Box/reviews/<id>/` (review.html, review.json, thumbnails).
 - **The originals are on the NAS** (`source_path`, `/Volumes/…`, `/VideoSource/…`). Never open, read, probe
   (ffprobe, mediainfo), copy, play or transcode them, and never browse the NAS: it's slow, shared and holds the
   only copies. Work from proxies, transcripts and `blackbox frame`. If a clip has no proxy, say so; don't fall
@@ -159,8 +173,9 @@ one instead.
 
 ## Rough cuts: proxies, fast, throwaway — and open them
 
-When the user asks for a rough cut, selects, a string-out, or to show, play or bring up footage, build a cut
-and **open it yourself with `--play`** unless they say otherwise. Don't ask first, and don't make them
+When the user asks for a cut, an edit, a rough cut, a string-out, or to show, play or bring up footage, build a cut
+and **open it yourself with `--play`** unless they say otherwise. (Selects, sound bites or options to choose from
+are a selects review instead: below.) Don't ask first, and don't make them
 ask you to open it. One moment is a one-clip cut.
 
 1. Write a cut list, one clip per line in play order (`#` starts a comment, ` # note` after a clip is its note):
@@ -193,24 +208,41 @@ installed either, say `brew install ffmpeg`.
 
 ## Selects review: clips to choose from, then into Resolve
 
-When the user asks for selects to look through ("build me a selects review for b-roll and sound bites of …",
-"pull selects of …", "show me options for …"):
+When the user asks for selects ("build me selects for …", "a selects review of b-roll and sound bites of …",
+"pull sound bites of …", "show me options for …"), you do the finding; the CLI does the rest in seconds.
 
-1. Find candidates with search, shots, look and people. Write a cut list with a `group:` line before each section
-   (`group: Sound bites`, `group: B-roll`) and a note on each clip (` # why it's here`). Sound bites as runs of lines
-   (`k7f3q2ab.41..k7f3q2ab.43`, so in and out follow the words), b-roll as shots' best moments or file ranges. Give
-   them more than they need (10 to 30), the best first in each group.
-2. `blackbox review new - --dry-run` checks it.
-3. `blackbox review new - --open` **in the background** (your shell tool's background mode): it makes the review
-   in `~/Black Box/reviews/<id>/` and opens it in their browser, serving it until the page has been closed for
-   5 minutes. Tell them in a line or two what's in it.
+1. Find candidates with `search` (what was said, with `--person` for someone), `shots` (b-roll by what happens,
+   `--framing`, `--camera`, `--clean`) and `look` (what's in the picture). Read around sound bites with `line` so
+   each is a complete thought.
+2. Write a cut list with a `group:` line before each section and a note on each clip saying why it's there. Sound
+   bites as runs of lines, so in and out follow the words; b-roll as shots' best moments or file ranges. Give them
+   more than they need (10 to 30), the best first in each group:
 
-On the page each clip plays its proxy with its words under it (an Italian line gets its English under it once Black
-Box publishes translations). Clicking a clip opens it with its file's whole transcript: a word jumps there, `i` and
-`o` trim the in and out. `s` selects a clip (the selected gather at the top, in timeline order) and `?` lists the
-keys. They press `i` in the gallery, or Import into Resolve, which runs `online` on them (below): a new
-timeline from the originals, with pre- and post-roll and the synced recorders. `blackbox review list` and
-`blackbox review open <id>` (in the background) bring one back.
+   ```
+   title: Kiln firing selects
+   group: Sound bites
+   k7f3q2ab.41..k7f3q2ab.43  # why she fires at night
+   m2xq7rja.7  # "the colour comes from the ash"
+   group: B-roll
+   k7f3q2ab.s3  # flames through the spy hole, the shot's best moment
+   C5274.MP4 0:26.5-0:30  # wide, the kiln at dusk
+   ```
+3. `blackbox review new - --dry-run` checks it (every problem listed, nothing written).
+4. `blackbox review new - --open` **in the background** (your shell tool's background mode): it makes the review
+   in `~/Black Box/reviews/<id>/` (clips without a proxy are left out, under `warnings`) and opens it in their
+   browser, serving it on this Mac until the page has been closed for 5 minutes. Don't wait for it; tell them in a
+   line or two what's in it, by group.
+
+What they can do on the page, if they ask: hover a clip to preview it silently; click it to open it with sound and
+its file's whole transcript (a word jumps there; `i` and `o` set the in and out; ← → move between clips). `s`
+selects the clip under the mouse or the open one; the selected gather at the top in the order picked, which is
+their order on the timeline. `i` in the gallery, Shift+I anywhere, or the Import into Resolve button sends them
+to `online` (below): a new timeline from the camera originals, with the handles, Into (open project or new
+project) and Recorders (synced or off) chosen in the bar at the bottom; a toast says how it went. `?` lists the
+keys. An Italian line will get its English under it once Black Box publishes translations.
+
+`blackbox review list` lists them; `blackbox review open <id>` (in the background) serves one again, with Import
+working. review.html opened from Finder plays and reads but can't import.
 
 ## Taking a cut to DaVinci Resolve (only when asked)
 
@@ -224,7 +256,9 @@ Only when the user wants the cut in Resolve:
   file), and Resolve on this Mac imports the originals, links the proxies and imports the edit's EDL as a new
   timeline: in the open project, or a new project when Resolve wasn't running (`--into current|new-project`;
   `--db local` for this Mac's database). The recorders heard with each clip come with it, synced by the sync map,
-  each on its own tracks from A2 (`--no-audio` to leave them out). It takes seconds (about 15 s more when it has to start Resolve). A cut
+  each on its own tracks from A2 (`--no-audio` to leave them out): the output's `recorders` column and
+  `audio_placed` say what came, and a match too weak to place (confidence under 0.5) is named in `warnings`, not
+  placed. It takes seconds (about 15 s more when it has to start Resolve). A cut
   list works too (`blackbox online -`): it's saved as an edit first. `resolve` says where it went; `missing` lists
   originals Resolve couldn't find (the NAS not mounted: `--originals <the folder holding media/>`). If it says
   `resolve-scripting-off`, the user sets Resolve → Preferences → System → General → External scripting → Local.

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.9 (2026-11-24)
+
+- The skill routes what editors say: a table from "teach me about Black Box", "build me selects of …", "cut me …",
+  "online this", stills and sources to the command for each. Selects go to a selects review, not a rough cut. Its
+  review section has the whole workflow (find, a grouped cut list, `review new - --open` in the background) and the
+  page's keys as they are (`s` selects, `i` or Shift+I imports, `i`/`o` trim in an open clip); `online` says how
+  recorders are reported. Its description names teaching, what's new, selects and stills.
+
 ## 0.1.8 (2026-11-24)
 
 - `blackbox review new <selects|->` (`open`, `list`): a selects review. A cut list with `group:` sections becomes

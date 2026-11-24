@@ -243,7 +243,11 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.8" :date "2026-11-24"
+  [{:version "0.1.9" :date "2026-11-24"
+    :items [{:title "Ask in your own words" :lesson "start" :run "blackbox tutorial --open"
+             :what (str "Say \"teach me about Black Box\", \"build me selects of …\" or \"cut me …\" and your agent "
+                        "knows which: a tutorial, a selects review page, or a cut that plays.")}]}
+   {:version "0.1.8" :date "2026-11-24"
     :items [{:title "Selects review" :lesson "review" :run "blackbox review new - --open"
              :what (str "Ask for selects and get a page: each clip plays on hover with its words under it; open one for "
                         "its whole transcript. s selects, i imports the selected into Resolve.")}

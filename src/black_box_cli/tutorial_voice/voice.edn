@@ -1,8 +1,7 @@
 ;; Written by `bb narrate`: each narration line's audio and its length. Don't edit by hand.
-{"127a1a813cb9d4f5"
- {:text
-  "New in version 0.1.8: selects review, recorders come synced, and this tutorial, animated.",
-  :seconds 8.908},
+{"0f88f5b514622449"
+ {:text "New in version 0.1.9: ask in your own words.",
+  :seconds 5.146},
  "214b0cbbb1540673"
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
