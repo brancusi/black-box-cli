@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Find footage by what shot it, from the files' own metadata (Black Box's `media_meta/probe`, ask 14; the newest
+  `v<N>` folder is read): `--device fx3` (camera or recorder by name, model or make), `--slow-motion`, `--fps 120`
+  (`50+`), `--res 4k` (`4k+`), `--codec`, `--bitrate 100+` on `footage`, `search`, `look`, `like` and `shots`.
+  `footage` shows each file's device, resolution and frame rate (`slow_motion`: `5x`, or `conform` for high frame
+  rate), and lists the files nothing is said in too. A cut list, a saved edit and a shot take a clip without a
+  transcript (slow motion records no sound) by its facts; `cut.edl` counts it from 0:00 and `online` places such a
+  cut by frame.
+
 ## 0.1.12 (2026-11-24)
 
 - `online` (and a review's Import) puts what's said on the timeline's subtitle track, so editors can copy lines
