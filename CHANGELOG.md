@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- A crash in Resolve after importing selects: the subtitles' .srt was left in the edit's bin as a subtitle item, and
+  an editor dragging the bin's contents into a timeline dragged it too (Resolve crashes placing a subtitle clip
+  that way). Once its lines are on the timeline, the import now removes that item, this run's own; the lines stay,
+  and the .srt stays beside the EDL. Subtitles are placed only on Resolve 21 or later (tested on 21.1); before
+  that, `subtitles_note` says to import the .srt by hand.
+
 ## 0.1.14 (2026-11-24)
 
 - The camera facts give a clip nothing is said in its own start timecode (`video.timecode`) or a recorder's time of

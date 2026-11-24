@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.14:** Slow motion on its own timecode ([more](#whats-new))
+**What's new in 0.1.15:** Safer imports ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -289,6 +289,10 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.15 (2026-11-24)
+
+- **Safer imports:** The subtitles go straight onto the timeline and leave nothing in the bin to drag, so pulling a bin's clips into your edit is safe. `blackbox online quarry`
 
 ### 0.1.14 (2026-11-24)
 

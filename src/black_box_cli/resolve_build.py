@@ -247,7 +247,11 @@ def main(plan_path):
     subtitles_placed, subtitles_note = 0, None
     srt = plan.get("subtitles")
     subtitle_item = None
-    if srt and os.path.isfile(srt):
+    major = (resolve.GetVersion() or [0])[0]
+    if srt and os.path.isfile(srt) and major < 21:
+        subtitles_note = (f"Resolve {resolve.GetVersionString()}: subtitles are placed on 21 or later; "
+                          "import the .srt beside the EDL by hand (File > Import > Subtitle)")
+    elif srt and os.path.isfile(srt):
         found = media_pool.ImportMedia([srt]) or media_pool.ImportMedia([{"FilePath": srt}]) or []
         subtitle_item = next((i for i in found if i.GetClipProperty("Type") == "Subtitle"), None)
         if subtitle_item is None:
@@ -268,6 +272,12 @@ def main(plan_path):
                 timeline.AddTrack("subtitle")
             media_pool.AppendToTimeline([{"mediaPoolItem": subtitle_item, "trackIndex": 1}])
             subtitles_placed = len(timeline.GetItemListInTrack("subtitle", 1) or [])
+        if subtitle_item is not None:
+            # The lines are the timeline's own once placed. Left in the bin, the .srt's item goes into an editor's
+            # timeline with the clips when they drag the bin's contents, and Resolve crashes placing a subtitle clip
+            # that way. It's this run's own, seconds old; the .srt stays beside the EDL.
+            media_pool.DeleteClips([subtitle_item])
+            subtitle_item = None
         start = timeline.GetStartFrame()
         for c in plan["clips"]:
             if c["source_path"] in have:
