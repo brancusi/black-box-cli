@@ -11,14 +11,14 @@
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
   :seconds 7.889},
- "846100f790653c45"
- {:text
-  "New in version 0.1.10: scrub through selects, and your bins first.",
-  :seconds 6.348},
  "8536408f509e5a99"
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",
   :seconds 8.124},
+ "930570375b49e33d"
+ {:text
+  "New in version 0.1.11: a steady review, and updates in minutes.",
+  :seconds 6.609},
  "a611f3e3e2f9abd1"
  {:text
   "Ask for a rough cut and it plays seconds later. Every edit is kept, so you can always go back.",

@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.10:** Scrub through selects; Your bins first ([more](#whats-new))
+**What's new in 0.1.11:** A steady review; Updates in minutes ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -285,6 +285,11 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.11 (2026-11-24)
+
+- **A steady review:** Selecting a clip moves nothing on the page, and the open clip's video keeps its shape at any window size. `blackbox review new - --open`
+- **Updates in minutes:** Black Box brings each new blackbox and its skill to your Mac minutes after the owner approves it; blackbox update checks now. `blackbox update`
 
 ### 0.1.10 (2026-11-24)
 

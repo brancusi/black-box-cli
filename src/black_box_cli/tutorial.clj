@@ -245,7 +245,13 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.10" :date "2026-11-24"
+  [{:version "0.1.11" :date "2026-11-24"
+    :items [{:title "A steady review" :lesson "review" :run "blackbox review new - --open"
+             :what "Selecting a clip moves nothing on the page, and the open clip's video keeps its shape at any window size."}
+            {:title "Updates in minutes" :lesson "start" :run "blackbox update"
+             :what (str "Black Box brings each new blackbox and its skill to your Mac minutes after the owner approves it; "
+                        "blackbox update checks now.")}]}
+   {:version "0.1.10" :date "2026-11-24"
     :items [{:title "Scrub through selects" :lesson "review" :run "blackbox review new - --open"
              :what "In a selects review, move the mouse across a clip to run through it from in to out."}
             {:title "Your bins first" :lesson "online" :run "blackbox online quarry"
