@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.15 (2026-11-24)
 
 - A crash in Resolve after importing selects: the subtitles' .srt was left in the edit's bin as a subtitle item, and
   an editor dragging the bin's contents into a timeline dragged it too (Resolve crashes placing a subtitle clip
