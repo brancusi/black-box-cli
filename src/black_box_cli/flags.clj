@@ -285,6 +285,12 @@
                   {:flag "--html" :doc "write the animated tutorial's page and print its path; don't open it"}]
                  (output-flags false))
     :examples ["blackbox tutorial --open" "blackbox tutorial" "blackbox tutorial online" "blackbox tutorial new"]}
+   {:path ["update"] :phase 18
+    :summary "have Black Box install the newest blackbox now (it also checks every few minutes by itself)"
+    :flags (output-flags false)
+    :examples ["blackbox update"]
+    :about (str "Black Box downloads the newest release, checks it, and switches this Mac to it, with the agent skill.\n"
+                "A release that needs a newer Black Box waits until Black Box is updated.\n")}
    {:path ["setup" "skill-check"] :phase 17
     :summary "for the hook `setup agent` installs: tells a running session when a newer skill was installed"
     :flags [{:flag "--agent" :value "claude|codex" :default "claude" :doc "whose skill to check (default claude)"}]

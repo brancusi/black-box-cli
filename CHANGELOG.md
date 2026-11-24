@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Releases reach every Mac within minutes, without waiting for a Black Box release (once Black Box has ask 13):
+  each release carries a manifest, `blackbox-cli.json` (version, SHA-256, size and `min_black_box`, the oldest
+  Black Box it works with), which Black Box checks every few minutes. `blackbox update` asks Black Box to check now.
+  The home view says how this blackbox was installed (`installed`: bundled or updated, and Black Box's version).
+- `bb release X.Y.Z` makes a release in one step; GitHub's release workflow builds and publishes it from the tag,
+  with the CHANGELOG's notes.
+
 ## 0.1.10 (2026-11-24)
 
 - The selects review's gallery scrubs: the mouse's place across a clip is its time from in to out (a playhead and

@@ -23,6 +23,7 @@ an error, 2 a command line to fix (the valid flags are listed).
 | "online this", "put it in Resolve", "go to source" | `blackbox online <edit id>` |
 | a still for print or the web | `blackbox still new …`, then `still show <id> --wait` in the background |
 | "where is this picture from?" | `blackbox source <picture>` |
+| "update Black Box's CLI", "get the latest blackbox" | `blackbox update` |
 
 ## Teaching it: "teach me about Black Box", "give me a tutorial"
 
@@ -59,6 +60,10 @@ also read the same lessons in docs/EDITORS.md.
 index was last built (`indexed`) and its `health`. You don't need to run `blackbox index`: every command brings the
 index up to date first when Dropbox has brought new files into `media_meta` (a few seconds; the first build on a
 Mac takes a minute or two). Black Box may also keep it up to date itself.
+
+Black Box keeps `blackbox` and this skill up to date by itself, minutes after a release. `blackbox update` asks it
+to check now; a release that needs a newer Black Box waits (`needs_black_box` says which) until Black Box is
+updated. When you're told this skill was updated, re-read it and tell the user what's new (`blackbox tutorial new`).
 
 `blackbox status` says more: each source (transcripts, frames, people, prints, sync, shots), what it holds, and
 how many files are `pending` (new, not read yet) or `offline`. If `health` is:

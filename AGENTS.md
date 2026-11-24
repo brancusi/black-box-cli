@@ -123,11 +123,12 @@ checks (`cmd+shift+b` runs test, lint and fmt).
   `~/.local/bin/blackbox` it didn't write alone. If Black Box's launcher is there, remove it first.
 - `deps.edn` exists only so bbin can load the checkout. Tasks and the REPL stay in `bb.edn`.
 - **A change:** run the checks, add a line under the unreleased version in `CHANGELOG.md`, commit.
-- **A release:** set `version` in `src/black_box_cli/version.clj`, date the version in `CHANGELOG.md`, commit, tag
-  `vX.Y.Z`, push with the tag. The release workflow runs the checks, builds `blackbox-cli.jar` with `bb dist
-  vX.Y.Z` and attaches it and its `.sha256` to the GitHub release, where Black Box's release script fetches it:
-  `https://github.com/brancusi/black-box-cli/releases/download/vX.Y.Z/blackbox-cli.jar`.
-- **After a release:** send Black Box's agent the version and the jar's SHA-256 (from the release's `.sha256`).
+- **A release:** add what's new to `tutorial/news` (then `bb narrate`), commit, then `bb release X.Y.Z "summary"`
+  (`--dry-run` checks first). It dates the CHANGELOG, sets the version, runs the checks, commits, tags and pushes;
+  GitHub's release workflow builds `blackbox-cli.jar`, its `.sha256` and the manifest `blackbox-cli.json`, and
+  publishes them; `bb release` waits for it and checks the download. Black Box installs it on every Mac within
+  minutes (docs/CONTRACT.md, CLI updates). When the CLI needs something new from Black Box, raise `min-black-box`
+  in version.clj first: Macs on an older Black Box wait for it.
   Black Box pins both in its next build, and editors get the new CLI when that Black Box updates. A Black Box
   release build won't run without a pinned CLI.
 

@@ -1,22 +1,18 @@
 {:paths ["src" "skills"]
  ;; bbin install . --as blackbox puts this checkout on your PATH (on a Mac without Black Box's bundled copy).
  :bbin/bin {blackbox {:main-opts ["-m" "black-box-cli.main"]}}
- :tasks {dist {:doc "The release file: target/blackbox-cli.jar (src and skills/ inside; `bb blackbox-cli.jar` runs it) and its .sha256. bb dist vX.Y.Z also checks the tag against the version."
-               :requires ([babashka.fs :as fs]
-                          [clojure.string :as str])
-               :task (let [tag (first *command-line-args*)
-                           version (second (re-find (re-pattern "def version \"([^\"]+)\"") (slurp "src/black_box_cli/version.clj")))]
-                       (when (and tag (not= tag (str "v" version)))
-                         (throw (ex-info (str "tag " tag " but version.clj says " version) {})))
-                       (fs/create-dirs "target")
-                       (fs/delete-if-exists "target/blackbox-cli.jar")
-                       (shell "bb uberjar target/blackbox-cli.jar -m black-box-cli.main")
-                       (let [said (str/trim (:out (shell {:out :string} "bb target/blackbox-cli.jar --version")))]
-                         (when (not= said version)
-                           (throw (ex-info (str "the jar says " said ", not " version) {}))))
-                       (spit "target/blackbox-cli.jar.sha256"
-                             (:out (shell {:out :string :dir "target"} "shasum -a 256 blackbox-cli.jar")))
-                       (println "target/blackbox-cli.jar" version))}
+ :tasks {dist {:doc "The release files in target/: blackbox-cli.jar (src and skills/ inside; `bb blackbox-cli.jar` runs it), its .sha256, and blackbox-cli.json, the manifest Black Box updates from. bb dist vX.Y.Z also checks the tag against the version."
+               :extra-paths ["dev"]
+               :requires ([release])
+               :task (release/dist! (first *command-line-args*))}
+         release-notes {:doc "The CHANGELOG's section for a version (bb release-notes vX.Y.Z), for the GitHub release."
+                        :extra-paths ["dev"]
+                        :requires ([release])
+                        :task (release/notes! (first *command-line-args*))}
+         release {:doc "A release in one step: bb release X.Y.Z [summary] [--trailer \"Key: value\"]… [--dry-run]. Dates the CHANGELOG's Unreleased, sets the version, runs the checks, commits, tags and pushes; GitHub's release workflow builds and publishes it; then checks the download as Black Box will."
+                  :extra-paths ["dev"]
+                  :requires ([release])
+                  :task (release/release! *command-line-args*)}
          test {:doc "Runs every test against the fixture media_meta in test/fixtures. Never reads real media."
                :extra-paths ["test"]
                :requires ([black-box-cli.test-runner :as runner])

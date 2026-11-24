@@ -40,7 +40,8 @@
            ["blackbox status" "the index's health, and anything Dropbox hasn't brought down yet"]
            ["blackbox index" "read what Dropbox has brought down (seconds; your agent does it when it's needed)"]
            ["blackbox tutorial --open" "this tutorial, animated, in your browser"]
-           ["blackbox setup agent" "once on a new Mac: teaches your agent Black Box"]]
+           ["blackbox setup agent" "once on a new Mac: teaches your agent Black Box"]
+           ["blackbox update" "the newest blackbox now (Black Box also checks every few minutes)"]]
     :tips ["New footage shows up on its own: the studio's Mac mini transcribes and logs it, and Dropbox brings it here."
            "If it says `incomplete`, right-click media_meta in Finder → Make Available Offline."
            "On a new Mac: install Black Box, then run `blackbox setup agent` once so your agent knows how to use it."

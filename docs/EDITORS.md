@@ -40,6 +40,7 @@ Everything Black Box reads is already on your Mac, in Dropbox's media_meta: tran
 - `blackbox index`: read what Dropbox has brought down (seconds; your agent does it when it's needed)
 - `blackbox tutorial --open`: this tutorial, animated, in your browser
 - `blackbox setup agent`: once on a new Mac: teaches your agent Black Box
+- `blackbox update`: the newest blackbox now (Black Box also checks every few minutes)
 
 **Tips:**
 

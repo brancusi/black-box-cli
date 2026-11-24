@@ -17,6 +17,7 @@
    [black-box-cli.review :as review]
    [black-box-cli.tutorial :as tutorial]
    [black-box-cli.version :as version]
+   [black-box-cli.update :as update]
    [black-box-cli.who :as who]
    [clojure.string :as str]))
 
@@ -51,6 +52,7 @@
   blackbox people                who is heard and seen (--person on search and footage)
   blackbox whose <id>            who a voice (line id) or a face (face id) may be; like <id> for ones like it
   blackbox tutorial [lesson]     what an editor can do, lesson by lesson; --open plays it animated in the browser
+  blackbox update                have Black Box install the newest blackbox now (it also checks by itself)
   blackbox setup agent           the Agent Skill and the session hook
 
 Global flags, before the command: --meta <media_meta folder>, --local <cache and cuts folder>.
@@ -100,20 +102,22 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
         meta-line (if m (out/home-path m (:home ctx)) "not found")
         no-meta "Pass --meta <the media_meta folder>, or make Dropbox's media_meta available on this Mac"]
     (if-not months
-      (out/emit! (array-map :bin (bin ctx) :version version/version :description description :index index
-                            :media_meta meta-line)
+      (out/emit! (apply array-map (concat [:bin (bin ctx) :version version/version]
+                                          (when-let [i (update/installed (:env ctx))] [:installed i])
+                                          [:description description :index index :media_meta meta-line]))
                  [(if m "Run `blackbox index` to build the search index from the transcripts" no-meta)]
                  fmt)
       (let [recent (take 3 (cuts/edls (index/paths ctx)))]
-        (out/emit! (array-map :bin (bin ctx)
-                              :version version/version
-                              :description description
-                              :index index
-                              :media_meta meta-line
-                              :months months
-                              :recent_edls (if (seq recent)
-                                             (mapv #(select-keys % [:id :title :clips :length]) recent)
-                                             "none yet"))
+        (out/emit! (apply array-map
+                          (concat [:bin (bin ctx) :version version/version]
+                                  (when-let [i (update/installed (:env ctx))] [:installed i])
+                                  [:description description
+                                   :index index
+                                   :media_meta meta-line
+                                   :months months
+                                   :recent_edls (if (seq recent)
+                                                  (mapv #(select-keys % [:id :title :clips :length]) recent)
+                                                  "none yet")]))
                    (cond-> []
                      (not m) (conj no-meta)
                      true (conj "Run `blackbox search <words> [--month YYYY-MM]` to find what was said"
@@ -150,6 +154,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["review" "new"] review/new-cmd
    ["review" "open"] review/open-cmd
    ["review" "list"] review/list-cmd
+   ["update"] update/update-cmd
    ["setup" "agent"] setup/agent-cmd
    ["setup" "skill-check"] setup/skill-check-cmd})
 
