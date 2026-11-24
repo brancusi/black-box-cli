@@ -97,8 +97,10 @@ CHANGELOG.md.
     edits go in ~/Black Box/edits/<id>/ with edit.mp4 (rendered once from the proxies), cut.edl and cut.json; the
     earlier folder is still read. `online` adds pre- and post-roll (default 2 s, clamped to the file), writes
     online-<time>.edl and its plan into the edit's folder, and runs resolve_build.py
-    with Resolve's own Python: it imports the originals by path into "Black Box/<id>", reusing ones an earlier cut
-    brought in, links the proxies, and imports cut.edl as a new timeline that may link only to those clips. If the
+    with Resolve's own Python: originals already in the project are used where they are, in any folder (the
+    editor's own first; matched by path, or by the same path from media/ on for another mount, never by file name
+    alone), and only the rest are imported by path into "Black Box/<id>" with the proxies linked (the editor's clips
+    are left as they are); cut.edl comes in as a new timeline that may link only to those clips. If the
     EDL doesn't link every clip to its own original, the clips are appended by frame instead (the same frames). auto
     puts it in the open project, or a new one when Resolve had to be started or nothing real is open.
 15. **The recorders come synced, and a selects review imports (owner, 2026-11-24).** `online` lays each clip's

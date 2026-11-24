@@ -77,6 +77,43 @@ def file_path(item):
     return (item.GetClipProperty("File Path") or "") if item else ""
 
 
+def media_key(path):
+    """The path from its last /media/ on, lower case: the same original on the NAS whichever way it was mounted
+    (never the file name alone: camera names repeat across cards)."""
+    p = (path or "").replace("\\", "/")
+    i = p.lower().rfind("/media/")
+    return p[i:].lower() if i >= 0 else None
+
+
+def find_existing(root, ours, paths):
+    """The originals already in this project, in any folder: {path: (item, folder, mine)}. A clip the editor brought
+    in is preferred to one in a Black Box folder, and an exact path to one matched by its media/ path."""
+    ours_ids = {f.GetUniqueId() for f in walk(ours)}
+    by_key = {}
+    for p in paths:
+        k = media_key(p)
+        if k:
+            by_key.setdefault(k, []).append(p)
+    found = {}
+    for f in walk(root):
+        theirs = f.GetUniqueId() not in ours_ids
+        for item in f.GetClipList() or []:
+            fp = file_path(item)
+            if not fp:
+                continue
+            if fp in paths:
+                p, exact = fp, True
+            else:
+                same = by_key.get(media_key(fp)) or []
+                if len(same) != 1:
+                    continue
+                p, exact = same[0], False
+            rank = (theirs, exact)
+            if p not in found or rank > found[p][3]:
+                found[p] = (item, f, theirs, rank)
+    return {p: (item, f, theirs) for p, (item, f, theirs, _) in found.items()}
+
+
 def timeline_names(project):
     return {project.GetTimelineByIndex(i).GetName() for i in range(1, project.GetTimelineCount() + 1)}
 
@@ -172,18 +209,18 @@ def main(plan_path):
     folder = subfolder(media_pool, ours, plan["bin"])
     media_pool.SetCurrentFolder(folder)
 
-    # Originals an earlier cut already brought into this project (under "Black Box") are used again, not imported
-    # twice: the EDL may link to them in their own folders.
+    # Originals already in this project, in any folder (the editor's own first, then an earlier cut's under "Black
+    # Box"), are used where they are, never imported twice; only the rest come into this cut's Black Box folder. The
+    # EDL links to them in their folders.
     audio = plan.get("audio") or []
     paths = list(dict.fromkeys([c["source_path"] for c in plan["clips"]] + [a["source_path"] for a in audio]))
-    have, homes = {}, [folder]
-    for f in walk(ours):
-        found = False
-        for item in f.GetClipList() or []:
-            p = file_path(item)
-            if p in paths and p not in have:
-                have[p], found = item, True
-        if found and f.GetUniqueId() != folder.GetUniqueId():
+    existing = find_existing(root, ours, paths)
+    have = {p: item for p, (item, _, _) in existing.items()}
+    theirs = {p for p, (_, _, mine) in existing.items() if mine}
+    homes, seen = [folder], {folder.GetUniqueId()}
+    for _, f, _ in existing.values():
+        if f.GetUniqueId() not in seen:
+            seen.add(f.GetUniqueId())
             homes.append(f)
     new = [p for p in paths if p not in have]
     # Resolve 21.1 answers None to the documented [{"FilePath": …}] form; a list of paths works.
@@ -196,7 +233,9 @@ def main(plan_path):
     if plan.get("proxies"):
         for c in plan["clips"]:
             item, proxy = have.get(c["source_path"]), c.get("proxy")
-            if item and proxy and os.path.isfile(proxy) and not item.GetClipProperty("Proxy Media Path"):
+            # The editor's own clips are left as they are: a proxy is linked only to ours.
+            if (item and proxy and c["source_path"] not in theirs and os.path.isfile(proxy)
+                    and not item.GetClipProperty("Proxy Media Path")):
                 if item.LinkProxyMedia(proxy):
                     linked += 1
 
@@ -236,7 +275,8 @@ def main(plan_path):
             "timeline": timeline.GetName(), "method": method, "edl_note": edl_note,
             "clips": len(timeline.GetItemListInTrack("video", 1) or []) + len(
                 [c for c in clips if not c["video"]]),
-            "imported": len(imported or []), "reused": len(paths) - len(new), "missing": missing,
+            "imported": len(imported or []), "reused": len(paths) - len(new), "in_project": len(theirs),
+            "missing": missing,
             "proxies_linked": linked, "launched": launched, "resolve": resolve.GetVersionString(),
             "audio": len(audio), "audio_placed": audio_placed}
 

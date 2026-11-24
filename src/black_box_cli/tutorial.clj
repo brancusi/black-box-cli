@@ -143,6 +143,7 @@
            ["blackbox online quarry --no-audio" "without the synced recorders"]]
     :tips ["Once, in Resolve: Preferences → System → General → External scripting using → Local."
            "The NAS must be mounted (Finder → Go → Connect to Server); clips it can't find are listed as missing."
+           "Originals already in your project, in any bin, are used where they are; only the rest are imported, into a Black Box bin."
            "It only adds: new timelines and projects, and a name already taken gets a number. Nothing in Resolve is changed or deleted."]}
    {:id "project"
     :punch "A whole Resolve project, built by the mini."

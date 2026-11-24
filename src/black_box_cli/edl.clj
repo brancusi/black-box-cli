@@ -451,6 +451,7 @@
                                              :by (if (= "edl" (:method res)) "the EDL, imported" "frames, appended")
                                              :originals_imported (:imported res)
                                              :originals_reused (:reused res)
+                                             :originals_in_project (or (:in_project res) 0)
                                              :missing (if (seq (:missing res)) (:missing res) "none")
                                              :proxies_linked (:proxies_linked res)
                                              :audio_placed (str (:audio_placed res) " of " (:audio res))

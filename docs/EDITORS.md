@@ -214,6 +214,7 @@ Say "online this" and the edit goes back to the camera originals, 2 s of handles
 
 - Once, in Resolve: Preferences → System → General → External scripting using → Local.
 - The NAS must be mounted (Finder → Go → Connect to Server); clips it can't find are listed as missing.
+- Originals already in your project, in any bin, are used where they are; only the rest are imported, into a Black Box bin.
 - It only adds: new timelines and projects, and a name already taken gets a number. Nothing in Resolve is changed or deleted.
 
 <a id="project"></a>

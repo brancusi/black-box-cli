@@ -3,6 +3,7 @@
   Python (faked here by a script that keeps the plan and prints an answer). Nothing opens Resolve or an original."
   (:require
    [babashka.fs :as fs]
+   [babashka.process :as process]
    [black-box-cli.cutlist :as cutlist]
    [black-box-cli.edl :as edl]
    [black-box-cli.resolve :as resolve]
@@ -145,3 +146,13 @@
       (is (= "no-resolve" (-> (run "/nowhere/python" stdin "online" "-") :error :code))))
     (testing "usage"
       (is (= 2 (:exit (run "/nowhere/python" stdin "online" "-" "--into" "elsewhere")))))))
+
+(deftest originals-already-in-the-project-are-used-where-they-are
+  (testing "the editor's own copy first, an exact path before the same media/ path, never a file name alone"
+    (let [{:keys [exit out err]} (process/sh "python3" "test/black_box_cli/resolve_build_check.py"
+                                             "src/black_box_cli/resolve_build.py")]
+      (is (zero? exit) err)
+      (is (= {"2026/09/16/fx3/C0001.MP4" ["Editor media" true "/Volumes/Video/media/2026/09/16/fx3/C0001.MP4"]
+              "2026/09/17/fx3/C0002.MP4" ["Editor media" true "/Volumes/Video-1/media/2026/09/17/fx3/C0002.MP4"]}
+             (json/parse-string out))
+          "C0001 of the 18th is nowhere in the project: it's imported, not matched by its name"))))

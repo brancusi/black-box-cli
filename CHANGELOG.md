@@ -4,6 +4,10 @@
 
 - The selects review's gallery scrubs: the mouse's place across a clip is its time from in to out (a playhead and
   the time follow it; one seek at a time, always to where the mouse is now). The open clip is unchanged.
+- `online` (and a review's Import) uses originals already in the project wherever they are, the editor's own
+  folders first: matched by path, or by the same path from media/ on (another mount of the NAS), never by file name
+  alone. Only the rest are imported into "Black Box/<id>". The editor's clips are left as they are (no proxy linked
+  to them); `originals_in_project` counts them.
 
 ## 0.1.9 (2026-11-24)
 
