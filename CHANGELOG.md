@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.11 (2026-11-24)
 
 - Releases reach every Mac within minutes, without waiting for a Black Box release (once Black Box has ask 13):
   each release carries a manifest, `blackbox-cli.json` (version, SHA-256, size and `min_black_box`, the oldest
