@@ -284,7 +284,7 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 
 ## What's new
 
-### 0.1.8 (this version)
+### 0.1.8 (2026-11-24)
 
 - **Selects review:** Ask for selects and get a page: each clip plays on hover with its words under it; open one for its whole transcript. s selects, i imports the selected into Resolve. `blackbox review new - --open`
 - **Recorders come synced:** Onlining an edit lays the lavs and field recorder under each clip, frame-exact, each on its own tracks. `blackbox online quarry`

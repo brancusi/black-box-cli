@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.8 (2026-11-24)
 
 - `blackbox review new <selects|->` (`open`, `list`): a selects review. A cut list with `group:` sections becomes
   ~/Black Box/reviews/<id>/: a page of the clips playing their proxies, each with its words under it; a click opens
