@@ -11,14 +11,13 @@
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
   :seconds 7.889},
+ "732049815477c9d7"
+ {:text "New in version 0.1.12: subtitles in Resolve.",
+  :seconds 5.329},
  "8536408f509e5a99"
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",
   :seconds 8.124},
- "930570375b49e33d"
- {:text
-  "New in version 0.1.11: a steady review, and updates in minutes.",
-  :seconds 6.609},
  "a611f3e3e2f9abd1"
  {:text
   "Ask for a rough cut and it plays seconds later. Every edit is kept, so you can always go back.",

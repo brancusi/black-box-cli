@@ -246,7 +246,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.11" :date "2026-11-24"
+  [{:version "0.1.12" :date "2026-11-24"
+    :items [{:title "Subtitles in Resolve" :lesson "online" :run "blackbox online quarry"
+             :what "Importing selects or an edit puts what's said on the timeline's subtitle track, handles included: copy lines straight from it."}]}
+   {:version "0.1.11" :date "2026-11-24"
     :items [{:title "A steady review" :lesson "review" :run "blackbox review new - --open"
              :what "Selecting a clip moves nothing on the page, and the open clip's video keeps its shape at any window size."}
             {:title "Updates in minutes" :lesson "start" :run "blackbox update"
