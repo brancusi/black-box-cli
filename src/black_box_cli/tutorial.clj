@@ -96,7 +96,7 @@
            ["blackbox review list" "every review, newest first"]
            ["blackbox review open kiln" "open one again, with Import working"]]
     :tips ["Reviews are kept in ~/Black Box/reviews; review.html opens from Finder to watch and read, but importing needs it opened by your agent."
-           "Keys in a clip: space plays, i and o set in and out, x ticks it, ← and → move to the previous or next clip."
+           "Keys: ? lists them all. s selects the clip you're on (they gather at the top, in timeline order), i imports them; in an open clip i and o set in and out as in Resolve, shift+I imports, and ← and → move between clips."
            "Italian lines will show their English underneath once Black Box publishes translations."]}
    {:id "online"
     :title "Online an edit in Resolve"

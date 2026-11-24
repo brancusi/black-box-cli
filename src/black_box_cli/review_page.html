@@ -16,7 +16,7 @@
 html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
-header.top { position: sticky; top: 0; z-index: 5; background: rgba(17,18,20,.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); padding: 14px 24px 10px; }
+header.top { position: sticky; top: 0; z-index: 12; background: rgba(17,18,20,.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); padding: 14px 24px 10px; }
 header.top h1 { font-size: 18px; margin: 0 0 2px; font-weight: 650; letter-spacing: -.01em; }
 header.top .sub { color: var(--dim); font-size: 13px; }
 nav.groups { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
@@ -60,7 +60,28 @@ footer.bar select { background: var(--card); border: 1px solid var(--line); bord
 .status.err { color: var(--bad); }
 .ghost { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; color: var(--dim); }
 /* detail */
-.detail { position: fixed; inset: 0; z-index: 10; background: var(--bg); display: none; }
+.detail { position: fixed; inset: var(--top, 0px) 0 0 0; z-index: 10; background: var(--bg); display: none; }
+body.in-detail .titles { display: none; }
+body.in-detail header.top { padding-top: 10px; }
+.tray { display: flex; gap: 8px; align-items: center; margin-top: 10px; overflow-x: auto; padding-bottom: 2px; min-height: 30px; }
+.tray .label { color: var(--dim); font-size: 12.5px; white-space: nowrap; margin-right: 4px; }
+.tray .label b { color: var(--text); }
+.tray .hint { color: var(--faint); font-size: 12.5px; }
+.chip { flex: none; display: flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 7px; padding: 3px 8px 3px 3px; cursor: pointer; font-size: 12px; color: var(--text); }
+.chip:hover { border-color: #4a5058; }
+.chip.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.chip img, .chip .ph { width: 56px; height: 32px; object-fit: cover; border-radius: 4px; background: #000; display: block; }
+.chip .k { color: var(--faint); font-variant-numeric: tabular-nums; }
+.chip .x { color: var(--faint); padding: 0 2px; }
+.chip .x:hover { color: var(--bad); }
+.help { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.6); display: none; place-items: center; }
+.help.on { display: grid; }
+.help .box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px 26px; width: min(680px, 92vw); max-height: 90vh; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 6px 28px; }
+.help h3 { grid-column: 1 / -1; margin: 0 0 6px; font-size: 15px; }
+.help h4 { margin: 8px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+.help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: baseline; font-size: 13px; }
+.help dt { text-align: right; white-space: nowrap; min-width: 84px; }
+.help .foot { grid-column: 1 / -1; color: var(--faint); font-size: 12px; margin-top: 10px; }
 .detail.on { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); }
 .d-left { padding: 20px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .d-left video { width: 100%; max-height: calc(100vh - 220px); background: #000; border-radius: 8px; }
@@ -89,21 +110,25 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
 </style>
 </head>
 <body>
-<header class="top">
-  <h1 id="title"></h1>
-  <div class="sub" id="sub"></div>
-  <nav class="groups" id="groups"></nav>
+<header class="top" id="top">
+  <div class="titles">
+    <h1 id="title"></h1>
+    <div class="sub" id="sub"></div>
+    <nav class="groups" id="groups"></nav>
+  </div>
+  <div class="tray" id="tray"></div>
 </header>
 <main id="main"></main>
 <footer class="bar">
   <span class="count" id="count">Nothing selected</span>
   <button class="ghost" id="all">Select all shown</button>
   <button class="ghost" id="clear">Clear</button>
+  <button class="ghost" id="keys" title="Keyboard shortcuts">Keys <kbd>?</kbd></button>
   <label>Pre <input type="number" id="pre" min="0" step="0.5" value="2"> s</label>
   <label>Post <input type="number" id="post" min="0" step="0.5" value="2"> s</label>
   <label>Into <select id="into"><option value="auto">open project (new if Resolve is closed)</option><option value="current">open project</option><option value="new-project">new project</option></select></label>
   <label><input type="checkbox" id="audio" checked> synced recorders</label>
-  <button class="go" id="go" disabled>Import into Resolve</button>
+  <button class="go" id="go" disabled>Import into Resolve <kbd>I</kbd></button>
   <div class="status" id="status"></div>
 </footer>
 <div class="detail" id="detail">
@@ -116,16 +141,40 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
       <button class="ghost" id="d-in">Set in <kbd>i</kbd></button>
       <button class="ghost" id="d-out">Set out <kbd>o</kbd></button>
       <button class="ghost" id="d-reset">Reset in/out</button>
-      <button class="ghost" id="d-pick">Select <kbd>x</kbd></button>
+      <button class="ghost" id="d-pick">Select <kbd>s</kbd></button>
       <button class="ghost" id="d-prev">‹ Prev <kbd>←</kbd></button>
       <button class="ghost" id="d-next">Next › <kbd>→</kbd></button>
-      <span class="keys"><kbd>space</kbd> play · <kbd>j</kbd>/<kbd>l</kbd> 5 s · click a word to jump</span>
+      <span class="keys"><kbd>space</kbd> play · <kbd>j</kbd>/<kbd>l</kbd> 5 s · click a word to jump · <kbd>?</kbd> keys</span>
     </div>
     <div class="note" id="d-note"></div>
   </div>
   <div class="d-right">
     <div class="t-head"><b>Transcript</b><button class="ghost" id="d-follow">Following</button></div>
     <div class="transcript" id="d-transcript"></div>
+  </div>
+</div>
+<div class="help" id="help">
+  <div class="box">
+    <h3>Keys</h3>
+    <div><h4>Gallery</h4><dl>
+      <dt>hover</dt><dd>preview a clip, silent</dd>
+      <dt>click</dt><dd>open a clip</dd>
+      <dt><kbd>s</kbd></dt><dd>select or deselect the clip under the mouse</dd>
+      <dt><kbd>space</kbd> <kbd>enter</kbd></dt><dd>open the clip under the mouse</dd>
+      <dt><kbd>i</kbd></dt><dd>import the selected clips into Resolve</dd>
+      <dt><kbd>?</kbd></dt><dd>these keys</dd>
+    </dl></div>
+    <div><h4>An open clip</h4><dl>
+      <dt><kbd>space</kbd></dt><dd>play or pause</dd>
+      <dt><kbd>s</kbd></dt><dd>select or deselect it</dd>
+      <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>previous or next clip</dd>
+      <dt><kbd>i</kbd> <kbd>o</kbd></dt><dd>set its in or out at the playhead</dd>
+      <dt><kbd>j</kbd> <kbd>l</kbd></dt><dd>back or forward 5 s</dd>
+      <dt>a word</dt><dd>jump there</dd>
+      <dt><kbd>shift</kbd> <kbd>I</kbd></dt><dd>import the selected clips</dd>
+      <dt><kbd>esc</kbd></dt><dd>back to the gallery</dd>
+    </dl></div>
+    <div class="foot">Selected clips gather at the top, in the order you picked them: that's their order on the timeline. Click one to open it, × to drop it. <kbd>esc</kbd> closes this.</div>
   </div>
 </div>
 <script type="application/json" id="review-data">/*REVIEW_DATA*/</script>
@@ -144,7 +193,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
   };
   var thumbURL = function (c) { return c.thumb ? (SERVER ? "/" + c.thumb + "?t=" + encodeURIComponent(TOKEN) : c.thumb) : ""; };
 
-  var picked = {}, ranges = {}, filter = null;
+  var picked = {}, order = [], ranges = {}, filter = null, hoverN = null;
   var clipBy = {}; D.clips.forEach(function (c) { clipBy[c.n] = c; });
   var rangeOf = function (c) { return ranges[c.n] || { start: c.start, end: c.end }; };
   var linesIn = function (c, r) {
@@ -201,6 +250,8 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
         bar.style.width = (100 * Math.max(0, v.currentTime - rr.start) / Math.max(0.1, rr.end - rr.start)) + "%";
       });
     }
+    a.addEventListener("mouseenter", function () { hoverN = c.n; });
+    a.addEventListener("mouseleave", function () { if (hoverN === c.n) hoverN = null; });
     a.querySelector(".pick").addEventListener("click", function (e) { e.stopPropagation(); toggle(c.n); });
     a.addEventListener("click", function () { openDetail(c.n); });
     return a;
@@ -221,20 +272,51 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
     count();
   }
   function toggle(n) {
-    if (picked[n]) delete picked[n]; else picked[n] = true;
+    if (n === null || n === undefined) return;
+    if (picked[n]) { delete picked[n]; order = order.filter(function (m) { return m !== n; }); }
+    else { picked[n] = true; order.push(n); }
     var el = document.querySelector('.card[data-n="' + n + '"]'); if (el) el.classList.toggle("picked", !!picked[n]);
     if (cur === n) pickLabel();
     count();
   }
+  function tray() {
+    var t = $("tray");
+    if (!order.length) {
+      t.innerHTML = '<span class="hint">Nothing selected yet: press <kbd>s</kbd> on a clip (hover it, or open it), or tick its box. <kbd>?</kbd> shows every key.</span>';
+    } else {
+      var len = order.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
+      t.innerHTML = '<span class="label"><b>' + order.length + " selected</b> · " + fmt(len) + (SERVER ? " · <kbd>I</kbd> imports them" : "") + "</span>" +
+        order.map(function (n, i) {
+          var c = clipBy[n], r = rangeOf(c), th = thumbURL(c);
+          return '<span class="chip' + (n === cur ? " cur" : "") + '" data-n="' + n + '" title="' + esc(c.file + (c.note ? " · " + c.note : "")) + '">' +
+            (th ? '<img src="' + esc(th) + '" alt="">' : '<span class="ph"></span>') +
+            '<span><span class="k">' + (i + 1) + "</span> " + fmt(r.end - r.start) + '</span><span class="x" title="Drop it">×</span></span>';
+        }).join("");
+    }
+    layoutTop();
+  }
+  function layoutTop() { document.documentElement.style.setProperty("--top", $("top").offsetHeight + "px"); }
+  window.addEventListener("resize", layoutTop);
+  $("tray").addEventListener("click", function (e) {
+    var chip = e.target.closest(".chip"); if (!chip) return;
+    var n = +chip.dataset.n;
+    if (e.target.closest(".x")) { toggle(n); return; }
+    openDetail(n);
+  });
   function count() {
-    var ns = Object.keys(picked).map(Number);
+    tray();
+    var ns = order.slice();
     var len = ns.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
     $("count").textContent = ns.length ? ns.length + " selected · " + fmt(len) : "Nothing selected";
     $("go").disabled = !ns.length || !SERVER || busy;
     if (!SERVER) $("go").title = "Open this review with `blackbox review open " + D.id + "` to import";
   }
-  $("all").addEventListener("click", function () { shown().forEach(function (c) { picked[c.n] = true; }); render(); });
-  $("clear").addEventListener("click", function () { picked = {}; render(); });
+  $("all").addEventListener("click", function () {
+    shown().forEach(function (c) { if (!picked[c.n]) { picked[c.n] = true; order.push(c.n); } }); render();
+  });
+  $("clear").addEventListener("click", function () { picked = {}; order = []; render(); });
+  $("keys").addEventListener("click", function () { $("help").classList.add("on"); });
+  $("help").addEventListener("click", function (e) { if (e.target === this) this.classList.remove("on"); });
 
   // ---------- the detail view
   var cur = null, words = [], follow = true, playClip = false, lastWord = null;
@@ -257,12 +339,13 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
                 ws.join(" ") + (l.en ? '<span class="en">' + esc(l.en) + "</span>" : "") + "</div>");
     });
     $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">No transcript for this file.</p>';
+    document.body.classList.add("in-detail"); tray();
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
     Array.prototype.forEach.call(document.querySelectorAll(".card video"), function (x) { x.pause(); });
     playClip = true; dv.play().catch(function () {}); // the clip plays once, with sound; space carries on
     var first = document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
   }
-  function closeDetail() { dv.pause(); $("detail").classList.remove("on"); cur = null; render(); }
+  function closeDetail() { dv.pause(); $("detail").classList.remove("on"); document.body.classList.remove("in-detail"); cur = null; render(); }
   function marks() {
     var c = clipBy[cur], r = rangeOf(c), d = dv.duration || (D.files[c.rel] || {}).duration || c.duration || 1;
     $("d-rng").style.left = (100 * r.start / d) + "%"; $("d-rng").style.width = (100 * (r.end - r.start) / d) + "%";
@@ -271,7 +354,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
       q.classList.toggle("inrange", +q.dataset.e > r.start && +q.dataset.s < r.end);
     });
   }
-  function pickLabel() { $("d-pick").innerHTML = (picked[cur] ? "Selected ✓" : "Select") + " <kbd>x</kbd>"; }
+  function pickLabel() { $("d-pick").innerHTML = (picked[cur] ? "Selected ✓" : "Select") + " <kbd>s</kbd>"; }
   function followLabel() { $("d-follow").textContent = follow ? "Following" : "Follow"; }
   function setRange(which) {
     var c = clipBy[cur], r = rangeOf(c), t = dv.currentTime, nr = { start: r.start, end: r.end };
@@ -326,26 +409,39 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
   $("d-next").addEventListener("click", function () { step(1); });
   $("d-close").addEventListener("click", closeDetail);
   document.addEventListener("keydown", function (e) {
-    if (cur === null || e.metaKey || e.ctrlKey || e.altKey || /INPUT|SELECT/.test(e.target.tagName)) return;
-    var k = e.key;
-    if (k === "Escape") closeDetail();
-    else if (k === " ") { e.preventDefault(); if (dv.paused) dv.play(); else dv.pause(); }
-    else if (k === "i") setRange("in");
-    else if (k === "o") setRange("out");
-    else if (k === "x" || k === "Enter") toggle(cur);
-    else if (k === "j") dv.currentTime = Math.max(0, dv.currentTime - 5);
-    else if (k === "l") dv.currentTime = dv.currentTime + 5;
-    else if (k === "ArrowLeft" || k === "[") { e.preventDefault(); step(-1); }
-    else if (k === "ArrowRight" || k === "]") { e.preventDefault(); step(1); }
+    if (e.metaKey || e.ctrlKey || e.altKey || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+    var k = e.key, help = $("help");
+    if (k === "?") { e.preventDefault(); help.classList.toggle("on"); return; }
+    if (help.classList.contains("on")) { if (k === "Escape") help.classList.remove("on"); return; }
+    if (k === "I") { e.preventDefault(); importKey(); return; } // shift+i, from either view
+    if (cur !== null) {
+      if (k === "Escape") closeDetail();
+      else if (k === " ") { e.preventDefault(); playClip = false; if (dv.paused) dv.play(); else dv.pause(); }
+      else if (k === "s" || k === "S" || k === "x") toggle(cur);
+      else if (k === "i") setRange("in");
+      else if (k === "o") setRange("out");
+      else if (k === "j") dv.currentTime = Math.max(0, dv.currentTime - 5);
+      else if (k === "l") dv.currentTime = dv.currentTime + 5;
+      else if (k === "ArrowLeft" || k === "[") { e.preventDefault(); step(-1); }
+      else if (k === "ArrowRight" || k === "]") { e.preventDefault(); step(1); }
+      return;
+    }
+    if (k === "s" || k === "S") toggle(hoverN);
+    else if (k === "i") importKey();
+    else if ((k === " " || k === "Enter") && hoverN !== null) { e.preventDefault(); openDetail(hoverN); }
   });
 
   // ---------- importing
   var busy = false;
   function status(text, kind) { var s = $("status"); s.textContent = text; s.className = "status" + (kind ? " " + kind : ""); }
-  $("go").addEventListener("click", function () {
-    var clips = D.clips.filter(function (c) { return picked[c.n]; }).map(function (c) {
-      var r = rangeOf(c); return { n: c.n, start: r.start, end: r.end };
-    });
+  $("go").addEventListener("click", function () { doImport(); });
+  function importKey() {
+    if (!order.length) status("Nothing selected to import: press s on a clip first.", "err");
+    else if (!SERVER) status("Importing needs the review opened by your agent (blackbox review open " + D.id + ").", "err");
+    else if (!busy) doImport();
+  }
+  function doImport() {
+    var clips = order.map(function (n) { var r = rangeOf(clipBy[n]); return { n: n, start: r.start, end: r.end }; });
     busy = true; count(); status("Building the timeline in Resolve from the camera originals… (Resolve may start first)");
     fetch("/api/import?t=" + encodeURIComponent(TOKEN), {
       method: "POST", headers: { "content-type": "application/json" },
@@ -358,7 +454,7 @@ kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--line); 
              (r.audio_placed ? " · recorders " + r.audio_placed : "") + (Array.isArray(res.warnings) && res.warnings.length ? " · " + res.warnings.length + " warning(s): " + res.warnings.join("; ") : "") +
              " · edit " + res.id, "ok");
     }).catch(function (e) { busy = false; count(); status("Not imported: the review's server didn't answer (" + e + "). Run `blackbox review open " + D.id + "` again.", "err"); });
-  });
+  }
   if (SERVER) {
     var ping = function () { fetch("/api/ping?t=" + encodeURIComponent(TOKEN), { method: "POST" }).catch(function () {}); };
     ping(); setInterval(ping, 20000);

@@ -203,7 +203,8 @@ When the user asks for selects to look through ("build me a selects review for b
 
 On the page each clip plays its proxy with its words under it (an Italian line gets its English under it once Black
 Box publishes translations). Clicking a clip opens it with its file's whole transcript: a word jumps there, `i` and
-`o` trim the in and out. They tick clips and press Import into Resolve, which runs `online` on them (below): a new
+`o` trim the in and out. `s` selects a clip (the selected gather at the top, in timeline order) and `?` lists the
+keys. They press `i` in the gallery, or Import into Resolve, which runs `online` on them (below): a new
 timeline from the originals, with pre- and post-roll and the synced recorders. `blackbox review list` and
 `blackbox review open <id>` (in the background) bring one back.
 
