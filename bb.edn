@@ -5,11 +5,7 @@
                :extra-paths ["dev"]
                :requires ([release])
                :task (release/dist! (first *command-line-args*))}
-         release-notes {:doc "The CHANGELOG's section for a version (bb release-notes vX.Y.Z), for the GitHub release."
-                        :extra-paths ["dev"]
-                        :requires ([release])
-                        :task (release/notes! (first *command-line-args*))}
-         release {:doc "A release in one step: bb release X.Y.Z [summary] [--trailer \"Key: value\"]… [--dry-run]. Dates the CHANGELOG's Unreleased, sets the version, runs the checks, commits, tags and pushes; GitHub's release workflow builds and publishes it; then checks the download as Black Box will."
+         release {:doc "A release in one step: bb release X.Y.Z [summary] [--trailer \"Key: value\"]… [--dry-run]. Dates the CHANGELOG's Unreleased, sets the version, runs the checks, commits, tags, builds (jar, .sha256, manifest), pushes and publishes on GitHub, then checks the download as Black Box will. Nothing waits on GitHub's own run."
                   :extra-paths ["dev"]
                   :requires ([release])
                   :task (release/release! *command-line-args*)}

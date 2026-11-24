@@ -124,9 +124,9 @@ checks (`cmd+shift+b` runs test, lint and fmt).
 - `deps.edn` exists only so bbin can load the checkout. Tasks and the REPL stay in `bb.edn`.
 - **A change:** run the checks, add a line under the unreleased version in `CHANGELOG.md`, commit.
 - **A release:** add what's new to `tutorial/news` (then `bb narrate`), commit, then `bb release X.Y.Z "summary"`
-  (`--dry-run` checks first). It dates the CHANGELOG, sets the version, runs the checks, commits, tags and pushes;
-  GitHub's release workflow builds `blackbox-cli.jar`, its `.sha256` and the manifest `blackbox-cli.json`, and
-  publishes them with build provenance; `bb release` waits for it and checks the download. The mini checks and signs
+  (`--dry-run` checks first). It dates the CHANGELOG, sets the version, runs the checks, commits, tags, builds
+  `blackbox-cli.jar`, its `.sha256` and the manifest `blackbox-cli.json`, pushes, publishes them on GitHub and checks
+  the download, all from this Mac. Nothing waits on GitHub: its check workflow re-runs the tests in the background. The mini checks and signs
   it by itself, and Black Box installs it on every Mac within minutes, with nothing to do by hand
   (docs/CONTRACT.md, CLI updates). Never make or upload a `.sig` from here. When the CLI needs something new from Black Box, raise `min-black-box`
   in version.clj first: Macs on an older Black Box wait for it.

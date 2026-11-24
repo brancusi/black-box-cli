@@ -111,14 +111,14 @@ CHANGELOG.md.
     serves it on 127.0.0.1 with a key, and its Import sends the ticked clips, trimmed or not, to `online`. English
     under Italian lines waits for Black Box's translations in media_meta (ask 12).
 16. **Black Box updates the CLI between its own releases (owner, 2026-11-24).** A release is live on every Mac
-    minutes after it's published, with no one signing anything by hand: GitHub's release workflow builds it, attests
-    its provenance and publishes it with a manifest; the mini checks the provenance and signs the manifest by itself
+    minutes after it's published, with no one signing anything by hand: `bb release` builds it here and publishes it with
+    a manifest, waiting on nothing (GitHub only re-runs the tests in the background); the mini checks it and signs the
+    manifest by itself
     (Ed25519, the key in the mini's keychain, never on GitHub); and Black Box, which checks every 2 minutes
     and on start, update and wake, installs only a signed release, with the skill. Each release names the oldest Black Box it works with (`min-black-box` in
     version.clj; raise it when the CLI needs something new from Black Box), and Black Box never runs a CLI older
     than the one it carries, so neither runs ahead of the other. The CLI still talks to nothing: Black Box
-    downloads, and `blackbox update` only asks it to check now. GitHub's release workflow builds every release
-    from its tag; `bb release X.Y.Z` does the rest in one step (docs/CONTRACT.md, CLI updates).
+    downloads, and `blackbox update` only asks it to check now (docs/CONTRACT.md, CLI updates).
 
 ## Not this repo's
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `bb release` builds and publishes from the releasing Mac and waits on nothing: GitHub's release workflow is gone
+  (GitHub only re-runs the tests in the background on each push). `bb release X.Y.Z --check` checks a published
+  release's download.
+
 ## 0.1.11 (2026-11-24)
 
 - Releases reach every Mac within minutes, without waiting for a Black Box release (once Black Box has ask 13):

@@ -1,6 +1,7 @@
 (ns release
   "Releases: `bb dist` builds the files a release carries; `bb release X.Y.Z` makes the whole release in one step.
-  GitHub's release workflow builds and publishes from the tag. Black Box checks the manifest every few minutes and installs a release on every Mac whose Black Box is at least
+  It builds and publishes from this Mac, waiting on nothing; GitHub re-runs the tests in the background (check.yml).
+  Black Box checks the manifest every few minutes and installs a release on every Mac whose Black Box is at least
   its `min_black_box` (docs/CONTRACT.md, CLI updates), so a release is live minutes after this finishes."
   (:require
    [babashka.fs :as fs]
@@ -53,6 +54,7 @@
     (cond
       (nil? a) m
       (= a "--dry-run") (recur more (assoc m :dry-run true))
+      (= a "--check") (recur more (assoc m :check true))
       (= a "--trailer") (recur (rest more) (update m :trailers conj (first more)))
       (not (:version m)) (recur more (assoc m :version a))
       (not (:summary m)) (recur more (assoc m :summary a))
@@ -64,11 +66,6 @@
   (let [[_ body] (re-find (re-pattern (str "(?s)## " (java.util.regex.Pattern/quote version) " \\([^)]*\\)\\n(.*?)(?=\\n## |\\z)"))
                           changelog)]
     (str/trim (or body "See CHANGELOG.md."))))
-
-(defn notes!
-  "Prints the CHANGELOG's section for `tag` (vX.Y.Z or X.Y.Z)."
-  [tag]
-  (println (notes (slurp "CHANGELOG.md") (str/replace-first (str tag) #"^v" ""))))
 
 (defn- preflight [version]
   (when-not (re-matches #"\d+\.\d+\.\d+" (str version)) (fail "bb release X.Y.Z: the version, e.g. 0.1.11"))
@@ -85,10 +82,26 @@
         (fail "the tutorial's news starts at " news ": add what's new in " version " to tutorial/news, then `bb narrate`")))
     changelog))
 
+(defn- published!
+  "Checks the release `tag` as Black Box will download it: the jar's SHA-256 and version against its manifest."
+  [tag]
+  (let [version (subs tag 1)
+        dir (str (fs/create-temp-dir {:prefix "bbcli-release-"}))
+        repo (out "gh repo view --json nameWithOwner --jq .nameWithOwner")
+        _ (shell {:dir dir} "gh release download" tag "--repo" repo)
+        manifest (json/parse-string (slurp (str (fs/path dir "blackbox-cli.json"))) true)
+        sha (first (str/split (out {:dir dir} "shasum -a 256 blackbox-cli.jar") #"\s+"))
+        said (out "bb" (str (fs/path dir "blackbox-cli.jar")) "--version")]
+    (when-not (= version (:version manifest) said) (fail "the published jar says " said ", its manifest " (:version manifest)))
+    (when (not= sha (:sha256 manifest)) (fail "the published jar's SHA-256 isn't the manifest's"))
+    (println "published" tag "·" sha "· needs Black Box" (:min_black_box manifest))))
+
 (defn release!
-  "bb release X.Y.Z [summary] [--trailer \"Key: value\"]… [--dry-run]."
+  "bb release X.Y.Z [summary] [--trailer \"Key: value\"]… [--dry-run]; bb release X.Y.Z --check checks a
+  published release's download."
   [args]
-  (let [{:keys [version summary trailers dry-run]} (parse args)
+  (let [{:keys [version summary trailers dry-run check]} (parse args)
+        _ (when check (published! (str "v" version)) (System/exit 0))
         changelog (preflight version)
         today (str (java.time.LocalDate/now java.time.ZoneOffset/UTC))
         tag (str "v" version)]
@@ -105,24 +118,12 @@
       (apply shell "git commit -q -m" (str version (when summary (str ": " summary)))
              (mapcat (fn [t] ["--trailer" t]) trailers))
       (shell "git tag" tag)
+      ;; Built here, where the checks just ran; GitHub only re-runs the tests afterwards, and nothing waits on it.
+      (dist! tag)
       (shell "git push -q origin main")
       (shell "git push -q origin" tag)
-      ;; GitHub's release workflow builds and publishes it from the tag (.github/workflows/release.yml).
-      (println "waiting for GitHub's release workflow to build and publish" tag "…")
-      (let [run-id (loop [n 0]
-                     (let [id (out "gh run list --workflow release.yml --branch" tag "--limit 1 --json databaseId --jq .[0].databaseId")]
-                       (cond
-                         (seq id) id
-                         (> n 60) (fail "GitHub's release workflow didn't start for " tag)
-                         :else (do (Thread/sleep 2000) (recur (inc n))))))]
-        (shell "gh run watch" run-id "--exit-status"))
-      ;; What Black Box will download, checked as Black Box checks it.
-      (let [dir (str (fs/create-temp-dir {:prefix "bbcli-release-"}))
-            _ (shell {:dir dir} "gh release download" tag)
-            manifest (json/parse-string (slurp (str (fs/path dir "blackbox-cli.json"))) true)
-            sha (first (str/split (out {:dir dir} "shasum -a 256 blackbox-cli.jar") #"\s+"))
-            said (out "bb" (str (fs/path dir "blackbox-cli.jar")) "--version")]
-        (when-not (= version (:version manifest) said) (fail "the published jar says " said ", its manifest " (:version manifest)))
-        (when (not= sha (:sha256 manifest)) (fail "the published jar's SHA-256 isn't the manifest's"))
-        (println "published" tag "·" sha "· needs Black Box" (:min_black_box manifest))
-        (println "The Mac mini checks and signs it by itself; Black Box installs it on every Mac minutes later.")))))
+      (spit "target/notes.md" (notes (slurp "CHANGELOG.md") version))
+      (shell "gh release create" tag "target/blackbox-cli.jar" "target/blackbox-cli.jar.sha256" "target/blackbox-cli.json"
+             "--title" tag "--notes-file" "target/notes.md")
+      (published! tag))))
+
