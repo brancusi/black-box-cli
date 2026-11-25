@@ -1,5 +1,9 @@
 ;; Written by `bb narrate`: each narration line's audio and its length. Don't edit by hand.
-{"214b0cbbb1540673"
+{"1f570e03caa2205f"
+ {:text
+  "New in version 0.1.20: the shots around a select, and reviews remember.",
+  :seconds 7.079},
+ "214b0cbbb1540673"
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
   :seconds 6.113},
@@ -11,8 +15,6 @@
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
   :seconds 7.889},
- "6eaa8355aa2511a3"
- {:text "New in version 0.1.19: scrub every card.", :seconds 5.146},
  "8536408f509e5a99"
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",

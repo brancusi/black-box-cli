@@ -166,7 +166,7 @@ body.in-detail header.top { padding-top: 8px; }
 .detail.on { display: grid; grid-template-columns: minmax(0, 1.55fr) clamp(340px, 30vw, 460px); }
 .d-left { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
 .d-left video { display: block; flex: none; aspect-ratio: var(--ar, 16 / 9); height: auto; background: var(--video);
-  width: min(100%, calc((100vh - var(--top, 0px) - var(--foot, 0px) - var(--around, 170px)) * var(--ar-n, 1.7778))); }
+  width: min(100%, calc((100vh - var(--top, 0px) - var(--foot, 0px) - var(--around, 372px)) * var(--ar-n, 1.7778))); }
 .d-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .d-head b { font: 800 20px/24px var(--font-brand); letter-spacing: -.03em; }
 .d-head span { color: var(--faint); }
@@ -177,6 +177,34 @@ body.in-detail header.top { padding-top: 8px; }
 .d-tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .d-tools .keys { color: var(--faint); font-size: 12px; margin-left: auto; }
 .note#d-note { padding: 0; }
+/* the clips its camera shot before and after it: ghosts, with the time between them */
+.around { flex: none; border-top: 1px solid var(--line); padding-top: 10px; }
+.around .a-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--faint); font-size: 12px; margin-bottom: 8px; }
+.around .a-head b { color: var(--ink); font-weight: 600; }
+.around .a-row { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding-bottom: 4px; }
+.around .more { flex: none; align-self: center; font-size: 12px; padding: 4px 8px; }
+.gh { flex: none; width: 132px; cursor: pointer; opacity: .62; transition: opacity .12s; }
+.gh:hover, .gh.cur { opacity: 1; }
+.gh .gm { position: relative; aspect-ratio: 16 / 9; background: var(--video); outline: 1px dashed var(--line-strong); outline-offset: -1px; }
+.gh.cur .gm { outline: 2px solid var(--mustard); outline-offset: -2px; }
+.gh.inrev .gm { outline-style: solid; }
+.gh.sel .gm::after { content: "✓"; position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; display: grid; place-items: center; background: var(--mustard); color: #141310; font-size: 11px; font-weight: 700; }
+.gm .still, .gm .hv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; pointer-events: none; }
+.gm .hv { opacity: 0; }
+.gm .hv.on { opacity: 1; }
+.gm .bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--mustard); }
+.gm .len { position: absolute; right: 4px; bottom: 4px; font-size: 10.5px; line-height: 15px; padding: 0 4px; background: rgba(14,14,13,.78); color: var(--video-fg); }
+.gh .g-meta { display: flex; gap: 6px; align-items: center; font-size: 11px; line-height: 16px; margin-top: 4px; color: var(--muted); white-space: nowrap; overflow: hidden; }
+.gh .g-meta .at { color: var(--ink); }
+.cue-i { display: inline-flex; align-items: center; gap: 2px; padding: 0 4px; border: 1px solid var(--line); font-size: 10px; line-height: 14px; color: var(--muted); }
+.cue-i.mute { border-style: dashed; color: var(--faint); }
+.cue-i.slow { border-color: var(--mustard); color: var(--mustard-deep); }
+.cue-i.rev { border-color: var(--green); color: var(--green); }
+.gap { flex: none; align-self: flex-start; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(132px * 9 / 16); color: var(--faint); font-size: 10.5px; line-height: 13px; text-align: center; }
+.gap::before { content: ""; display: block; height: 1px; width: 100%; background: var(--line-strong); margin-bottom: 4px; }
+.gap.long { color: var(--mustard-deep); }
+.gap.long::before { background: var(--mustard); height: 2px; }
+.gap.day { color: var(--ink); font-weight: 600; }
 .d-right { border-left: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
 .d-right .t-head { padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; color: var(--faint); }
 .d-right .t-head b { color: var(--ink); font-weight: 600; }
@@ -264,9 +292,10 @@ header.top .langs button { padding: 0 10px; }
       <button class="ghost" id="d-pick"><span class="sw"><span>Select</span><span class="off">Selected ✓</span></span> <kbd>s</kbd></button>
       <button class="ghost" id="d-prev">‹ Prev <kbd>←</kbd></button>
       <button class="ghost" id="d-next">Next › <kbd>→</kbd></button>
-      <span class="keys"><kbd>space</kbd> play · <kbd>j</kbd>/<kbd>l</kbd> 5 s · click a word to jump · <kbd>?</kbd> keys</span>
+      <span class="keys"><kbd>space</kbd> play · <kbd>j</kbd>/<kbd>l</kbd> 5 s · <kbd>shift</kbd> <kbd>←</kbd>/<kbd>→</kbd> shot before/after · <kbd>?</kbd> keys</span>
     </div>
     <div class="note" id="d-note"></div>
+    <div class="around" id="d-around" hidden></div>
   </div>
   <div class="d-right">
     <div class="t-head"><span><b>Transcript</b> <span id="d-said"></span></span><button class="ghost" id="d-follow"><span class="sw"><span class="off">Follow</span><span>Following</span></span></button></div>
@@ -290,6 +319,7 @@ header.top .langs button { padding: 0 10px; }
       <dt><kbd>space</kbd></dt><dd>play or pause</dd>
       <dt><kbd>s</kbd></dt><dd>select or deselect it</dd>
       <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>previous or next clip</dd>
+      <dt><kbd>shift</kbd> <kbd>←</kbd> <kbd>→</kbd></dt><dd>in an open clip: the shot its camera took before or after it (the strip under it)</dd>
       <dt><kbd>i</kbd> <kbd>o</kbd></dt><dd>set its in or out at the playhead</dd>
       <dt><kbd>j</kbd> <kbd>l</kbd></dt><dd>back or forward 5 s</dd>
       <dt><kbd>t</kbd></dt><dd>translated lines: English, both, or as spoken</dd>
@@ -318,10 +348,38 @@ header.top .langs button { padding: 0 10px; }
     if (SERVER) return "media/" + k + "?t=" + encodeURIComponent(TOKEN);
     return "file://" + D.media[k].split("/").map(encodeURIComponent).join("/");
   };
-  var thumbURL = function (c) { return c.thumb ? (SERVER ? c.thumb + "?t=" + encodeURIComponent(TOKEN) : c.thumb) : ""; };
+  var thumbURL = function (c) {
+    if (c.extra) return "thumb?rel=" + encodeURIComponent(c.rel) + "&at=" + ((c.start + c.end) / 2).toFixed(2) + "&t=" + encodeURIComponent(TOKEN);
+    return c.thumb ? (SERVER ? c.thumb + "?t=" + encodeURIComponent(TOKEN) : c.thumb) : "";
+  };
+  // A clip's proxy: a review clip's by its place in the review, one from around a select by its original's path.
+  var srcOf = function (c) { return c.extra ? "proxy?rel=" + encodeURIComponent(c.rel) + "&t=" + encodeURIComponent(TOKEN) : mediaURL(c.media); };
 
   var picked = {}, order = [], ranges = {}, filter = null, hoverN = null;
   var clipBy = {}; D.clips.forEach(function (c) { clipBy[c.n] = c; });
+  // Clips from around a select (the ones its camera shot before and after): opened from the strip under a clip, added
+  // with s like any other, the whole clip until i and o trim it. Numbered from 100001, one number per original.
+  var extraN = {}, nextExtra = 100001;
+  function extra(g) {
+    var n = extraN[g.rel];
+    if (n === undefined) {
+      n = extraN[g.rel] = nextExtra++;
+      clipBy[n] = { n: n, extra: true, rel: g.rel, file: g.name, group: "Added by you", note: null, start: 0, end: g.duration,
+                    duration: g.duration, tc_in: g.at || g.day, audio_only: false, day: g.day, at: g.at };
+    }
+    return clipBy[n];
+  }
+  // A file's words, fetched once for a clip from around a select (the review's own files came with the page).
+  var asked = {};
+  function fetchWords(rel, then) {
+    if (D.files[rel] || !SERVER) { then(); return; }
+    if (asked[rel]) { asked[rel].push(then); return; }
+    asked[rel] = [then];
+    fetch("api/file?rel=" + encodeURIComponent(rel) + "&t=" + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); })
+      .then(function (f) { D.files[rel] = { lines: f.lines || [] }; })
+      .catch(function () { D.files[rel] = { lines: [] }; })
+      .then(function () { var cbs = asked[rel]; delete asked[rel]; cbs.forEach(function (f) { f(); }); });
+  }
   var rangeOf = function (c) { return ranges[c.n] || { start: c.start, end: c.end }; };
   var linesIn = function (c, r) {
     var f = D.files[c.rel]; if (!f) return [];
@@ -421,7 +479,7 @@ header.top .langs button { padding: 0 10px; }
     return {
       to: function (c, box, tm) {
         if (n !== c.n) { n = c.n; v.classList.remove("on"); var st = box.querySelector(".still"); box.insertBefore(v, st ? st.nextSibling : box.firstChild); }
-        if (k !== c.media) { k = c.media; seeking = false; v.src = mediaURL(c.media); }
+        var src = srcOf(c); if (k !== src) { k = src; seeking = false; v.src = src; }
         want = tm; go();
       },
       off: function (c) { if (n === c.n) { n = null; want = null; v.classList.remove("on"); } },
@@ -429,6 +487,7 @@ header.top .langs button { padding: 0 10px; }
     };
   })();
   function card(c) {
+    if (c.extra && !D.files[c.rel]) fetchWords(c.rel, function () { if (cur === null) render(); });
     var r = rangeOf(c), lines = linesIn(c, r), said = clipLang(lines);
     var a = document.createElement("article");
     a.className = "card" + (picked[c.n] ? " picked" : ""); a.dataset.n = c.n;
@@ -440,7 +499,7 @@ header.top .langs button { padding: 0 10px; }
       '<span class="len">' + fmt(r.end - r.start) + '</span><div class="bar"></div><div class="scrub"></div></div>' +
       '<div class="meta"><b title="' + esc(c.rel) + '">' + esc(c.file) + "</b><span>" + esc(c.tc_in || "") + " · " +
       fmt(r.end - r.start) + (ranges[c.n] ? " (trimmed)" : "") + "</span></div>" +
-      (c.note ? '<div class="note">' + esc(c.note) + "</div>" : "") +
+      (c.note ? '<div class="note">' + esc(c.note) + "</div>" : c.extra ? '<div class="note added">added by you, from around a select</div>' : "") +
       '<div class="lines">' + snippet(r, lines) + "</div>";
     // In the gallery the mouse scrubs: its place across the card is the clip's time from in to out. A click opens it.
     a.querySelector(".lines").addEventListener("scroll", function () { this.classList.toggle("down", this.scrollTop > 0); }, { passive: true });
@@ -469,14 +528,17 @@ header.top .langs button { padding: 0 10px; }
     a.addEventListener("click", function () { openDetail(c.n); });
     return a;
   }
-  function shown() { return D.clips.filter(function (c) { return !filter || (c.group || "Clips") === filter; }); }
+  function addedClips() { return order.map(function (n) { return clipBy[n]; }).filter(function (c) { return c.extra; }); }
+  function shown() {
+    return D.clips.filter(function (c) { return !filter || (c.group || "Clips") === filter; }).concat(filter ? [] : addedClips());
+  }
   function render() {
     var main = $("main"); main.innerHTML = "";
-    groups.forEach(function (g) {
+    groups.concat(["Added by you"]).forEach(function (g) {
       if (filter && g !== filter) return;
-      var cs = D.clips.filter(function (c) { return (c.group || "Clips") === g; }); if (!cs.length) return;
+      var cs = g === "Added by you" ? addedClips() : D.clips.filter(function (c) { return (c.group || "Clips") === g; }); if (!cs.length) return;
       var s = document.createElement("section"); s.className = "group";
-      if (groups.length > 1) s.innerHTML = "<h2>" + esc(g) + " · " + cs.length + "</h2>";
+      if (groups.length > 1 || g === "Added by you") s.innerHTML = "<h2>" + esc(g) + " · " + cs.length + "</h2>";
       var grid = document.createElement("div"); grid.className = "grid";
       cs.forEach(function (c) { grid.appendChild(card(c)); });
       s.appendChild(grid); main.appendChild(s);
@@ -490,7 +552,40 @@ header.top .langs button { padding: 0 10px; }
     else { picked[n] = true; order.push(n); }
     var el = document.querySelector('.card[data-n="' + n + '"]'); if (el) el.classList.toggle("picked", !!picked[n]);
     if (cur === n) pickLabel();
-    count();
+    if (clipBy[n] && clipBy[n].extra && cur === null) render();
+    if (cur !== null && lastAround) drawAround(lastAround);
+    count(); save();
+  }
+  // What the editor has done (selected, in order; trimmed; added from around a select), kept in the review's folder
+  // through the server (state.jsonl, appended) and in this browser; on opening, the newer of the two is used.
+  var KEY = "bb-review-" + D.id, saveTimer = null, unsaved = false;
+  function snapshot() {
+    var rs = {}; Object.keys(ranges).forEach(function (n) { rs[n] = ranges[n]; });
+    return { at: Date.now(), order: order.slice(), ranges: rs,
+             extras: Object.keys(extraN).filter(function (rel) { var n = extraN[rel]; return picked[n] || ranges[n]; }).map(function (rel) { var c = clipBy[extraN[rel]];
+               return { n: c.n, rel: c.rel, name: c.file, duration: c.duration, day: c.day, at: c.at }; }) };
+  }
+  function save() {
+    var st = snapshot();
+    try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {}
+    if (!SERVER) return;
+    unsaved = true; clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      fetch("api/state?t=" + encodeURIComponent(TOKEN), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(snapshot()) })
+        .then(function (r) { if (r.ok) unsaved = false; }).catch(function () {});
+    }, 400);
+  }
+  function restore(st) {
+    if (!st || !Array.isArray(st.order)) return;
+    (st.extras || []).forEach(function (g) {
+      if (extraN[g.rel] !== undefined) return;
+      extraN[g.rel] = g.n; nextExtra = Math.max(nextExtra, g.n + 1);
+      clipBy[g.n] = { n: g.n, extra: true, rel: g.rel, file: g.name, group: "Added by you", note: null, start: 0, end: g.duration,
+                      duration: g.duration, tc_in: g.at || g.day, audio_only: false, day: g.day, at: g.at };
+    });
+    order = st.order.filter(function (n) { return clipBy[n]; }); picked = {};
+    order.forEach(function (n) { picked[n] = true; });
+    ranges = {}; Object.keys(st.ranges || {}).forEach(function (n) { if (clipBy[n]) ranges[n] = st.ranges[n]; });
   }
   var trayLen = 0;
   function tray() {
@@ -542,9 +637,9 @@ header.top .langs button { padding: 0 10px; }
     if (!SERVER) $("go").title = "Open this review with `blackbox review open " + D.id + "` to import";
   }
   $("all").addEventListener("click", function () {
-    shown().forEach(function (c) { if (!picked[c.n]) { picked[c.n] = true; order.push(c.n); } }); render();
+    shown().forEach(function (c) { if (!picked[c.n]) { picked[c.n] = true; order.push(c.n); } }); render(); save();
   });
-  $("clear").addEventListener("click", function () { picked = {}; order = []; render(); });
+  $("clear").addEventListener("click", function () { picked = {}; order = []; render(); save(); });
   $("keys").addEventListener("click", function () { $("help").classList.add("on"); });
   // The import options: steppers for handles, two-way switches for where and whether the recorders come.
   Array.prototype.forEach.call(document.querySelectorAll("[data-step]"), function (b) {
@@ -573,9 +668,11 @@ header.top .langs button { padding: 0 10px; }
   var dv = $("d-video");
   function openDetail(n) {
     cur = n; var c = clipBy[n], f = D.files[c.rel] || { lines: [], duration: c.duration };
+    if (c.extra && !D.files[c.rel] && SERVER) fetchWords(c.rel, function () { if (cur === n) openDetail(n); });
+    if (!c.extra) anchor = null;
     $("d-file").textContent = c.file; $("d-note").textContent = c.note || "";
-    var src = mediaURL(c.media);
-    if (dv.dataset.k !== String(c.media)) { dv.dataset.k = c.media; dv.src = src; }
+    var src = srcOf(c);
+    if (dv.dataset.k !== src) { dv.dataset.k = src; dv.src = src; }
     dv.currentTime = rangeOf(c).start;
     words = []; var html = [], spk = null;
     f.lines.forEach(function (l, i) {
@@ -595,13 +692,98 @@ header.top .langs button { padding: 0 10px; }
     var by = {}; f.lines.forEach(function (l) { if (l.lang) by[l.lang] = (by[l.lang] || 0) + 1; });
     $("d-said").textContent = f.lines.some(foreign) ? "· " + Object.keys(by).sort(function (a, b) { return by[b] - by[a]; })
       .map(function (g) { return langName(g) + " " + by[g]; }).join(", ") + " lines" : "";
-    $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">No transcript for this file.</p>';
+    $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">' + (c.extra && !D.files[c.rel] && SERVER ? "Reading its transcript…" : "No transcript for this file.") + "</p>";
+    $("d-note").textContent = c.extra ? "Shot around a select: the whole clip until you set its in and out (i, o). s adds it to the selection." : c.note || "";
+    loadAround();
     document.body.classList.add("in-detail"); tray();
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
     hover.pause();
     playClip = true; dv.play().catch(function () {}); // the clip plays once, with sound; space carries on
     var first = document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
   }
+  // ---------- around the open clip: what its camera shot before and after, as ghosts
+  var aroundN = 3, aroundOf = {}, anchor = null, ghosts = [];
+  function gapText(g) {
+    if (g < 60) return Math.round(g) + " s";
+    if (g < 3600) return Math.round(g / 60) + " min";
+    if (g < 86400) return (g / 3600).toFixed(g < 36000 ? 1 : 0).replace(/\.0$/, "") + " h";
+    return Math.round(g / 86400) + " d";
+  }
+  function inReview(rel) { return D.clips.filter(function (c) { return c.rel === rel; }); }
+  function loadAround() {
+    var c = clipBy[cur], box = $("d-around");
+    if (!SERVER || !c || c.audio_only) { box.hidden = true; return; }
+    var key = c.rel + "|" + aroundN, n = cur;
+    var show = function (res) { if (cur === n) drawAround(res); };
+    if (aroundOf[key]) { show(aroundOf[key]); return; }
+    fetch("api/around?rel=" + encodeURIComponent(c.rel) + "&n=" + aroundN + "&t=" + encodeURIComponent(TOKEN))
+      .then(function (r) { return r.json(); }).then(function (res) { aroundOf[key] = res; show(res); })
+      .catch(function () { box.hidden = true; });
+  }
+  var lastAround = null;
+  function drawAround(res) {
+    lastAround = res;
+    var box = $("d-around"), gs = res.clips || [];
+    ghosts = gs;
+    if (gs.length < 2) { box.hidden = true; return; }
+    var me = gs.filter(function (g) { return g.current; })[0] || {};
+    var html = ['<div class="a-head"><span><b>Shot around it</b> · ' + esc(me.device || "the same camera") +
+                ", in the order it shot them · hover to scrub, click to open</span>" +
+                '<span><kbd>shift</kbd> <kbd>←</kbd>/<kbd>→</kbd></span></div><div class="a-row">'];
+    if (res.more_before) html.push('<button class="ghost more" data-more="1" title="Show more">‹ earlier</button>');
+    gs.forEach(function (g, i) {
+      if (i > 0 && g.gap !== null && g.gap !== undefined) {
+        var day = gs[i - 1].day !== g.day;
+        // the time between two shots, wider as it grows: a break reads apart from a quick retake
+        var w = Math.round(22 + Math.min(54, 10 * Math.log10(1 + g.gap)));
+        html.push('<div class="gap' + (day ? " day" : g.gap >= 600 ? " long" : "") + '" style="width:' + w + 'px" title="' +
+                  esc(gapText(g.gap)) + ' between them">' + (day ? esc(g.day.slice(5)) : esc(gapText(g.gap))) + "</div>");
+      } else if (i > 0) html.push('<div class="gap" style="width:18px"></div>');
+      var rv = inReview(g.rel), sel = extraN[g.rel] !== undefined && picked[extraN[g.rel]];
+      var cues = [];
+      cues.push(g.lines ? '<span class="cue-i" title="' + g.lines + ' lines said">“ ' + g.lines + "</span>" : '<span class="cue-i mute" title="Nothing said: picture only">no words</span>');
+      if (g.slow_motion) cues.push('<span class="cue-i slow" title="Slow motion' + (g.fps ? ", shot at " + g.fps + " fps" : "") + '">slow ' + esc(g.slow_motion) + "</span>");
+      if (rv.length && !g.current) cues.push('<span class="cue-i rev" title="Already in this review">in review</span>');
+      if (!g.proxy) cues.push('<span class="cue-i mute" title="No proxy on this Mac yet">no proxy</span>');
+      html.push('<div class="gh' + (g.current ? " cur" : "") + (rv.length ? " inrev" : "") + (sel ? " sel" : "") + '" data-i="' + i + '" title="' +
+                esc(g.name + " · " + (g.day || "") + " " + (g.at || "")) + '"><div class="gm">' +
+                (g.proxy ? '<img class="still" loading="lazy" src="thumb?rel=' + encodeURIComponent(g.rel) + "&at=" + (g.duration / 2).toFixed(2) + "&t=" + encodeURIComponent(TOKEN) + '" alt="">' : "") +
+                '<span class="len">' + fmt(g.duration) + '</span><div class="bar"></div></div>' +
+                '<div class="g-meta"><span class="at">' + esc(g.at || "") + "</span>" + cues.join("") + "</div></div>");
+    });
+    if (res.more_after) html.push('<button class="ghost more" data-more="1" title="Show more">later ›</button>');
+    html.push("</div>");
+    box.innerHTML = html.join(""); box.hidden = false;
+    var row = box.querySelector(".a-row"), on = box.querySelector(".gh.cur");
+    if (on) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
+    Array.prototype.forEach.call(box.querySelectorAll(".gh"), function (el) {
+      var g = gs[+el.dataset.i], gm = el.querySelector(".gm"), bar = el.querySelector(".bar"), len = el.querySelector(".len");
+      if (!g.proxy || g.current) return;
+      // scrubbed as itself: a clip of the review when it's one, else the whole file (no entry made until it's opened)
+      var c = inReview(g.rel)[0] || { n: "g:" + g.rel, extra: true, rel: g.rel };
+      el.addEventListener("mousemove", function (e) {
+        var b = el.getBoundingClientRect(), f = Math.min(1, Math.max(0, (e.clientX - b.left) / b.width));
+        var tm = f * Math.max(0, g.duration - 0.04);
+        hover.to(c, gm, tm); bar.style.width = (100 * f) + "%"; len.textContent = fmt(tm);
+      });
+      el.addEventListener("mouseleave", function () { hover.off(c); bar.style.width = "0"; len.textContent = fmt(g.duration); });
+    });
+  }
+  // A ghost opens as itself: the review's clip when it's one, else the whole file, to trim with i and o and add with s.
+  function openGhost(g) {
+    if (!g || g.current) return;
+    var rv = inReview(g.rel);
+    if (!clipBy[cur].extra) anchor = cur;
+    openDetail(rv.length ? rv[0].n : extra(g).n);
+  }
+  function shot(d) {
+    var i = ghosts.findIndex(function (g) { return g.current; });
+    if (i >= 0 && ghosts[i + d]) openGhost(ghosts[i + d]);
+  }
+  $("d-around").addEventListener("click", function (e) {
+    if (e.target.closest(".more")) { aroundN = Math.min(12, aroundN + 3); loadAround(); return; }
+    var el = e.target.closest(".gh"); if (el) openGhost(ghosts[+el.dataset.i]);
+  });
   function closeDetail() { dv.pause(); $("detail").classList.remove("on"); document.body.classList.remove("in-detail"); cur = null; render(); }
   function marks() {
     var c = clipBy[cur], r = rangeOf(c), d = dv.duration || (D.files[c.rel] || {}).duration || c.duration || 1;
@@ -617,7 +799,7 @@ header.top .langs button { padding: 0 10px; }
   function setRange(which) {
     var c = clipBy[cur], r = rangeOf(c), t = dv.currentTime, nr = { start: r.start, end: r.end };
     if (which === "in") nr.start = Math.min(t, r.end - 0.1); else nr.end = Math.max(t, r.start + 0.1);
-    ranges[cur] = nr; marks(); count();
+    ranges[cur] = nr; marks(); count(); save();
   }
   function wordAt(t) {
     var lo = 0, hi = words.length - 1, best = null;
@@ -669,10 +851,11 @@ header.top .langs button { padding: 0 10px; }
   $("d-play").addEventListener("click", function () { dv.currentTime = rangeOf(clipBy[cur]).start; playClip = true; dv.play(); });
   $("d-in").addEventListener("click", function () { setRange("in"); });
   $("d-out").addEventListener("click", function () { setRange("out"); });
-  $("d-reset").addEventListener("click", function () { delete ranges[cur]; marks(); count(); });
+  $("d-reset").addEventListener("click", function () { delete ranges[cur]; marks(); count(); save(); });
   $("d-pick").addEventListener("click", function () { toggle(cur); });
   var step = function (d) {
     var list = shown(), i = list.findIndex(function (c) { return c.n === cur; });
+    if (i < 0 && anchor !== null) i = list.findIndex(function (c) { return c.n === anchor; });
     var next = list[i + d]; if (next) openDetail(next.n);
   };
   $("d-prev").addEventListener("click", function () { step(-1); });
@@ -693,6 +876,8 @@ header.top .langs button { padding: 0 10px; }
       else if (k === "j") dv.currentTime = Math.max(0, dv.currentTime - 5);
       else if (k === "l") dv.currentTime = dv.currentTime + 5;
       else if (k === "t") setLang(LANGS[(LANGS.indexOf(langMode) + 1) % 3]);
+      else if (e.shiftKey && k === "ArrowLeft") { e.preventDefault(); shot(-1); }
+      else if (e.shiftKey && k === "ArrowRight") { e.preventDefault(); shot(1); }
       else if (k === "ArrowLeft" || k === "[") { e.preventDefault(); step(-1); }
       else if (k === "ArrowRight" || k === "]") { e.preventDefault(); step(1); }
       return;
@@ -721,7 +906,7 @@ header.top .langs button { padding: 0 10px; }
     else if (!busy) doImport();
   }
   function doImport() {
-    var clips = order.map(function (n) { var r = rangeOf(clipBy[n]); return { n: n, start: r.start, end: r.end }; });
+    var clips = order.map(function (n) { var c = clipBy[n], r = rangeOf(c); var o = { n: n, start: r.start, end: r.end }; if (c.extra) o.rel = c.rel; return o; });
     busy = true; count(); status("Building the timeline in Resolve from the camera originals… (Resolve may start first)");
     toast("Importing " + clips.length + " clip" + (clips.length > 1 ? "s" : "") + " into Resolve…", "From the camera originals" + ($("audio").checked ? ", with the synced recorders" : "") + ". Resolve may start first.");
     fetch("api/import?t=" + encodeURIComponent(TOKEN), {
@@ -748,7 +933,7 @@ header.top .langs button { padding: 0 10px; }
     var ping = function () {
       fetch("api/ping?t=" + encodeURIComponent(TOKEN), { method: "POST" }).then(function (r) {
         if (!r.ok) throw new Error(r.status);
-        if (lost) { lost = false; status("Reconnected to the review server.", "ok"); }
+        if (lost) { lost = false; status("Reconnected to the review server.", "ok"); if (unsaved) save(); }
       }).catch(function () {
         if (!lost) { lost = true; status("The review server isn't running: ask your agent to run `blackbox review open " + D.id + "`. This page reconnects by itself.", "err"); }
       });
@@ -760,6 +945,15 @@ header.top .langs button { padding: 0 10px; }
   // The switch is there when a line of the review's files was said in another language and has its English.
   $("d-lang").hidden = !Object.keys(D.files).some(function (r) { return D.files[r].lines.some(enOf); });
   setLang(langMode);
+  var local = null; try { local = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+  if (SERVER) {
+    fetch("api/state?t=" + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).catch(function () { return null; })
+      .then(function (srv) {
+        var st = srv && srv.order ? (local && local.at > (srv.at || 0) ? local : srv) : local;
+        restore(st); render();
+        if (st === local && local) save(); // what only this browser had goes to the folder
+      });
+  } else { restore(local); }
   render();
 })();
 </script>

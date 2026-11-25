@@ -67,7 +67,7 @@ The footage is irreplaceable. When a rule and a request conflict, stop and ask t
   `look` (`frame`, `look`, `like`), `frames` (the picture index and scoring), `probe` (each
   original's camera, rates and resolution; the filters), `translations` (the English of lines said in Italian), `people` (the names), `prints` (voice
   and face prints, scored as Black Box's People page does), `who` (`people`, `whose`, `like` for voices and faces),
-  `picture` (JPEGs from proxies), `preview` (a cut rendered to one mp4 for `--play`), `sync` (the sync map:
+  `picture` (JPEGs from proxies), `around` (the shots a camera took before and after a clip), `preview` (a cut rendered to one mp4 for `--play`), `sync` (the sync map:
   recorders heard with each camera), `app` (running the Black Box app for what only it can do), `project` (asking
   Black Box to have the mini build a cut's Resolve project), `stills` (`still`: frames rendered from the originals
   by the mini), `setup` (`setup agent`, and `setup skill-check`, the hook that tells a running session of a new skill), `tutorial` (the lessons for editors, and docs/EDITORS.md made from them), `tools` (finding ffmpeg and mpv), `index` (building the index), `db`

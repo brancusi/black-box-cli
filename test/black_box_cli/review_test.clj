@@ -141,6 +141,41 @@
           (is (= "current" (:into plan)))
           (is (= [480 599] ((juxt :in_frame :out_frame) (first (:clips plan)))) "21-24 s with 1 s each side, at 23.976")
           (is (= 1 (count (:audio plan))) "the recorder the sync map puts with it")))
+      (testing "around a select: the clips its camera shot before and after, in order"
+        (let [res (json/parse-string (:body (get* (str "/" id "/api/around?rel=media/2026/09/16/src/fx3/C5274.MP4&t=" token) {})) true)]
+          (is (= [["C5274.MP4" true true] ["C5280.MP4" false false] ["C5900.MP4" false false]]
+                 (mapv (juxt :name :current :proxy) (:clips res))) "the same FX3, on any day; the A7S isn't it")
+          (is (= [nil 0 0] (mapv :gap (:clips res))) "the fixture's clocks overlap: no time between them")
+          (is (= [false false] ((juxt :more_before :more_after) res))))
+        (is (= [] (:clips (json/parse-string (:body (get* (str "/" id "/api/around?rel=nope.MP4&t=" token) {})) true)))))
+      (testing "a file's words, a clip's proxy and still: only of originals the index knows"
+        (is (= 200 (:status (get* (str "/" id "/api/file?rel=media/2026/09/16/src/fx3/C5280.MP4&t=" token) {}))))
+        (is (= 404 (:status (get* (str "/" id "/api/file?rel=nope.MP4&t=" token) {}))))
+        (is (= 206 (:status (get* (str "/" id "/proxy?rel=media/2026/09/16/src/fx3/C5274.MP4&t=" token)
+                                  {:headers {"range" "bytes=0-3"}}))))
+        (is (= 404 (:status (get* (str "/" id "/proxy?rel=media/2026/09/16/src/fx3/C5280.MP4&t=" token) {}))) "no proxy of it")
+        (is (= 404 (:status (get* (str "/" id "/proxy?rel=..%2F..%2Fetc%2Fpasswd&t=" token) {})))))
+      (testing "what the editor did is kept beside the review, appended, never in review.json"
+        (let [before (slurp (str (fs/path local "reviews" id "review.json")))
+              post #(http/post (str "http://127.0.0.1:" port "/" id "/api/state?t=" token)
+                               {:throw false :headers {"content-type" "application/json"} :body (json/generate-string %)})]
+          (is (= {} (json/parse-string (:body (get* (str "/" id "/api/state?t=" token) {})) true)))
+          (is (= 204 (:status (post {:at 1 :order [1]}))))
+          (is (= 204 (:status (post {:at 2 :order [1 100001] :extras [{:n 100001 :rel "media/2026/09/16/src/fx3/C5280.MP4"}]}))))
+          (is (= 400 (:status (post [1 2]))))
+          (is (= [1 100001] (:order (json/parse-string (:body (get* (str "/" id "/api/state?t=" token) {})) true))))
+          (is (= 2 (count (str/split-lines (slurp (str (fs/path local "reviews" id "state.jsonl")))))))
+          (is (= before (slurp (str (fs/path local "reviews" id "review.json")))))))
+      (testing "Import takes a clip added from around a select, with its in and out; never one the index doesn't know"
+        (let [r (http/post (str "http://127.0.0.1:" port "/" id "/api/import?t=" token)
+                           {:throw false :headers {"content-type" "application/json"}
+                            :body (json/generate-string {:clips [{:n 1 :start 21 :end 24}
+                                                                 {:n 100001 :rel "media/2026/09/16/src/fx3/C5280.MP4" :start 2 :end 5}
+                                                                 {:n 100002 :rel "/Volumes/x/y.MP4" :start 2 :end 5}]
+                                                         :pre 0 :post 0 :into "current" :audio false})})
+              plan (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)]
+          (is (= 200 (:status r)))
+          (is (= 2 (count (:clips plan))))))
       (testing "an Import with nothing chosen says so"
         (let [r (http/post (str "http://127.0.0.1:" port "/" id "/api/import?t=" token)
                            {:throw false :body (json/generate-string {:clips []})})]

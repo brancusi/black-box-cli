@@ -250,7 +250,12 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.19" :date "2026-11-25"
+  [{:version "0.1.20" :date "2026-11-25"
+    :items [{:title "The shots around a select" :lesson "review" :run "blackbox review open kiln"
+             :what "Open a clip in a selects review: the strip under it shows what its camera shot before and after, with the time between. Hover to scrub, click to open, s to add one with your own in and out."}
+            {:title "Reviews remember" :lesson "review" :run "blackbox review open kiln"
+             :what "What you select, trim and add on a review page comes back when you reload it, kept in the review's folder."}]}
+   {:version "0.1.19" :date "2026-11-25"
     :items [{:title "Scrub every card" :lesson "review" :run "blackbox review open kiln"
              :what "Move the mouse across any card in a selects review to scrub its picture, frame by frame, with the line being said lit below it."}]}
    {:version "0.1.18" :date "2026-11-25"

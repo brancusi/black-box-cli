@@ -8,6 +8,8 @@
   (:require
    [babashka.fs :as fs]
    [babashka.http-client :as hc]
+   [black-box-cli.archive :as archive]
+   [black-box-cli.around :as around]
    [black-box-cli.cuts :as cuts]
    [black-box-cli.db :as db]
    [black-box-cli.edl :as edl]
@@ -128,14 +130,37 @@
                  :let [[k v] (str/split kv #"=" 2)]]
              [k (java.net.URLDecoder/decode (or v "") "UTF-8")])))
 
+(defn last-state
+  "What the editor last did on review `folder`'s page (the last line of its state.jsonl), or nil."
+  [folder]
+  (let [f (fs/path folder "state.jsonl")]
+    (when (fs/exists? f)
+      (some->> (str/split-lines (slurp (str f))) (remove str/blank?) last
+               (#(try (json/parse-string % true) (catch Exception _ nil)))))))
+
+(def ^:private state-lock (Object.))
+
+(defn save-state!
+  "Appends the page's state `m` to review `folder`'s state.jsonl, one line, stamped: never rewritten."
+  [folder m]
+  (locking state-lock
+    (spit (str (fs/path folder "state.jsonl"))
+          (str (json/generate-string (assoc m :saved (str (java.time.Instant/now)))) "\n")
+          :append true)))
+
 (defn import!
   "The page's Import: the chosen clips ([{:n :start :end}], trimmed or not) of review `doc` as a cut list, handed to
   `online`. Its output as data, or {:error {:code :message} :help}."
   [ctx doc {:keys [clips pre post audio] place :into}]
   (try
     (let [by (into {} (map (juxt :n identity) (:clips doc)))
-          picked (vec (for [{:keys [n start end]} clips
-                            :let [c (by n)]
+          index-path (:index (index/paths ctx))
+          picked (vec (for [{:keys [n start end rel]} clips
+                            ;; a clip of the review, or one the editor added from around a select (an original the
+                            ;; index knows, with the in and out they set)
+                            :let [c (or (by n)
+                                        (when (and (string? rel) (number? start) (number? end) (around/known? index-path rel))
+                                          {:rel rel :group "Added"}))]
                             :when c
                             :let [s (max 0.0 (double (or start (:start c))))
                                   e (min (double (or (:duration c) 1e9)) (double (or end (:end c))))]
@@ -250,6 +275,43 @@
 
                        (and (= :post request-method) (= "/api/ping" rest*))
                        {:status 204}
+
+                       ;; around a select: the clips its camera shot before and after, each file's words, its proxy,
+                       ;; a still; only of originals the index knows, and only their proxies (never the NAS)
+                       (and (= :get request-method) (= "/api/around" rest*))
+                       (json-ok (or (around/around {:meta (:meta ctx) :index-path (:index (index/paths ctx))
+                                                    :version (:transcripts doc)}
+                                                   (get q "rel") (min 12 (max 1 (or (parse-long (get q "n" "3")) 3))))
+                                    {:clips [] :more_before false :more_after false}))
+
+                       (and (= :get request-method) (= "/api/file" rest*))
+                       (let [rel (get q "rel") path (:index (index/paths ctx))]
+                         (if (around/known? path rel)
+                           (json-ok {:rel rel :lines (or (file-lines path (:transcripts doc) rel) [])})
+                           {:status 404}))
+
+                       (and (= :get request-method) (#{"/proxy" "/thumb"} rest*))
+                       (let [rel (get q "rel")
+                             p (when (around/known? (:index (index/paths ctx)) rel) (archive/proxy-of (:meta ctx) rel))]
+                         (cond
+                           (nil? p) {:status 404 :body "no proxy of that on this Mac"}
+                           (= "/proxy" rest*) (file-response p (get headers "range"))
+                           :else (if-let [jpeg (picture/try-jpeg {:env (:env ctx) :cache (:frames (index/paths ctx))
+                                                                  :clip (ids/clip rel) :proxy p :width 320
+                                                                  :t (or (parse-double (get q "at" "0")) 0)})]
+                                   (file-response jpeg nil)
+                                   {:status 404})))
+
+                       ;; what the editor has done on the page (selected, trimmed, added), a snapshot a line, appended:
+                       ;; review.json stays as it was made, and the last line is the state
+                       (and (= :get request-method) (= "/api/state" rest*))
+                       (json-ok (or (last-state folder) {}))
+
+                       (and (= :post request-method) (= "/api/state" rest*))
+                       (let [m (try (json/parse-string (slurp body) true) (catch Exception _ nil))]
+                         (if (and (map? m) (< (count (json/generate-string m)) 1000000))
+                           (do (save-state! folder m) {:status 204})
+                           {:status 400 :body "a state is a JSON object"}))
 
                        (and (= :post request-method) (= "/api/import" rest*))
                        (json-ok (try (import! ctx doc (json/parse-string (slurp body) true))

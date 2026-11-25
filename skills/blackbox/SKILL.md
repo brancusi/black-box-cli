@@ -49,7 +49,7 @@ also read the same lessons in docs/EDITORS.md.
   **Edits:** `~/Black Box/edits/<id>/`, each with `edit.mp4` (the edit rendered from the proxies), `cut.edl` and
   `cut.json` (every clip's source file and timecode), kept for good. Earlier ones in
   `~/Library/Application Support/black-box-cli/cuts/` are still listed. **Selects reviews:**
-  `~/Black Box/reviews/<id>/` (review.html, review.json, thumbnails).
+  `~/Black Box/reviews/<id>/` (review.html, review.json, thumbnails; state.jsonl, what the editor picked).
 - **The originals are on the NAS** (`source_path`, `/Volumes/…`, `/VideoSource/…`). Never open, read, probe
   (ffprobe, mediainfo), copy, play or transcode them, and never browse the NAS: it's slow, shared and holds the
   only copies. Work from proxies, transcripts and `blackbox frame`. If a clip has no proxy, say so; don't fall
@@ -281,6 +281,11 @@ keys. A review has a language, English unless `--language it` (any code) says ot
 is marked on its picture ("Italian"), and the header counts them (`in_another_language` in the output too). A line
 said in Italian shows its English ("Translated from Italian"), with the Italian word for word under it (what the cut
 follows, lit word by word as it plays); English, Both and As spoken at the top (or `t`) switch between them.
+Under an open clip, a strip shows the shots its camera took before and after it, in the order it shot them, with
+the time between them (Shift+← → step through them); a shot opens like any clip, and `s` adds it, trimmed with `i`
+and `o`, to an "Added by you" group. What they select, trim and add is kept in the review's folder
+(`state.jsonl`, the last line is the latest) and comes back when the page is reloaded; read it to see what an
+editor picked.
 
 `blackbox review list` lists them; `blackbox review open <id>` opens one again, with Import working. review.html
 opened from Finder plays and reads but can't import. Reviews are kept until someone deletes them: to free space,

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- A review's open clip has a strip under it: the shots its camera took before and after it, in the order it shot
+  them (on any day), ghosted, with the time between them (a day apart, ten minutes, a quick retake) and what each
+  holds (lines said or no words, slow motion, already in the review, no proxy). Hover one to scrub it, click it to
+  open it with its transcript, Shift+← → to step through them; `s` adds it, trimmed with `i` and `o`, to an "Added by
+  you" group that imports like the rest. From the proxies only.
+- What an editor does on a review page (selected, in order; trimmed; added) survives a reload: the review server
+  appends it to the review's `state.jsonl` (review.json stays as made), the browser keeps a copy, and the newer
+  wins when the page opens.
+
 ## 0.1.19 (2026-11-25)
 
 - Moving across a card scrubs its picture again, frame-exact: one player for the whole gallery moves into the card
