@@ -213,7 +213,7 @@ button:focus, video:focus, [tabindex]:focus { outline: none; }
 .track .head { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; }
 .track .head::before { content: ""; position: absolute; top: 0; left: -4px; border: 5px solid transparent; border-top-color: var(--ink); }
 .track .hov { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line-strong); pointer-events: none; }
-.track .hov span { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap; max-width: 360px; overflow: hidden; text-overflow: ellipsis;
+.track .hov span { position: absolute; bottom: calc(100% + 6px); left: 0; white-space: nowrap; max-width: min(480px, 90vw); overflow: hidden; text-overflow: ellipsis;
   font: 12px/18px var(--font-mono); padding: 1px 7px; background: var(--ink); color: var(--ground); }
 .player .ctl { display: flex; align-items: center; gap: 4px; height: 38px; padding: 0 6px; border-top: 1px solid var(--line); }
 .pbtn { display: grid; place-items: center; min-width: 32px; height: 30px; padding: 0 6px; border: 0; background: none; color: var(--muted); cursor: pointer; font: 700 11px/1 var(--font-mono); letter-spacing: .04em; }
@@ -1454,8 +1454,12 @@ header.top .langs button { padding: 0 10px; }
     tr.addEventListener("pointermove", function (e) {
       if (cur === null) return;
       var t = at(e), b = tr.getBoundingClientRect(), l = lineAt(t);
-      hov.hidden = false; hov.style.left = (e.clientX - b.left) + "px";
-      hov.firstChild.textContent = fmt(t) + (l ? "  " + (enOf(l) || l.text) : "");
+      // the bubble says the line under the mouse (the time where nothing is said), and stays inside the timeline
+      var x = e.clientX - b.left, tip = hov.firstChild;
+      hov.hidden = false; hov.style.left = x + "px";
+      tip.textContent = l ? (enOf(l) || l.text) : fmt(t);
+      var w = tip.offsetWidth, left = Math.max(0, Math.min(b.width - w, x - w / 2));
+      tip.style.transform = "translateX(" + (left - x) + "px)";
       if (drag) { tv === dv || peek.close(); dv.currentTime = t; }
     });
     tr.addEventListener("pointerleave", function () { hov.hidden = true; });

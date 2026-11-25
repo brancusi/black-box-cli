@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The timeline's bubble says only the line under the mouse (the time where nothing is said), and stays inside the
+  timeline at either end.
+
 ## 0.1.30 (2026-11-25)
 
 - The open clip's player is the page's own: a tall timeline of its sound's waveform with each line said marked above
