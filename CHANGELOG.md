@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.28 (2026-11-25)
 
 - While a closer look is open, J K L, the arrows, Home and End drive it (backward with sound too, its speed on it);
   `o`, ↵ or a click opens the shot right there, playing on; space closes it.
