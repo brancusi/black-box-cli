@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.43 (2026-11-25)
 
 - An open clip says whether it's in the selection, beside its name and around its picture: "✓ Selected" and a mustard
   frame; "Not selected"; or, when its in or out was set but it isn't selected, a marked warning and a dashed frame.
