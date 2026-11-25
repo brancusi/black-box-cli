@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.36 (2026-11-25)
 
 - The right-click menu behaves as a system one: it opens just off the pointer and flips where it would leave the
   window; it closes on a click elsewhere, esc, the wheel or leaving the window, never because the page scrolled
