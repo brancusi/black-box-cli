@@ -25,7 +25,7 @@
   (fs/path meta "transcripts" "deepgram-nova-3-multi" (str rel ".json")))
 
 (defn- italian-meta
-  "A copy of the fixture with C5274's third line said in Italian."
+  "A copy of the fixture with C5274's third line said in Italian, and no recorders synced."
   []
   (let [meta (str (fs/create-temp-dir {:prefix "bbcli-meta-"}))]
     (fs/copy-tree s/fixture-meta meta)
@@ -36,6 +36,8 @@
           step (/ (- (:end cue) (:start cue)) (count said))
           words (vec (map-indexed (fn [i w] {:w w :start (+ (:start cue) (* i step)) :end (+ (:start cue) (* (inc i) step))}) said))]
       (spit (str p) (json/generate-string (update-in doc [:cues 2] assoc :text (str/join " " said) :words words))))
+    ;; without the sync map: its recorder heard that moment in English, and a recorder's text wins over a camera's
+    (fs/delete-tree (fs/path meta "sync"))
     meta))
 
 (defn- publish!

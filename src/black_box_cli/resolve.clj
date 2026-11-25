@@ -185,16 +185,18 @@
 
 (defn- words-in
   "Every word said in the file of segment `s` between its in and out, handles included, as fully as the archive
-  knows (black-box-cli.heard: a camera's gaps filled from its synced recorders): [[w start end]]. In `target` en, a
+  knows (black-box-cli.heard: its synced recorders' lines, the camera's own where no recorder heard it): [[w start end]]. In `target` en, a
   line said in another language is its English, spread over the line."
   [idx version s target]
   (->> (:lines (heard/lines idx version (:rel s)))
        (filter #(and (> (:end %) (:start s)) (< (:start %) (:end s))))
+       (remove :also) ; the camera's version of a moment the recorders heard otherwise: the page shows both, not Resolve
        (mapcat (fn [{:keys [en lang words] :as l}]
                  (if (and (= "en" target) (seq en) lang (not= "en" lang))
                    (spread en (:start l) (:end l))
                    words)))
        (filter (fn [[_ ws]] (and (>= ws (:start s)) (< ws (:end s)))))
+       (sort-by second) ; two recorders' lines at one moment (people talking over each other) interleave by time
        vec))
 
 (defn subtitles

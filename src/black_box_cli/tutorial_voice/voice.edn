@@ -7,6 +7,10 @@
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
+ "48b97046650051bc"
+ {:text
+  "New in version 0.1.43: the recorders' words, search the transcript, and selected or not, at a glance.",
+  :seconds 9.326},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
@@ -39,10 +43,6 @@
  {:text
   "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",
   :seconds 8.594},
- "f4d206c9f2363df1"
- {:text
-  "New in version 0.1.42: gaps filled from the recorders, who's talking, by name, and where you are.",
-  :seconds 8.986},
  "f62fc0406604cf31"
  {:text
   "Stills for print and the web, rendered full size from the originals, in the house look or yours.",

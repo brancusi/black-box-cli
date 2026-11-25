@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- An open clip says whether it's in the selection, beside its name and around its picture: "✓ Selected" and a mustard
+  frame; "Not selected"; or, when its in or out was set but it isn't selected, a marked warning and a dashed frame.
+  Nothing is added by itself: `s`, or a click on the mark, adds it.
+- `/` searches the open clip's transcript: every match highlighted, ↵ goes to the first from the playhead, `n` and `p`
+  to the next and previous (the playhead follows), esc closes it. Find in the transcript's head does the same.
+- A click in the transcript moves the playhead and leaves it playing or paused as it was (it used to always play).
+- The transcript's head: its title and buttons on one line, what it's from on the line below.
+- The recorders win: when lav recorders are synced with a camera clip (confidence 0.5 and up), the clip's transcript
+  is theirs, moved onto its time, in the review page and the subtitles imported into Resolve. One moment heard on two
+  recorders is kept once (the fullest); people talking over each other are all kept. The camera's own lines stay only
+  where no recorder heard anything, or where they say something else than the recorders (compared word by word):
+  marked CAM. Replaces 0.1.42's filling only the camera's gaps.
 - `bb review-dev` (for working on the CLI): this checkout's review server beside the installed one, on this Mac's
   reviews; its pages say DEV, and it leaves the installed server in charge.
 

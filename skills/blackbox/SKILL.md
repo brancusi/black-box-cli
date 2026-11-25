@@ -275,9 +275,12 @@ server stopped says so and reconnects once any review is opened again. `blackbox
 the foreground, only to see why it won't start (`error.code review-server`).
 
 What they can do on the page, if they ask: move the mouse across a clip to scrub through it, in to out; click it to open it with sound and
-its file's whole transcript (a word jumps there; each turn says who's talking by name when Black Box has named the
-voice; where a camera's own transcript has gaps, the lines its synced lav recorders heard fill them, marked REC, and
-the header says how many recorders were heard with it). Importing into Resolve puts those lines in the subtitles too.
+its file's whole transcript (a word moves the playhead there, playing or paused as it was; `/` searches it, `n` `p` go
+to the next and previous match; each turn says who's talking by name when Black Box has named the
+voice. When lav recorders were synced with a camera, their text is the clip's: they hear the people talking far better
+than the camera's mic. The camera's own lines stay only where no recorder heard anything, or where it heard something
+else (an off-camera voice, people talking over each other), marked CAM, both kept for the editor to choose). Importing
+into Resolve puts the same text in the subtitles, without the CAM lines that sit beside a recorder's.
 An open clip takes Resolve's keys, so editors don't change habits:
 J K L shuttle (each press faster, backward with its sound; K held with J or L steps a frame or plays slowly),
 ← → a frame (Shift: a second), ↑ ↓ the previous or next clip, `i` `o` mark in and out, Shift+I/O go to them, ⌥I ⌥O

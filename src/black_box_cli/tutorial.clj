@@ -250,7 +250,14 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.42" :date "2026-11-25"
+  [{:version "0.1.43" :date "2026-11-25"
+    :items [{:title "The recorders' words" :lesson "review" :run "blackbox review open kiln"
+             :what "When people wore recorders, their cleaner transcript is the clip's; the camera's own lines stay only where no recorder heard them, marked CAM."}
+            {:title "Search the transcript" :lesson "review" :run "blackbox review open kiln"
+             :what "Press / in an open clip to search what's said; n and p go to the next and previous match."}
+            {:title "Selected or not, at a glance" :lesson "review" :run "blackbox review open kiln"
+             :what "An open clip says beside its name, and with a frame, whether it's in the selection, and warns when you've set an in and out but not added it."}]}
+   {:version "0.1.42" :date "2026-11-25"
     :items [{:title "Gaps filled from the recorders" :lesson "review" :run "blackbox review open kiln"
              :what "Where a camera's transcript is missing words, the lav recorders' lines fill in, marked REC, in the page and in Resolve's subtitles."}
             {:title "Who's talking, by name" :lesson "review" :run "blackbox review open kiln"

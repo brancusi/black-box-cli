@@ -218,7 +218,15 @@ header.top .where .pos b { color: var(--muted); font-weight: 600; }
 .d-head .crumbs { color: var(--faint); font-size: 12px; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
 .d-head .crumbs i { font-style: normal; color: var(--line-strong); margin: 0 5px; }
 .d-head span { color: var(--faint); }
+#d-tc { white-space: nowrap; }
 .d-head .right { display: flex; gap: 12px; align-items: center; }
+/* in the selection or not, beside the clip's name; and the picture framed when it's in */
+.selstate { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px dashed var(--line-strong); background: none; color: var(--faint); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; }
+.selstate:hover { color: var(--ink); border-color: var(--ink); }
+.selstate.on { border: 1px solid var(--mustard); background: var(--mustard); color: #141310; font-weight: 600; }
+.selstate.edited { border-color: var(--mustard); color: var(--ink); background: var(--range); }
+.detail.is-sel .d-left video { box-shadow: 0 0 0 3px var(--mustard); }
+.detail.is-edit .d-left video { outline: 2px dashed var(--mustard); outline-offset: 3px; }
 /* the player: the picture, then a flat bar under it. The timeline is the clip's sound (its waveform) with each line
    said as a block above it; drag anywhere on it to scrub. No browser controls, no focus rings. */
 button:focus, video:focus, [tabindex]:focus { outline: none; }
@@ -342,7 +350,19 @@ html:has(body.in-detail) { overflow: hidden; }
 .gap.day { color: var(--ink); font-weight: 600; }
 .gap.day::before { height: 0; border-top: 1px dashed var(--line-strong); background: none; }
 .d-right { border-left: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
-.d-right .t-head { padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; color: var(--faint); }
+.d-right .t-head { padding: 10px 16px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; row-gap: 2px; align-items: center; color: var(--faint); }
+.d-right .t-head .t-tools { display: flex; gap: 6px; }
+.d-right .t-head .said { grid-column: 1 / -1; font-size: 12px; line-height: 16px; }
+.d-right .t-head .said:empty { display: none; }
+/* searching the transcript (/): the bar under the head, the matches marked without touching the words' spans */
+.t-find { display: none; align-items: center; gap: 6px; padding: 8px 16px; border-bottom: 1px solid var(--line); }
+.t-find.on { display: flex; }
+.t-find input { flex: 1; min-width: 0; font: inherit; font-size: 13px; line-height: 20px; padding: 4px 8px; border: 1px solid var(--line-strong); background: var(--ground); color: var(--ink); outline: none; border-radius: 0; }
+.t-find input:focus { border-color: var(--mustard); }
+.t-find .qn { color: var(--faint); font-size: 12px; white-space: nowrap; min-width: 4ch; text-align: right; }
+.t-find button { padding: 0 8px; }
+::highlight(tq) { background-color: rgba(214, 160, 38, .32); color: inherit; }
+::highlight(tq-at) { background-color: #d6a026; color: #141310; }
 .d-right .t-head b { color: var(--ink); font-weight: 600; }
 header.top .langs { margin-right: 6px; }
 header.top .langs button { padding: 0 10px; }
@@ -358,8 +378,8 @@ header.top .langs button { padding: 0 10px; }
 .cue .who { grid-column: 2; grid-row: 1; font-size: 11px; line-height: 16px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
 .cue .who.named { color: var(--muted); font-weight: 600; }
 /* a line only a recorder heard (the camera's transcript has a gap there) */
-.cue.rec { border-left-style: dashed; }
-.cue .lang.rec { float: left; margin: 4px 8px 0 0; color: var(--muted); border-color: var(--line-strong); }
+.cue.cam { border-left-style: dashed; }
+.cue .lang.cam { float: left; margin: 4px 8px 0 0; color: var(--muted); border-color: var(--line-strong); }
 .cue .body { grid-column: 2; grid-row: 2; min-width: 0; }
 .cue .tr { cursor: pointer; }
 .cue.playing .ts { color: var(--ink); }
@@ -437,7 +457,7 @@ header.top .langs button { padding: 0 10px; }
 <div class="sheet" id="sheet"></div>
 <div class="detail" id="detail">
   <div class="d-left">
-    <div class="d-head"><span class="d-name"><span class="crumbs" id="d-path"></span><b id="d-file"></b></span><div class="right"><span id="d-tc"></span><button class="ghost" id="d-close">Close <kbd>esc</kbd></button></div></div>
+    <div class="d-head"><span class="d-name"><span class="crumbs" id="d-path"></span><b id="d-file"></b></span><div class="right"><button class="selstate" id="d-state"></button><span id="d-tc"></span><button class="ghost" id="d-close">Close <kbd>esc</kbd></button></div></div>
     <video id="d-video" playsinline tabindex="-1"></video>
     <div class="cap d-cap" id="d-cap" hidden></div>
     <div class="player">
@@ -466,7 +486,8 @@ header.top .langs button { padding: 0 10px; }
     <div class="around" id="d-around" hidden></div>
   </div>
   <div class="d-right">
-    <div class="t-head"><span><b>Transcript</b> <span id="d-said"></span></span><button class="ghost" id="d-follow"><span class="sw"><span class="off">Follow</span><span>Following</span></span></button></div>
+    <div class="t-head"><b>Transcript</b><div class="t-tools"><button class="ghost" id="d-find" title="Search the transcript (/); n and p go to the next and previous match">Find <kbd>/</kbd></button><button class="ghost" id="d-follow"><span class="sw"><span class="off">Follow</span><span>Following</span></span></button></div><div class="said" id="d-said"></div></div>
+    <div class="t-find" id="d-findbar"><input id="d-q" type="text" placeholder="Search the transcript" autocomplete="off" spellcheck="false"><span class="qn" id="d-qn"></span><button class="ghost" id="d-qp" title="Previous match (p)">↑</button><button class="ghost" id="d-qnx" title="Next match (n)">↓</button><button class="ghost" id="d-qx" title="Close (esc)">×</button></div>
     <div class="transcript" id="d-transcript"></div>
   </div>
 </div>
@@ -515,6 +536,8 @@ header.top .langs button { padding: 0 10px; }
         <div class="row"><span class="ks"><kbd>⌘</kbd><i>+</i><kbd>↵</kbd></span><span class="what">Import into Resolve</span></div>
         <div class="row"><span class="ks"><kbd>t</kbd></span><span class="what">English, both, spoken</span></div>
         <div class="row"><span class="ks"><kbd>c</kbd></span><span class="what">Captions on or off</span></div>
+        <div class="row"><span class="ks"><kbd>/</kbd></span><span class="what">Search the transcript (↵ to the first match)</span></div>
+        <div class="row"><span class="ks"><kbd>n</kbd> <kbd>p</kbd></span><span class="what">Next, previous match</span></div>
         <div class="row"><span class="ks"><kbd>f</kbd></span><span class="what">Full screen</span></div>
         <div class="row"><span class="ks"><kbd>?</kbd></span><span class="what">This sheet</span></div>
       </section>
@@ -534,6 +557,7 @@ header.top .langs button { padding: 0 10px; }
   var SERVER = location.protocol.indexOf("http") === 0;
   var TOKEN = new URLSearchParams(location.search).get("t") || "";
   var $ = function (id) { return document.getElementById(id); };
+  var tfind = null; // the transcript's search (/), made with the open clip's handlers
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var fmt = function (t) { t = Math.max(0, t || 0); var m = Math.floor(t / 60), s = t - m * 60; return m + ":" + (s < 10 ? "0" : "") + s.toFixed(1); };
   var mediaURL = function (k) {
@@ -615,6 +639,7 @@ header.top .langs button { padding: 0 10px; }
     langMode = m; document.body.classList.remove("m-en", "m-both", "m-spoken"); document.body.classList.add("m-" + m);
     Array.prototype.forEach.call($("d-lang").children, function (x) { x.classList.toggle("on", x.dataset.v === m); });
     try { localStorage.setItem("bb-lang", m); } catch (e) {}
+    if (tfind) tfind.mark(); // the words shown changed
   }
 
   // ---------- header and groups
@@ -1021,7 +1046,7 @@ header.top .langs button { padding: 0 10px; }
     if (dv.dataset.k !== src) { dv.dataset.k = src; dv.src = src; }
     var startAt = typeof at === "number" ? at : rangeOf(c).start;
     dv.currentTime = startAt;
-    words = []; var html = [], spk = null;
+    words = []; var html = [], spk = null, recs = f.recorders || [];
     f.lines.forEach(function (l, i) {
       var ws = (l.words && l.words.length ? l.words : [[l.text, l.start, l.end]]).map(function (w) {
         var k = words.length; words.push({ s: w[1], e: w[2], k: k, cue: i });
@@ -1031,27 +1056,32 @@ header.top .langs button { padding: 0 10px; }
       var who = l.person || (/^S\d+$/.test(l.speaker || "") ? "Speaker " + l.speaker.slice(1) : l.speaker || ""),
           key = l.person || (l.from || "") + (l.speaker || "");
       var turn = key !== spk; spk = key;
-      // who only where a turn starts, on its own line above the words; a line heard only on a recorder is tagged
-      // REC before its words (the time column holds only the time)
-      html.push('<div class="cue' + (turn && i ? " turn" : "") + (l.from ? " rec" : "") + '" data-i="' + i + '" data-s="' + l.start + '" data-e="' + l.end + '">' +
+      // who only where a turn starts, on its own line above the words. With recorders, their text is the clip's; a
+      // line from the camera's own mic is tagged CAM before its words (the time column holds only the time)
+      var cam = recs.length && !l.from;
+      html.push('<div class="cue' + (turn && i ? " turn" : "") + (cam ? " cam" : "") + '" data-i="' + i + '" data-s="' + l.start + '" data-e="' + l.end + '"' +
+                (l.from ? ' title="Heard on ' + esc(l.from) + '"' : "") + ">" +
                 '<button class="ts" data-s="' + l.start + '">' + fmt(l.start) + "</button>" +
                 (turn && who ? '<div class="who' + (l.person ? " named" : "") + '">' + esc(who) + "</div>" : "") +
                 '<div class="body">' +
-                (l.from ? '<span class="lang rec" title="Not in the camera\'s transcript: heard on the recorder ' + esc(l.from) + '">REC</span>' : "") +
+                (cam ? '<span class="lang cam" title="' + (l.also ? "The camera\'s mic heard this; the recorders heard something else at this moment. Both are here: choose." : "Only the camera\'s mic heard this: no recorder has it.") + '">CAM</span>' : "") +
                 english(l) + spoken(l, ws.join(" ")) + "</div></div>");
     });
 
     // what the file is said in, when any of it isn't the review's language
     var by = {}; f.lines.forEach(function (l) { if (l.lang) by[l.lang] = (by[l.lang] || 0) + 1; });
-    $("d-said").textContent = f.lines.some(foreign) ? "· " + Object.keys(by).sort(function (a, b) { return by[b] - by[a]; })
-      .map(function (g) { return langName(g) + " " + by[g]; }).join(", ") + " lines" : "";
-    // where the camera's transcript has gaps its recorders filled
-    // the recorders heard with it (Black Box's sync map), and the lines they filled where the camera's has gaps
-    var filled = f.lines.filter(function (l) { return l.from; }).length, recs = f.recorders || [];
-    if (recs.length) $("d-said").textContent += " · " + recs.length + " recorder" + (recs.length > 1 ? "s" : "") +
-      (filled ? ", " + filled + " line" + (filled > 1 ? "s" : "") + " from them" : "");
-    $("d-said").title = recs.length ? "Heard on " + recs.join(", ") + (filled ? ". Lines marked REC are only on a recorder: the camera's transcript has nothing there." : "") : "";
+    var said = f.lines.some(foreign) ? [Object.keys(by).sort(function (a, b) { return by[b] - by[a]; })
+      .map(function (g) { return langName(g) + " " + by[g]; }).join(", ") + " lines"] : [];
+    // the recorders heard with it (Black Box's sync map): their text is the clip's, the camera's own only where they
+    // heard nothing or something else
+    var own = recs.length ? f.lines.filter(function (l) { return !l.from; }).length : 0;
+    if (recs.length) said.push("from " + recs.length + " recorder" + (recs.length > 1 ? "s" : "") +
+      (own ? ", " + own + " line" + (own > 1 ? "s" : "") + " from the camera" : ""));
+    $("d-said").textContent = said.join(" · ");
+    $("d-said").title = recs.length ? "The text is the recorders' (" + recs.join(", ") + "): they hear the people talking better than the camera does." +
+      (own ? " Lines marked CAM are the camera's own mic, where no recorder heard it or heard something else." : "") : "";
     $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">' + (c.extra && !D.files[c.rel] && SERVER ? "Reading its transcript…" : "No transcript for this file.") + "</p>";
+    if (tfind) tfind.mark();
     $("d-note").textContent = c.extra ? "Shot around a select: the whole clip until you set its in and out (i, o). s adds it to the selection." : c.note || "";
     loadAround(); loadPeaks(c.rel); timeText();
     where(c);
@@ -1344,7 +1374,17 @@ header.top .langs button { padding: 0 10px; }
     });
   }
   function swap(on, a, b) { return '<span class="sw"><span' + (on ? ' class="off"' : "") + ">" + a + "</span><span" + (on ? "" : ' class="off"') + ">" + b + "</span></span>"; }
-  function pickLabel() { $("d-pick").innerHTML = swap(!!picked[cur], "Select", "Selected ✓") + " <kbd>s</kbd>"; }
+  // whether the open clip is in the selection, said where the eye is (beside its name, and around the picture), so
+  // marking an in and out never leaves it out unnoticed. Nothing is added by itself: s, or a click here, adds it.
+  function pickLabel() {
+    var on = !!picked[cur], edited = !on && cur !== null && !!ranges[cur];
+    $("d-pick").innerHTML = swap(on, "Select", "Selected ✓") + " <kbd>s</kbd>";
+    var st = $("d-state");
+    st.className = "selstate" + (on ? " on" : edited ? " edited" : "");
+    st.innerHTML = on ? "✓ Selected" : edited ? "In/out set · not selected <kbd>s</kbd>" : "Not selected <kbd>s</kbd>";
+    st.title = on ? "In the selection: it goes into Resolve. s takes it out." : "Not in the selection: it won't go into Resolve. s adds it.";
+    $("detail").classList.toggle("is-sel", on); $("detail").classList.toggle("is-edit", edited);
+  }
   function followLabel() { $("d-follow").innerHTML = swap(follow, "Follow", "Following"); }
   // ---------- the transport: Resolve's keys. L forward and J backward, each press faster (1×, 2×, 4×, 8×, 16×), K
   // stops; K held with a tap of J or L moves a frame, with J or L held too, slowly. Forward is the video's own playback
@@ -1461,7 +1501,7 @@ header.top .langs button { padding: 0 10px; }
     var c = clipBy[cur], r = rangeOf(c), base = c.extra ? { start: 0, end: c.duration } : { start: c.start, end: c.end };
     var nr = { start: which === "out" ? r.start : base.start, end: which === "in" ? r.end : base.end };
     if (nr.start === base.start && nr.end === base.end) delete ranges[cur]; else ranges[cur] = nr;
-    marks(); count(); save();
+    marks(); count(); save(); pickLabel();
   }
   function setRange(which) {
     var c = clipBy[cur], r = rangeOf(c), t = dv.currentTime, nr = { start: r.start, end: r.end };
@@ -1470,7 +1510,7 @@ header.top .langs button { padding: 0 10px; }
     // As in Resolve: an in past the out (or an out before the in) drops the other mark, never a sliver of a clip.
     if (which === "in") { nr.start = t; if (nr.end <= t + 0.04) nr.end = base.end > t + 0.04 ? base.end : d; }
     else { nr.end = t; if (nr.start >= t - 0.04) nr.start = base.start < t - 0.04 ? base.start : 0; }
-    ranges[cur] = nr; marks(); count(); save();
+    ranges[cur] = nr; marks(); count(); save(); pickLabel();
   }
   function wordAt(t) {
     var lo = 0, hi = words.length - 1, best = null;
@@ -1526,13 +1566,72 @@ header.top .langs button { padding: 0 10px; }
     if (playClip && cur !== null && !dv.paused && dv.currentTime >= rangeOf(clipBy[cur]).end - 0.02) { dv.pause(); playClip = false; }
     requestAnimationFrame(watchOut);
   })();
+  // a click in the transcript moves the playhead there and leaves it playing or paused as it was
   $("d-transcript").addEventListener("click", function (e) {
-    var ts = e.target.closest(".ts"); if (ts) { dv.currentTime = +ts.dataset.s; dv.play(); return; }
-    var tr = e.target.closest(".tr"); if (tr) { dv.currentTime = +tr.closest(".cue").dataset.s; dv.play(); return; }
-    var w = e.target.closest(".w"); if (w) { dv.currentTime = words[+w.dataset.k].s; dv.play(); }
+    var ts = e.target.closest(".ts"); if (ts) { dv.currentTime = +ts.dataset.s; return; }
+    var tr = e.target.closest(".tr"); if (tr) { dv.currentTime = +tr.closest(".cue").dataset.s; return; }
+    var w = e.target.closest(".w"); if (w) dv.currentTime = words[+w.dataset.k].s;
   });
   $("d-transcript").addEventListener("wheel", function () { if (follow) { follow = false; followLabel(); } }, { passive: true });
+
+  // ---------- searching the transcript: / opens it, ↵ goes to the first match from the playhead, n p the next and
+  // previous (the playhead goes there too), esc closes it. The query stays from clip to clip.
+  tfind = (function () {
+    var q = "", hits = [], at = -1, HL = typeof Highlight !== "undefined" && window.CSS && CSS.highlights;
+    function timeOf(r) {
+      var el = r.startContainer.parentElement, w = el.closest(".w");
+      if (w) return words[+w.dataset.k].s;
+      var c = el.closest(".cue"); return c ? +c.dataset.s : 0;
+    }
+    function count() {
+      $("d-qn").textContent = !q ? "" : !hits.length ? "none" : (at >= 0 ? (at + 1) + " / " : "") + hits.length;
+    }
+    // every place the query is in the words shown (not in a hidden language, not the times)
+    function mark() {
+      hits = []; at = -1;
+      if (HL) { CSS.highlights.delete("tq"); CSS.highlights.delete("tq-at"); }
+      if (q) {
+        var tw = document.createTreeWalker($("d-transcript"), NodeFilter.SHOW_TEXT, null), n;
+        while ((n = tw.nextNode())) {
+          var el = n.parentElement;
+          if (!el || el.closest(".ts, .who, .lang") || !el.getClientRects().length) continue;
+          var low = n.data.toLowerCase(), i = low.indexOf(q);
+          while (i >= 0) { var r = document.createRange(); r.setStart(n, i); r.setEnd(n, i + q.length); hits.push(r); i = low.indexOf(q, i + q.length); }
+        }
+        if (HL && hits.length) CSS.highlights.set("tq", new Highlight(...hits));
+      }
+      count();
+    }
+    function go(d) {
+      if (!hits.length) return;
+      if (at < 0) {
+        var t = tv.currentTime, i = hits.findIndex(function (r) { return timeOf(r) >= t - 0.05; });
+        at = d > 0 ? (i < 0 ? 0 : i) : ((i < 0 ? hits.length : i) - 1 + hits.length) % hits.length;
+      } else at = (at + d + hits.length) % hits.length;
+      var r = hits[at];
+      if (HL) CSS.highlights.set("tq-at", new Highlight(r));
+      follow = false; followLabel();
+      var el = r.startContainer.parentElement, box = $("d-transcript"), b = el.getBoundingClientRect(), o = box.getBoundingClientRect();
+      box.scrollTop += b.top - o.top - box.clientHeight / 3;
+      dv.currentTime = timeOf(r); // playing or paused, as it was
+      count();
+    }
+    function open() { $("d-findbar").classList.add("on"); $("d-q").focus(); $("d-q").select(); }
+    function close() { $("d-findbar").classList.remove("on"); $("d-q").value = ""; q = ""; mark(); $("d-q").blur(); }
+    $("d-q").addEventListener("input", function () { q = $("d-q").value.trim().toLowerCase(); mark(); });
+    $("d-q").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); go(e.shiftKey ? -1 : 1); $("d-q").blur(); } // then n and p
+      else if (e.key === "Escape") { e.preventDefault(); close(); }
+      else if ((e.key === "ArrowDown" || e.key === "ArrowUp")) { e.preventDefault(); go(e.key === "ArrowUp" ? -1 : 1); }
+    });
+    $("d-find").addEventListener("click", open);
+    $("d-qnx").addEventListener("click", function () { go(1); });
+    $("d-qp").addEventListener("click", function () { go(-1); });
+    $("d-qx").addEventListener("click", close);
+    return { open: open, close: close, go: go, mark: mark, on: function () { return $("d-findbar").classList.contains("on"); }, active: function () { return !!q; } };
+  })();
   $("d-follow").addEventListener("click", function () { follow = true; followLabel(); });
+  $("d-state").addEventListener("click", function () { if (cur !== null) toggle(cur); });
   // ---------- the timeline: waveform, the lines said, the in and out; drag to scrub
   var peaksOf = {}, wavePending = {};
   function durNow() { return dv.duration || (cur !== null && ((D.files[clipBy[cur].rel] || {}).duration || clipBy[cur].duration)) || 1; }
@@ -1759,6 +1858,10 @@ header.top .langs button { padding: 0 10px; }
       else if (peek.on() && (k === "o" || k === "Enter")) { e.preventDefault(); peek.openHere(); }
       else if ((lk === "s" || k === "x") && (peek.on() || ghostAt)) { var sg = peek.on() ? peek.shot() : ghostAt.g; toggle(ghostN(sg, true)); }
       else if (peek.on() && /^[iIO]$/.test(k)) { /* marks are the open clip's: not while looking closer */ }
+      else if (k === "/") { e.preventDefault(); tfind.open(); }
+      else if (lk === "n" && tfind.active()) { e.preventDefault(); tfind.go(1); }
+      else if (lk === "p" && tfind.active()) { e.preventDefault(); tfind.go(-1); }
+      else if (k === "Escape" && tfind.on()) tfind.close();
       else if (k === "Escape" && span) showSpan(null);
       else if (k === "Enter" && !e.metaKey && !e.ctrlKey && span) { e.preventDefault(); useSpan(); }
       else if (k === "Escape") closeDetail();
