@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- The selection at the top shows as many clips as fit, then "+N more · View all": a panel of every selected clip in
+  timeline order, each with its picture, number, length, file and note. Drag a clip (there or at the top) to move
+  it, × or ⌥-click to drop it, click to open it; esc or a click outside closes the panel. Replaces 0.1.24's reel,
+  which made short clips too thin to read.
+- The closer look plays on, picture and sound, where the mouse rests; a click opens the clip where it has got to.
+
 ## 0.1.25 (2026-11-25)
 
 - A closer look at a shot in the strip: space over it opens it a few times larger just above, scrubbed with sound
@@ -8,8 +16,6 @@
 
 ## 0.1.24 (2026-11-25)
 
-- The selection at the top is a reel: one strip the width of the page, each clip as wide as it is long, in order,
-  so dozens fit. Click one to open it, drag it to move it, × or ⌥-click to drop it.
 - In and out as in Resolve: an in marked past the out (or an out before the in) drops the other mark, instead of
   leaving a clip a tenth of a second long that stops as soon as it plays.
 

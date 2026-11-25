@@ -250,7 +250,12 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.25" :date "2026-11-25"
+  [{:version "0.1.26" :date "2026-11-25"
+    :items [{:title "View all selects" :lesson "review" :run "blackbox review open kiln"
+             :what "The top of a selects review shows the clips you picked that fit, and View all opens every one in timeline order, to reorder by dragging."}
+            {:title "Rest to play" :lesson "review" :run "blackbox review open kiln"
+             :what "In a closer look at a shot (space in the strip), stop the mouse and it plays from there with sound."}]}
+   {:version "0.1.25" :date "2026-11-25"
     :items [{:title "A closer look, with sound" :lesson "review" :run "blackbox review open kiln"
              :what "Hover a shot in the strip under an open clip and press space: a larger view opens above it that scrubs with sound. Click it to open the shot right there."}]}
    {:version "0.1.24" :date "2026-11-25"

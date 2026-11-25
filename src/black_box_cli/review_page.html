@@ -56,22 +56,41 @@ nav.groups button.on { background: var(--ink); color: var(--ground); border-colo
 .tray .label .n { display: inline-block; min-width: 11ch; }
 .tray .label .d { display: inline-block; min-width: 7ch; text-align: right; }
 .tray .hint { color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-/* the selection as the timeline it will become: each clip as wide as it is long, in order; dozens fit */
-.reel { flex: 1 1 auto; min-width: 0; display: flex; gap: 2px; height: 30px; }
-.seg { position: relative; flex: var(--len) 1 0; min-width: 10px; background: var(--video) center / cover no-repeat; cursor: pointer; outline: 1px solid var(--line); outline-offset: -1px; overflow: hidden; }
-.seg::after { content: ""; position: absolute; inset: 0; background: rgba(14,14,13,.35); transition: background .1s; }
-.seg:hover::after { background: transparent; }
-.seg.cur { outline: 2px solid var(--mustard); outline-offset: -2px; }
-.seg.cur::after { background: transparent; }
-.seg.added { outline-style: dashed; }
-.seg .k { position: absolute; left: 3px; bottom: 2px; z-index: 1; font: 600 10px/12px var(--font-mono); color: var(--video-fg); text-shadow: 0 0 3px #000; pointer-events: none; }
-.seg .x { position: absolute; right: 0; top: 0; z-index: 1; width: 14px; height: 14px; display: none; place-items: center; font-size: 11px; line-height: 1; background: rgba(14,14,13,.8); color: var(--video-fg); }
-.seg:hover .x { display: grid; }
-.seg .x:hover { background: var(--danger); }
-.seg.narrow .k, .seg.narrow .x { display: none; }
-.seg.drag { opacity: .35; }
-.seg.before { box-shadow: -3px 0 0 var(--mustard); }
-.seg.after { box-shadow: 3px 0 0 var(--mustard); }
+/* the selection: as many clips as fit, then the rest behind "View all" */
+.chips { flex: 1 1 auto; min-width: 0; display: flex; gap: 6px; overflow: hidden; }
+.chip { flex: none; display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line); padding: 2px 8px 2px 2px; cursor: pointer; font-size: 12px; color: var(--ink); white-space: nowrap; }
+.chip:hover { border-color: var(--line-strong); }
+.chip.cur { border-color: var(--mustard); box-shadow: inset 0 -2px 0 var(--mustard); }
+.chip.added { border-style: dashed; }
+.chip img, .chip .ph { width: 52px; height: 29px; object-fit: cover; background: var(--video); display: block; }
+.chip .k, .tile .k { color: var(--faint); }
+.chip .x { color: var(--faint); padding: 0 2px; }
+.chip .x:hover, .tile .x:hover { color: var(--danger); }
+.allsel { flex: none; font-size: 12px; white-space: nowrap; }
+.allsel.pulse { animation: pulse .5s ease-out; }
+@keyframes pulse { 30% { background: var(--mustard); color: #141310; } }
+[data-sel].drag { opacity: .35; }
+[data-sel].before { box-shadow: -3px 0 0 var(--mustard); }
+[data-sel].after { box-shadow: 3px 0 0 var(--mustard); }
+/* every selected clip, in timeline order */
+.sheet { position: fixed; left: 0; right: 0; top: var(--top, 0px); z-index: 14; max-height: min(72vh, 760px); overflow: auto; background: var(--surface); border-bottom: 1px solid var(--line-strong); box-shadow: 0 18px 40px rgba(0,0,0,.35); padding: 14px 20px 18px; display: none; }
+.sheet.on { display: block; animation: sheet-in .16s ease-out; }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(-8px); } }
+.sheet .s-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; color: var(--faint); }
+.sheet .s-head b { color: var(--ink); font-weight: 600; }
+.sheet .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; }
+.tile { position: relative; cursor: pointer; background: var(--ground); border: 1px solid var(--line); }
+.tile:hover { border-color: var(--line-strong); }
+.tile.cur { border-color: var(--mustard); }
+.tile.added { border-style: dashed; }
+.tile .tm { position: relative; aspect-ratio: 16 / 9; background: var(--video) center / cover no-repeat; }
+.tile .num { position: absolute; left: 5px; top: 5px; font: 600 11px/18px var(--font-mono); padding: 0 6px; background: rgba(14,14,13,.8); color: var(--video-fg); }
+.tile .len { position: absolute; right: 5px; bottom: 5px; font-size: 11px; line-height: 16px; padding: 0 5px; background: rgba(14,14,13,.8); color: var(--video-fg); }
+.tile .x { position: absolute; right: 4px; top: 4px; width: 20px; height: 20px; display: none; place-items: center; background: rgba(14,14,13,.85); color: var(--video-fg); }
+.tile:hover .x { display: grid; }
+.tile .tx { padding: 6px 8px 8px; font-size: 11.5px; line-height: 16px; }
+.tile .tx b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile .tx span { display: block; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* the gallery */
 main { padding: 4px 20px 120px; }
@@ -315,6 +334,7 @@ header.top .langs button { padding: 0 10px; }
   <button class="go" id="go" disabled>Import into Resolve <kbd>⌘</kbd><kbd>↵</kbd></button>
   <div class="status" id="status"></div>
 </footer>
+<div class="sheet" id="sheet"></div>
 <div class="detail" id="detail">
   <div class="d-left">
     <div class="d-head"><b id="d-file"></b><div class="right"><span id="d-tc"></span><button class="ghost" id="d-close">Close <kbd>esc</kbd></button></div></div>
@@ -629,43 +649,88 @@ header.top .langs button { padding: 0 10px; }
     order.forEach(function (n) { picked[n] = true; });
     ranges = {}; Object.keys(st.ranges || {}).forEach(function (n) { if (clipBy[n]) ranges[n] = st.ranges[n]; });
   }
+  function chipHTML(n, i) {
+    var c = clipBy[n], r = rangeOf(c), th = thumbURL(c);
+    return '<span class="chip' + (n === cur ? " cur" : "") + (c.extra ? " added" : "") + '" data-sel="' + n + '" draggable="true" title="' + esc(c.file + (c.note ? " · " + c.note : "")) + '">' +
+      (th ? '<img src="' + esc(th) + '" alt="" draggable="false">' : '<span class="ph"></span>') +
+      '<span><span class="k">' + (i + 1) + "</span> " + fmt(r.end - r.start) + '</span><span class="x" title="Drop it">×</span></span>';
+  }
+  var shownChips = 0;
   function tray() {
     var t = $("tray");
     if (!order.length) {
       t.innerHTML = '<span class="hint">Nothing selected yet: press <kbd>s</kbd> on a clip (hover it, or open it), or tick its box. <kbd>?</kbd> shows every key.</span>';
+      shownChips = 0; sheet(false);
     } else {
       var len = order.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
-      // One strip, the timeline to be: each clip as wide as it is long, in the order picked. Click one to open it,
-      // drag it to move it, × (or ⌥-click) to drop it.
       t.innerHTML = '<span class="label"><b class="n">' + order.length + ' selected</b> · <span class="d">' + fmt(len) + "</span>" + (SERVER ? " · <kbd>⌘</kbd><kbd>↵</kbd> imports them" : "") + "</span>" +
-        '<div class="reel">' + order.map(function (n, i) {
-          var c = clipBy[n], r = rangeOf(c), th = thumbURL(c), l = Math.max(0.1, r.end - r.start);
-          return '<div class="seg' + (n === cur ? " cur" : "") + (c.extra ? " added" : "") + '" draggable="true" data-n="' + n + '" style="--len:' + l.toFixed(2) +
-            (th ? ";background-image:url(&quot;" + esc(th) + "&quot;)" : "") + '" title="' + esc((i + 1) + " · " + c.file + " · " + fmt(l) + (c.note ? " · " + c.note : "") + "\nclick: open · drag: move · ⌥-click or ×: drop") + '">' +
-            '<span class="k">' + (i + 1) + '</span><span class="x" title="Drop it">×</span></div>';
-        }).join("") + "</div>";
-      Array.prototype.forEach.call(t.querySelectorAll(".seg"), function (el) { el.classList.toggle("narrow", el.offsetWidth < 28); });
+        '<div class="chips">' + order.map(chipHTML).join("") + '</div><button class="ghost allsel" id="allsel">+' + order.length + " more · View all</button>";
+      // As many as fit, in order; the open clip's always among them; the rest behind View all.
+      var box = t.querySelector(".chips"), chips = Array.prototype.slice.call(box.children), right = box.getBoundingClientRect().right, hidden = [];
+      chips.forEach(function (ch) { if (ch.getBoundingClientRect().right > right + 0.5) hidden.push(ch); });
+      var curChip = box.querySelector(".chip.cur");
+      if (curChip && hidden.indexOf(curChip) >= 0 && hidden.length < chips.length) {
+        var last = chips[chips.length - hidden.length - 1]; box.insertBefore(curChip, last); box.removeChild(last);
+        hidden = hidden.filter(function (h) { return h !== curChip; }).concat([last]);
+      }
+      hidden.forEach(function (h) { if (h.parentNode) h.parentNode.removeChild(h); });
+      var more = $("allsel");
+      more.textContent = hidden.length ? "+" + hidden.length + " more · View all" : "View all";
+      if (hidden.length && order.length > lastCount) { more.classList.remove("pulse"); more.offsetWidth; more.classList.add("pulse"); }
+      shownChips = order.length - hidden.length;
+      if ($("sheet").classList.contains("on")) drawSheet();
     }
+    lastCount = order.length;
     layoutTop();
   }
-  // Moving a clip on the reel: drag it before or after another.
+  var lastCount = 0;
+  // the chips are measured to fit: again once the fonts that size them have loaded
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (order.length) tray(); });
+  // ---------- every selected clip, in timeline order: View all
+  function drawSheet() {
+    var len = order.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
+    $("sheet").innerHTML = '<div class="s-head"><span><b>' + order.length + " selected</b> · " + fmt(len) +
+      " · in timeline order: drag one to move it, × to drop it, click to open it</span><button class=\"ghost\" id=\"sheet-close\">Close <kbd>esc</kbd></button></div>" +
+      '<div class="tiles">' + order.map(function (n, i) {
+        var c = clipBy[n], r = rangeOf(c), th = thumbURL(c);
+        return '<div class="tile' + (n === cur ? " cur" : "") + (c.extra ? " added" : "") + '" data-sel="' + n + '" draggable="true">' +
+          '<div class="tm"' + (th ? ' style="background-image:url(&quot;' + esc(th) + '&quot;)"' : "") + '><span class="num">' + (i + 1) + '</span><span class="len">' + fmt(r.end - r.start) + '</span><span class="x" title="Drop it">×</span></div>' +
+          '<div class="tx"><b title="' + esc(c.file) + '">' + esc(c.file) + "</b><span>" + esc(c.note || (c.extra ? "added by you" : c.group || "")) + "</span></div></div>";
+      }).join("") + "</div>";
+  }
+  function sheet(on) {
+    var el = $("sheet");
+    if (on) { drawSheet(); el.classList.add("on"); } else el.classList.remove("on");
+  }
+  $("sheet").addEventListener("click", function (e) {
+    if (e.target.closest("#sheet-close")) { sheet(false); return; }
+    var tile = e.target.closest(".tile"); if (!tile) return;
+    var n = +tile.dataset.sel;
+    if (e.target.closest(".x") || e.altKey) { toggle(n); return; }
+    sheet(false); openDetail(n);
+  });
+  document.addEventListener("click", function (e) { // outside it, it closes
+    var el = $("sheet");
+    if (el.classList.contains("on") && !el.contains(e.target) && !e.target.closest("#allsel") && !e.target.closest(".help")) sheet(false);
+  });
+  // Moving a selected clip: drag its chip or tile before or after another.
   var dragN = null;
-  $("tray").addEventListener("dragstart", function (e) {
-    var el = e.target.closest(".seg"); if (!el) return;
-    dragN = +el.dataset.n; el.classList.add("drag");
+  document.addEventListener("dragstart", function (e) {
+    var el = e.target.closest && e.target.closest("[data-sel]"); if (!el) return;
+    dragN = +el.dataset.sel; el.classList.add("drag");
     try { e.dataTransfer.setData("text/plain", String(dragN)); e.dataTransfer.effectAllowed = "move"; } catch (x) {}
   });
-  $("tray").addEventListener("dragover", function (e) {
-    var el = e.target.closest(".seg"); if (dragN === null || !el) return;
+  document.addEventListener("dragover", function (e) {
+    var el = e.target.closest && e.target.closest("[data-sel]"); if (dragN === null || !el) return;
     e.preventDefault();
     var b = el.getBoundingClientRect(), after = e.clientX > b.left + b.width / 2;
-    Array.prototype.forEach.call(document.querySelectorAll(".seg.before, .seg.after"), function (x) { x.classList.remove("before", "after"); });
-    if (+el.dataset.n !== dragN) el.classList.add(after ? "after" : "before");
+    Array.prototype.forEach.call(document.querySelectorAll("[data-sel].before, [data-sel].after"), function (x) { x.classList.remove("before", "after"); });
+    if (+el.dataset.sel !== dragN) el.classList.add(after ? "after" : "before");
   });
-  $("tray").addEventListener("drop", function (e) {
-    var el = e.target.closest(".seg"); if (dragN === null || !el) return;
+  document.addEventListener("drop", function (e) {
+    var el = e.target.closest && e.target.closest("[data-sel]"); if (dragN === null || !el) return;
     e.preventDefault();
-    var to = +el.dataset.n, after = el.classList.contains("after");
+    var to = +el.dataset.sel, after = el.classList.contains("after");
     if (to !== dragN) {
       order = order.filter(function (m) { return m !== dragN; });
       var i = order.indexOf(to); order.splice(after ? i + 1 : i, 0, dragN);
@@ -673,9 +738,9 @@ header.top .langs button { padding: 0 10px; }
     }
     dragN = null; count();
   });
-  $("tray").addEventListener("dragend", function () {
+  document.addEventListener("dragend", function () {
     dragN = null;
-    Array.prototype.forEach.call(document.querySelectorAll(".seg.drag, .seg.before, .seg.after"), function (x) { x.classList.remove("drag", "before", "after"); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-sel].drag, [data-sel].before, [data-sel].after"), function (x) { x.classList.remove("drag", "before", "after"); });
   });
   function layoutTop() {
     document.documentElement.style.setProperty("--top", $("top").offsetHeight + "px");
@@ -687,8 +752,9 @@ header.top .langs button { padding: 0 10px; }
     t.scrollLeft += e.deltaY; e.preventDefault();
   }, { passive: false });
   $("tray").addEventListener("click", function (e) {
-    var chip = e.target.closest(".seg"); if (!chip) return;
-    var n = +chip.dataset.n;
+    if (e.target.closest("#allsel")) { sheet(!$("sheet").classList.contains("on")); return; }
+    var chip = e.target.closest(".chip"); if (!chip) return;
+    var n = +chip.dataset.sel;
     if (e.target.closest(".x") || e.altKey) { toggle(n); return; }
     openDetail(n);
   });
@@ -883,7 +949,7 @@ header.top .langs button { padding: 0 10px; }
     box.innerHTML = '<video playsinline preload="auto"></video><div class="p-bar"><div></div></div><div class="p-meta"><b></b><span></span></div>';
     document.body.appendChild(box);
     var v = box.querySelector("video"), bar = box.querySelector(".p-bar div"), when = box.querySelector(".p-meta span"), name = box.querySelector(".p-meta b");
-    var g = null, el = null, c = null, want = null, seeking = false, burst = null, t = 0, closing = null;
+    var g = null, el = null, c = null, want = null, seeking = false, burst = null, t = 0, closing = null, rest = null;
     var go = function () {
       if (want === null || seeking || v.readyState < 1) return;
       var tm = want; want = null; seeking = true; clearTimeout(burst); v.pause(); v.currentTime = tm;
@@ -894,6 +960,10 @@ header.top .langs button { padding: 0 10px; }
       if (want !== null) { go(); return; }
       v.play().catch(function () {}); clearTimeout(burst); burst = setTimeout(function () { v.pause(); }, 160);
     });
+    var show = function (tm) {
+      bar.style.width = (100 * tm / (g.duration || 1)) + "%"; when.textContent = fmt(tm) + " / " + fmt(g.duration);
+    };
+    v.addEventListener("timeupdate", function () { if (g && !v.paused && !seeking) { t = v.currentTime; show(t); } });
     var place = function () {
       var b = el.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
       box.style.left = Math.max(8, Math.min(innerWidth - w - 8, b.left + b.width / 2 - w / 2)) + "px";
@@ -909,11 +979,12 @@ header.top .langs button { padding: 0 10px; }
         place(); api.to(at.tm);
       },
       to: function (tm) {
-        t = Math.max(0, Math.min(tm, g.duration)); want = t; go();
-        bar.style.width = (100 * t / (g.duration || 1)) + "%"; when.textContent = fmt(t) + " / " + fmt(g.duration);
+        t = Math.max(0, Math.min(tm, g.duration)); want = t; go(); show(t);
+        // the mouse at rest: it plays on from there, picture and sound, until it moves again
+        clearTimeout(rest); rest = setTimeout(function () { if (g && want === null && !seeking) { clearTimeout(burst); v.play().catch(function () {}); } else if (g) api.to(t); }, 350);
       },
       time: function () { return t; },
-      close: function () { clearTimeout(closing); clearTimeout(burst); v.pause(); box.hidden = true; g = null; },
+      close: function () { clearTimeout(closing); clearTimeout(burst); clearTimeout(rest); v.pause(); box.hidden = true; g = null; },
       later: function () { clearTimeout(closing); closing = setTimeout(api.close, 260); },
       stay: function () { clearTimeout(closing); },
       g: function () { return g; }
@@ -1152,6 +1223,7 @@ header.top .langs button { padding: 0 10px; }
     if (e.metaKey || e.ctrlKey) return;
     if (k === "?") { e.preventDefault(); help.classList.toggle("on"); return; }
     if (help.classList.contains("on")) { if (k === "Escape") help.classList.remove("on"); return; }
+    if (k === "Escape" && $("sheet").classList.contains("on")) { sheet(false); return; }
     if (cur !== null) {
       if (e.altKey) { // ⌥I, ⌥O, ⌥X: clear the in, the out, both (by the key's place: ⌥ changes the letter)
         if (code === "KeyI") { e.preventDefault(); clearRange("in"); }
