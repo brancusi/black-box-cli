@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.41 (2026-11-25)
 
 - The import's toast is short ("Imported into Resolve", how many clips, warnings counted and read on hover) and every
   toast has a × to close it.
