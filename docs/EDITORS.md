@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.18:** Italian in English, word for word ([more](#whats-new))
+**What's new in 0.1.19:** Scrub every card ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -291,6 +291,10 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.19 (2026-11-25)
+
+- **Scrub every card:** Move the mouse across any card in a selects review to scrub its picture, frame by frame, with the line being said lit below it. `blackbox review open kiln`
 
 ### 0.1.18 (2026-11-25)
 

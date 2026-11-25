@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.18" :date "2026-11-25"
+  [{:version "0.1.19" :date "2026-11-25"
+    :items [{:title "Scrub every card" :lesson "review" :run "blackbox review open kiln"
+             :what "Move the mouse across any card in a selects review to scrub its picture, frame by frame, with the line being said lit below it."}]}
+   {:version "0.1.18" :date "2026-11-25"
     :items [{:title "Italian in English, word for word" :lesson "review" :run "blackbox review open kiln"
              :what "In a selects review, a clip said in Italian is marked on its picture, and each line shows its English with the Italian under it, lit word by word as it plays: read in English, cut on the Italian. English, Both or As spoken at the top, or t."}]}
    {:version "0.1.17" :date "2026-11-24"
