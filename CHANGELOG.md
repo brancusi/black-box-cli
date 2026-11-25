@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Moving across a card scrubs its picture again, frame-exact: one player for the whole gallery moves into the card
+  under the mouse (one decoder and one download however many cards; cards of one file share what it loaded), and
+  the card shows its still until the player has its frame.
+- The selection at the top no longer shifts: its count and length keep one width, and the chips scroll only to show
+  the open clip's or one just added, never when moving between clips.
+- A card's snippet fades at the top once scrolled, instead of cutting a line in half.
+
 ## 0.1.18 (2026-11-25)
 
 - Selects reviews show a line said in Italian in English, with the Italian word for word under it: the English to

@@ -49,6 +49,9 @@ nav.groups button.on { background: var(--ink); color: var(--ground); border-colo
 .tray::-webkit-scrollbar { display: none; }
 .tray .label { color: var(--faint); white-space: nowrap; margin-right: 6px; }
 .tray .label b { color: var(--ink); font-weight: 600; }
+.tray .label { flex: none; }
+.tray .label .n { display: inline-block; min-width: 11ch; }
+.tray .label .d { display: inline-block; min-width: 7ch; text-align: right; }
 .tray .hint { color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .chip { flex: none; display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line); padding: 2px 8px 2px 2px; cursor: pointer; font-size: 12px; color: var(--ink); }
 .chip:hover { border-color: var(--line-strong); }
@@ -67,7 +70,9 @@ section.group h2::after { content: ""; flex: 1; height: 1px; background: var(--l
 .card:hover { border-color: var(--line-strong); }
 .card.picked { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
 .media { position: relative; aspect-ratio: 16 / 9; background: var(--video); }
-.media video { width: 100%; height: 100%; display: block; object-fit: contain; background: var(--video); pointer-events: none; }
+.media .still, .media .hv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; background: var(--video); pointer-events: none; }
+.media .hv { opacity: 0; }
+.media .hv.on { opacity: 1; }
 .media .bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--mustard); opacity: 0; }
 .card:hover .media .bar { opacity: 1; }
 .media .scrub { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: var(--mustard); opacity: 0; pointer-events: none; }
@@ -89,6 +94,7 @@ section.group h2::after { content: ""; flex: 1; height: 1px; background: var(--l
    the clip lights the line being said there, and the snippet keeps it in view. */
 .lines { position: relative; padding: 6px 12px 14px; max-height: 214px; overflow: auto; scrollbar-width: thin; font: 400 14px/21px var(--font-read); color: var(--ink);
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); }
+.lines.down { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18px, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(to bottom, transparent, #000 18px, #000 calc(100% - 22px), transparent); }
 .lines p { margin: 0; }
 .lines .said { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 12.5px; line-height: 19px; color: var(--faint); }
 .lines .said .lang { margin-right: 6px; }
@@ -399,12 +405,35 @@ header.top .langs button { padding: 0 10px; }
     var shown = lit.filter(function (x) { return x && x.classList.contains("now") && x.offsetParent; })[0];
     if (shown) box.scrollTop = Math.max(0, shown.offsetTop - box.clientHeight / 3);
   }
+  // One player for the whole gallery: it moves into the card under the mouse and seeks to where the mouse is, and the
+  // card shows its still until the player has that card's frame. One decoder and one download, however many cards
+  // there are; cards of the same file share what it has loaded.
+  var hover = (function () {
+    var v = document.createElement("video"), n = null, want = null, seeking = false, k = null;
+    v.className = "hv"; v.muted = true; v.playsInline = true; v.preload = "auto";
+    var go = function () {
+      if (want === null || seeking || v.readyState < 1) return;
+      var tm = want; want = null; seeking = true; v.currentTime = tm; // exact, not the nearest keyframe
+    };
+    v.addEventListener("loadedmetadata", go);
+    v.addEventListener("seeked", function () { seeking = false; if (n !== null) v.classList.add("on"); go(); });
+    v.addEventListener("error", function () { seeking = false; v.classList.remove("on"); });
+    return {
+      to: function (c, box, tm) {
+        if (n !== c.n) { n = c.n; v.classList.remove("on"); var st = box.querySelector(".still"); box.insertBefore(v, st ? st.nextSibling : box.firstChild); }
+        if (k !== c.media) { k = c.media; seeking = false; v.src = mediaURL(c.media); }
+        want = tm; go();
+      },
+      off: function (c) { if (n === c.n) { n = null; want = null; v.classList.remove("on"); } },
+      pause: function () { v.pause(); }
+    };
+  })();
   function card(c) {
     var r = rangeOf(c), lines = linesIn(c, r), said = clipLang(lines);
     var a = document.createElement("article");
     a.className = "card" + (picked[c.n] ? " picked" : ""); a.dataset.n = c.n;
     a.innerHTML =
-      '<div class="media"><video preload="none" muted playsinline poster="' + esc(thumbURL(c)) + '"></video>' +
+      '<div class="media">' + (thumbURL(c) ? '<img class="still" src="' + esc(thumbURL(c)) + '" alt="">' : "") +
       (c.audio_only ? '<div class="audio">audio only</div>' : "") +
       (said ? '<span class="tongue" title="Said in ' + esc(langName(said)) + '">' + esc(langName(said)) + "</span>" : "") +
       '<button class="pick" title="Tick to import">✓</button><span class="open">Open ↗</span>' +
@@ -414,26 +443,15 @@ header.top .langs button { padding: 0 10px; }
       (c.note ? '<div class="note">' + esc(c.note) + "</div>" : "") +
       '<div class="lines">' + snippet(r, lines) + "</div>";
     // In the gallery the mouse scrubs: its place across the card is the clip's time from in to out. A click opens it.
-    var v = a.querySelector("video"), bar = a.querySelector(".bar"), head = a.querySelector(".scrub"), len = a.querySelector(".len"), snip = a.querySelector(".lines");
-    v.src = mediaURL(c.media) + "#t=" + r.start + "," + r.end; // preload none: nothing loads until it's scrubbed
+    a.querySelector(".lines").addEventListener("scroll", function () { this.classList.toggle("down", this.scrollTop > 0); }, { passive: true });
+    var media = a.querySelector(".media"), bar = a.querySelector(".bar"), head = a.querySelector(".scrub"), len = a.querySelector(".len"), snip = a.querySelector(".lines");
     if (!c.audio_only) {
-      var want = null, seeking = false;
-      // One seek at a time, always to where the mouse is now: fast moves skip what's in between.
-      var go = function () {
-        if (want === null || seeking || v.readyState < 1) return;
-        var tm = want; want = null; seeking = true;
-        if (v.fastSeek) v.fastSeek(tm); else v.currentTime = tm;
-      };
-      v.addEventListener("loadedmetadata", go);
-      v.addEventListener("seeked", function () { seeking = false; go(); });
       var scrub = function (e) {
         if (cur !== null) return; // only in the gallery
         var rr = rangeOf(c), box = a.getBoundingClientRect();
         var f = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
         var tm = rr.start + f * Math.max(0, rr.end - rr.start - 0.04);
-        want = tm;
-        if (v.preload !== "auto") v.preload = "auto";
-        go();
+        hover.to(c, media, tm);
         bar.style.width = (100 * f) + "%"; head.style.left = (100 * f) + "%";
         len.textContent = fmt(tm - rr.start) + " / " + fmt(rr.end - rr.start);
         markSnippet(snip, tm, !!e.target.closest(".media"));
@@ -441,7 +459,7 @@ header.top .langs button { padding: 0 10px; }
       a.addEventListener("mouseenter", scrub);
       a.addEventListener("mousemove", scrub);
       a.addEventListener("mouseleave", function () {
-        var rr = rangeOf(c); want = rr.start; go(); // back to its first frame
+        var rr = rangeOf(c); hover.off(c); // its still again
         bar.style.width = "0"; len.textContent = fmt(rr.end - rr.start); markSnippet(snip, null);
       });
     }
@@ -474,13 +492,15 @@ header.top .langs button { padding: 0 10px; }
     if (cur === n) pickLabel();
     count();
   }
+  var trayLen = 0;
   function tray() {
     var t = $("tray");
     if (!order.length) {
       t.innerHTML = '<span class="hint">Nothing selected yet: press <kbd>s</kbd> on a clip (hover it, or open it), or tick its box. <kbd>?</kbd> shows every key.</span>';
     } else {
       var len = order.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
-      t.innerHTML = '<span class="label"><b>' + order.length + " selected</b> · " + fmt(len) + (SERVER ? " · <kbd>I</kbd> imports them" : "") + "</span>" +
+      var keep = t.scrollLeft;
+      t.innerHTML = '<span class="label"><b class="n">' + order.length + ' selected</b> · <span class="d">' + fmt(len) + "</span>" + (SERVER ? " · <kbd>I</kbd> imports them" : "") + "</span>" +
         order.map(function (n, i) {
           var c = clipBy[n], r = rangeOf(c), th = thumbURL(c);
           return '<span class="chip' + (n === cur ? " cur" : "") + '" data-n="' + n + '" title="' + esc(c.file + (c.note ? " · " + c.note : "")) + '">' +
@@ -488,7 +508,10 @@ header.top .langs button { padding: 0 10px; }
             '<span><span class="k">' + (i + 1) + "</span> " + fmt(r.end - r.start) + '</span><span class="x" title="Drop it">×</span></span>';
         }).join("");
     }
-    var on = t.querySelector(".chip.cur") || t.lastElementChild;
+    if (order.length) t.scrollLeft = keep;
+    // The chips move only to show the open clip's, or one just added; otherwise they stay where they are.
+    var grew = order.length > trayLen; trayLen = order.length;
+    var on = t.querySelector(".chip.cur") || (grew ? t.lastElementChild : null);
     if (on && order.length) { // sideways only: the page itself never moves
       if (on.offsetLeft < t.scrollLeft) t.scrollLeft = on.offsetLeft;
       else if (on.offsetLeft + on.offsetWidth > t.scrollLeft + t.clientWidth) t.scrollLeft = on.offsetLeft + on.offsetWidth - t.clientWidth;
@@ -575,7 +598,7 @@ header.top .langs button { padding: 0 10px; }
     $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">No transcript for this file.</p>';
     document.body.classList.add("in-detail"); tray();
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
-    Array.prototype.forEach.call(document.querySelectorAll(".card video"), function (x) { x.pause(); });
+    hover.pause();
     playClip = true; dv.play().catch(function () {}); // the clip plays once, with sound; space carries on
     var first = document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
   }
