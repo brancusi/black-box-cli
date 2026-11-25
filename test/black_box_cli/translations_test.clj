@@ -4,6 +4,7 @@
   fixture's C5274 is copied with its third line said in Italian."
   (:require
    [babashka.fs :as fs]
+   [black-box-cli.resolve :as resolve]
    [black-box-cli.review :as review]
    [black-box-cli.support :as s]
    [black-box-cli.translations :as translations]
@@ -95,24 +96,44 @@
         (is (nil? (:en (nth (review-lines local (:id out)) 2))))
         (is (every? nil? (map :lang (review-lines local (:id out)))) "and what its lines were said in isn't known")))))
 
-(deftest a-review-has-a-language
+(deftest a-review-reads-in-the-editors-language
   (let [meta (italian-meta)
         _ (publish! meta (sha256 (transcript-path meta)) "v1" "We use this for a sculpture.")
         {:keys [run local]} (runner meta)
         italian "title: Marmo\nC5274.MP4 0:22-0:25\n"
         doc (fn [out] (json/parse-string (slurp (str (fs/path local "reviews" (:id out) "review.json"))) true))]
     (run nil "index")
-    (testing "English unless said: a clip said in Italian is counted, and the page knows"
+    (testing "English unless said: a clip said in Italian is counted, and the page knows; subtitles in English"
       (let [out (run italian "review" "new" "-")]
-        (is (= ["en" 1] ((juxt :language :in_another_language) out)))
-        (is (= "en" (:language (doc out))))))
-    (testing "--language it: the same clip is in the review's language"
-      (let [out (run italian "review" "new" "-" "--language" "it")]
-        (is (= ["it" 0] ((juxt :language :in_another_language) out)))
-        (is (= "it" (:language (doc out))))))
-    (testing "a language's code, nothing else"
-      (let [out (run italian "review" "new" "-" "--language" "Italian")]
-        (is (= [2 "usage"] [(:exit out) (-> out :error :code)]))))))
+        (is (= ["en" "en" 1] ((juxt :read_in :subtitles_in :in_another_language) out)))
+        (is (= ["en" "en"] ((juxt :read_in :subtitles_in) (doc out))))))
+    (testing "--read-in it: the same clip is in the editor's language; --language is its old name"
+      (doseq [flag ["--read-in" "--language"]]
+        (let [out (run italian "review" "new" "-" flag "it")]
+          (is (= ["it" 0] ((juxt :read_in :in_another_language) out)))
+          (is (= "it" (:read_in (doc out)))))))
+    (testing "--subtitles-in spoken: Resolve gets what was said, as it was said"
+      (is (= "spoken" (:subtitles_in (doc (run italian "review" "new" "-" "--subtitles-in" "spoken"))))))
+    (testing "a language's code, nothing else; subtitles only in what there are translations into"
+      (let [out (run italian "review" "new" "-" "--read-in" "Italian")]
+        (is (= [2 "usage"] [(:exit out) (-> out :error :code)])))
+      (let [out (run italian "review" "new" "-" "--subtitles-in" "de")]
+        (is (= [2 "usage"] [(:exit out) (-> out :error :code)]))
+        (is (str/includes? (-> out :error :message) "wait for translations"))))))
+
+(deftest resolve-gets-subtitles-in-english
+  (let [meta (italian-meta)
+        _ (publish! meta (sha256 (transcript-path meta)) "v1" "We use this for a sculpture.")
+        {:keys [run local]} (runner meta)
+        _ (run nil "index")
+        idx (str (fs/path local "search" "transcripts.sqlite"))
+        out (run "title: Marmo\nC5274.MP4 0:20-0:25\n" "review" "new" "-")
+        version (:transcripts (json/parse-string (slurp (str (fs/path local "reviews" (:id out) "review.json"))) true))
+        seg {:rel "media/2026/09/16/src/fx3/C5274.MP4" :start 20.0 :end 25.0}
+        said (fn [target] (str/join " " (map first (#'resolve/words-in idx version seg target))))]
+    (is (str/includes? (said "en") "We use this for a sculpture.") "a line said in Italian, as its English")
+    (is (not (str/includes? (said "spoken") "sculpture")) "as spoken: the Italian")
+    (is (str/includes? (said "spoken") "scultura"))))
 
 (deftest a-review-made-before-gets-the-english-when-served
   (let [meta (italian-meta)

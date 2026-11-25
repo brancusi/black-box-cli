@@ -35,9 +35,9 @@
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
   :seconds 5.721},
- "d198314290f1f7e1"
- {:text "New in version 0.1.38: open a clip where you were.",
-  :seconds 5.407},
+ "e4bfbbf25e1505aa"
+ {:text "New in version 0.1.39: english subtitles in Resolve.",
+  :seconds 5.642},
  "ee646e730511565f"
  {:text
   "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",

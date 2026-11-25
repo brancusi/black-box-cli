@@ -195,7 +195,7 @@
 (defn import!
   "The page's Import: the chosen clips ([{:n :start :end}], trimmed or not) of review `doc` as a cut list, handed to
   `online`. Its output as data, or {:error {:code :message} :help}."
-  [ctx doc {:keys [clips pre post audio] place :into}]
+  [ctx doc {:keys [clips pre post audio subtitles] place :into}]
   (try
     (let [by (into {} (map (juxt :n identity) (:clips doc)))
           index-path (:index (index/paths ctx))
@@ -215,7 +215,9 @@
           _ (when (empty? picked) (out/fail! "usage" "no clips were chosen" {:help ["Tick the clips to import"]}))
           text (json/generate-string {:title (str (:title doc) " (selects)") :clips picked})
           opts {:pre (str (or pre resolve/default-handle)) :post (str (or post resolve/default-handle))
-                :into (or place "auto") :no-audio (false? audio) :no-render true :transcripts (:transcripts doc)}
+                :into (or place "auto") :no-audio (false? audio) :no-render true :transcripts (:transcripts doc)
+                ;; the page's choice, else the review's (a review made before there was one: English)
+                :subtitles-in (or (#{"en" "spoken"} subtitles) (:subtitles_in doc) "en")}
           [m help] (binding [*in* (java.io.BufferedReader. (java.io.StringReader. text))]
                      (edl/online-cmd (assoc ctx :opts opts :args {:edit "-"})))]
       (assoc m :help (vec help)))
@@ -490,9 +492,15 @@
   [{:keys [home opts args] :as ctx}]
   (let [{:keys [text title segments warnings version]} (edl/read-cut (assoc-in ctx [:args :cutlist] (:selects args))
                                                                      "review new")
-        language (or (:language opts) "en")
+        ;; the editor's language (what the page reads in; --language is its old name), and the subtitles' in Resolve
+        language (or (:language opts) (:read-in opts) "en")
         _ (when-not (re-matches #"[a-z]{2,3}" language)
-            (out/fail! "usage" (str "--language takes a language's code, like en or it, not " language)
+            (out/fail! "usage" (str "--read-in takes a language's code, like en or it, not " language)
+                       {:help ["Run `blackbox review new --help`"]}))
+        subs-in (or (:subtitles-in opts) "en")
+        _ (when-not (resolve/subtitle-languages subs-in)
+            (out/fail! "usage" (str "--subtitles-in " subs-in " isn't available: subtitles are in English (en) or as spoken"
+                                    " (spoken); other languages wait for translations into them")
                        {:help ["Run `blackbox review new --help`"]}))
         path (index/require-index! ctx)
         no-proxy (keep-indexed (fn [i s] (when-not (:play_path s)
@@ -514,7 +522,7 @@
         rows (vec (map-indexed (fn [i s] (row (inc i) s (lines-in s))) segments))
         groups (vec (distinct (keep :group segments)))
         head [:title title :clips (count segments) :groups (if (seq groups) groups "none")
-              :language language :in_another_language (count (filter elsewhere segments))
+              :read_in language :subtitles_in subs-in :in_another_language (count (filter elsewhere segments))
               :warnings (if (seq warnings) warnings "none")]]
     (if (:dry-run opts)
       [(apply array-map (concat head [:written "nothing (--dry-run)" :review rows]))
@@ -525,7 +533,7 @@
             thumbs (vec (pmap (fn [[i s]] (thumb! ctx folder (inc i) s)) (map-indexed vector segments)))
             doc (array-map
                  :schema schema :id id :title title :made_at (str (java.time.Instant/now)) :transcripts version
-                 :language language
+                 :read_in language :subtitles_in subs-in
                  :groups groups :warnings warnings :media media
                  :clips (vec (map-indexed
                               (fn [i s]

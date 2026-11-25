@@ -403,6 +403,11 @@ header.top .langs button { padding: 0 10px; }
     <div class="segc" data-for="audio"><button data-v="on" class="on" title="Lavs and the field recorder, synced under each clip">Synced</button><button data-v="off" title="Picture and camera sound only">Off</button></div>
     <input type="checkbox" id="audio" checked hidden>
   </div>
+  <div class="fgroup">
+    <span class="flabel">Subtitles</span>
+    <div class="segc" data-for="subs"><button data-v="en" class="on" title="What's said, a line said in another language as its English">English</button><button data-v="spoken" title="What's said, as it was said">As spoken</button></div>
+    <input type="hidden" id="subs" value="en">
+  </div>
   <button class="go" id="go" disabled>Import into Resolve <kbd>⌘</kbd><kbd>↵</kbd></button>
   <div class="status" id="status"></div>
 </footer>
@@ -551,7 +556,7 @@ header.top .langs button { padding: 0 10px; }
   };
   // The review's language (`review new --language`, en unless said): a line said in another is marked, and shows its
   // English first, what was said under it (Black Box translates into English).
-  var HOME = D.language || "en";
+  var HOME = D.read_in || D.language || "en"; // the editor's language (reviews made before read_in say language)
   var names = (function () { try { return new Intl.DisplayNames(["en"], { type: "language" }); } catch (e) { return null; } })();
   var langName = function (code) { var n = null; try { n = names && names.of(code); } catch (e) {} return n && n !== code ? n : code.toUpperCase(); };
   var foreign = function (l) { return !!(l.lang && l.lang !== HOME); };
@@ -950,9 +955,15 @@ header.top .langs button { padding: 0 10px; }
       var b = e.target.closest("button"); if (!b) return;
       Array.prototype.forEach.call(g.children, function (x) { x.classList.toggle("on", x === b); });
       if (g.dataset.for === "lang") setLang(b.dataset.v);
-      else if (g.dataset.for === "into") $("into").value = b.dataset.v; else $("audio").checked = b.dataset.v === "on";
+      else if (g.dataset.for === "into" || g.dataset.for === "subs") $(g.dataset.for).value = b.dataset.v;
+      else $("audio").checked = b.dataset.v === "on";
     });
   });
+  // the subtitles Import puts in Resolve: the review's choice to start with
+  (function () {
+    var v = D.subtitles_in === "spoken" ? "spoken" : "en"; $("subs").value = v;
+    Array.prototype.forEach.call(document.querySelectorAll('.segc[data-for="subs"] button'), function (b) { b.classList.toggle("on", b.dataset.v === v); });
+  })();
   var themes = ["auto", "light", "dark"];
   function theme(tn) {
     if (tn === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = tn;
@@ -1759,7 +1770,7 @@ header.top .langs button { padding: 0 10px; }
     toast("Importing " + clips.length + " clip" + (clips.length > 1 ? "s" : "") + " into Resolve…", "From the camera originals" + ($("audio").checked ? ", with the synced recorders" : "") + ". Resolve may start first.");
     fetch("api/import?t=" + encodeURIComponent(TOKEN), {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ clips: clips, pre: +$("pre").value, post: +$("post").value, into: $("into").value, audio: $("audio").checked })
+      body: JSON.stringify({ clips: clips, pre: +$("pre").value, post: +$("post").value, into: $("into").value, audio: $("audio").checked, subtitles: $("subs").value })
     }).then(function (r) { return r.json(); }).then(function (res) {
       busy = false; count();
       if (res.error) {

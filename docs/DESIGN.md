@@ -144,6 +144,21 @@ CHANGELOG.md.
     isn't running and returns at once; a newer blackbox replaces an older one's server on the same port. It stops
     itself after a day with no page calling; a page whose server stopped says so and reconnects. Reviews, like
     edits, are kept until a person deletes them.
+20. **Three languages, named apart (owner, 2026-11-25).** What's said and who reads it are different things, and
+    the flags keep them apart so each can grow on its own:
+    - **spoken**: the language a line was said in, by the person in the clip. It's data (a line's `lang`, from
+      the transcript and Black Box's translations), never a flag.
+    - **read in** (`--read-in`, `review new`): the editor's own language, what the review page reads in (its
+      captions, a line's English beside the Italian). `--language` is its old name and still works.
+    - **subtitles in** (`--subtitles-in`, `online` and `review new`, and the review's Import): the language of the
+      subtitles laid on the Resolve timeline, the audience's; an editor reading German can cut for an English
+      audience. `spoken` lays every line as it was said.
+    Today there are translations into English only, so `--read-in` marks a clip said in another language (with its
+    English when reading in `en`) and `--subtitles-in` takes `en` or `spoken`; another language fails as a usage
+    error, saying it waits for translations. Later: Black Box translating into each editor's language (a request to
+    it, one per target), `--subtitles-in de` and the page reading in it, a per-editor default (the editor's
+    language kept on their Mac), and rough cuts' subtitles (`cut.srt`) in a chosen language too; they're as spoken
+    now.
 
 ## Not this repo's
 

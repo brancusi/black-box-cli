@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Subtitles laid in Resolve (`online`, and a review's Import) are in English by default: a line said in Italian goes
+  on as its English (Black Box's translation), spread over the line. `--subtitles-in spoken` lays them as said; the
+  review page has the same choice beside Recorders (Subtitles: English, As spoken).
+- Languages named apart (docs/DESIGN.md, decision 20): spoken (what a line was said in), `--read-in` (the editor's
+  language, the review page's; `--language` is its old name and still works) and `--subtitles-in` (the subtitles in
+  Resolve, the audience's). `review new` prints and keeps `read_in` and `subtitles_in`.
+
 ## 0.1.38 (2026-11-25)
 
 - A card opens where the mouse was on it: the scrub point on its picture, or the word under it in its text, and plays

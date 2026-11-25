@@ -385,6 +385,11 @@
         _ (when-not (resolve/intos place)
             (out/fail! "usage" (str "--into " place " isn't a choice; it's one of auto, current, new-project")
                        {:help ["Run `blackbox online --help` for what each does"]}))
+        subs-in (or (:subtitles-in opts) "en")
+        _ (when-not (resolve/subtitle-languages subs-in)
+            (out/fail! "usage" (str "--subtitles-in " subs-in " isn't available: subtitles are in English (en) or as spoken"
+                                    " (spoken); other languages wait for translations into them")
+                       {:help ["Run `blackbox online --help`"]}))
         handles {:pre (cutlist/parse-time (:pre opts)) :post (cutlist/parse-time (:post opts))}
         arg (:edit args)
         cut-list? (or (= "-" arg) (fs/regular-file? (fs/expand-home arg)))
@@ -414,7 +419,7 @@
         warnings (-> (vec warnings) (into short) (into weak))
         rate (cuts/timeline-rate segments)
         said (when-not (:no-subtitles opts)
-               (resolve/subtitles (index/require-index! ctx) (archive/version-of opts) segments rate))
+               (resolve/subtitles (index/require-index! ctx) (archive/version-of opts) segments rate subs-in))
         heard (group-by :clip audio)
         rows (vec (map-indexed (fn [i s] (cond-> (online-row (inc i) s (:full opts))
                                            true (assoc :recorders (count (heard (inc i))))))
@@ -433,7 +438,8 @@
                               :else "none: no recorder synced with these clips")
               :subtitles (cond
                            (:no-subtitles opts) "none (--no-subtitles)"
-                           (seq said) (str (count said) " lines on the subtitle track")
+                           (seq said) (str (count said) " lines on the subtitle track, "
+                                           (if (= "en" subs-in) "in English (lines said in another language as their English)" "as spoken"))
                            :else "none: nothing is said in these clips")
               :warnings (if (seq warnings) warnings "none")]]
     (if (:dry-run opts)

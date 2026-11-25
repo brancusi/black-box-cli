@@ -281,8 +281,9 @@ J K L shuttle (each press faster, backward with its sound; K held with J or L st
 ⌥X clear them. `s` selects the clip under the mouse or the open one; the selected gather at the top, as many as fit, in
 the order picked, which is their order on the timeline; View all shows every one (drag one to move it). ⌘↵ or the Import into Resolve button sends them to `online` (below):
 a new timeline from the camera originals, with the handles, Into (open project or new project) and Recorders
-(synced or off) chosen in the bar at the bottom; a toast says how it went. `?` lists the
-keys. A review has a language, English unless `--language it` (any code) says otherwise: a clip said in another
+(synced or off) and Subtitles (English, a line said in Italian as its English, or as spoken; `--subtitles-in` sets
+the review's start) chosen in the bar at the bottom; a toast says how it went. `?` lists the
+keys. A review reads in the editor's language, English unless `--read-in it` (any code) says otherwise: a clip said in another
 is marked on its picture ("Italian"), and the header counts them (`in_another_language` in the output too). A line
 said in Italian shows its English ("Translated from Italian"), with the Italian word for word under it (what the cut
 follows, lit word by word as it plays); English, Both and As spoken at the top (or `t`) switch between them.

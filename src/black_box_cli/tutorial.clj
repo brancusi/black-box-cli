@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.38" :date "2026-11-25"
+  [{:version "0.1.39" :date "2026-11-25"
+    :items [{:title "English subtitles in Resolve" :lesson "review" :run "blackbox review open kiln"
+             :what "Importing a review puts English subtitles on the timeline, a line said in Italian as its English; Subtitles in the bar at the bottom switches to as spoken."}]}
+   {:version "0.1.38" :date "2026-11-25"
     :items [{:title "Open a clip where you were" :lesson "review" :run "blackbox review open kiln"
              :what "Clicking a card opens the clip at the moment you scrubbed to, or at the word you were on, and plays from there."}]}
    {:version "0.1.37" :date "2026-11-25"

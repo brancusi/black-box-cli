@@ -158,6 +158,8 @@
                 {:flag "--originals" :value "folder" :doc "where the NAS's media/ folder is mounted, if not where the index says"}
                 {:flag "--no-proxies" :doc "don't link the proxies to the originals"}
                 {:flag "--no-audio" :doc "don't lay in the recorders synced with each clip (A2 up)"}
+                {:flag "--subtitles-in" :value "en|spoken" :default "en"
+                 :doc "the subtitles' language: en (default; a line said in another language as its English) or spoken (as said)"}
                 {:flag "--no-subtitles" :doc "don't put what's said on the timeline's subtitle track"}
                 {:flag "--title" :value "text" :doc "for a cut list: the edit's title (or `title:` in the cut list)"}
                 {:flag "--no-render" :doc "for a cut list: don't render the new edit's edit.mp4"}
@@ -279,8 +281,11 @@
     :args [{:arg "selects" :doc "a cut list (file or - for stdin); `group: B-roll` lines make its sections"}]
     :flags (-> [{:flag "--title" :value "text" :doc "the review's title (or `title:` in the cut list)"}
                 {:flag "--open" :doc "open it in the browser now, from the review server (returns at once)"}
-                {:flag "--language" :value "code" :default "en"
-                 :doc "the review's language (en, it…): clips said in another are marked, with their English when it's en"}
+                {:flag "--read-in" :value "code" :default "en"
+                 :doc "the editor's language (en, it…): the page reads in it; clips said in another are marked, with their English when it's en"}
+                {:flag "--subtitles-in" :value "en|spoken" :default "en"
+                 :doc "the subtitles Import puts in Resolve: en (default; a line said in another language as its English) or spoken (as said)"}
+                {:flag "--language" :value "code" :doc "the old name of --read-in"}
                 {:flag "--dry-run" :doc "check the selects and show them; write nothing"}
                 version-flag]
                (into (output-flags false)))

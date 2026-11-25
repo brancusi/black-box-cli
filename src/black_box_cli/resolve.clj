@@ -11,6 +11,7 @@
    [black-box-cli.db :as db]
    [black-box-cli.sync :as sync]
    [black-box-cli.tc :as tc]
+   [black-box-cli.translations :as translations]
    [cheshire.core :as json]
    [clojure.java.io :as io]
    [clojure.string :as str]))
@@ -168,29 +169,50 @@
                                            :track (:track a)))
                               audio)))))
 
+(def subtitle-languages
+  "What `--subtitles-in` takes: the language the subtitles on a Resolve timeline are in. `en`: a line said in another
+  language as its English (Black Box's translation), the others as said; `spoken`: every line as said. Other
+  languages wait for translations into them (docs/DESIGN.md, decision 20)."
+  #{"en" "spoken"})
+
+(defn- spread
+  "A line's `text` as words spread evenly over `start`..`end` (a translation has no times of its own): [[w s e]]."
+  [text start end]
+  (let [ws (str/split (str/trim (str text)) #"\s+")
+        step (/ (- end start) (max 1 (count ws)))]
+    (vec (map-indexed (fn [i w] [w (+ start (* i step)) (+ start (* (inc i) step))]) ws))))
+
 (defn- words-in
-  "Every word the file of segment `s` has between its in and out, handles included, from the index: [[w start end]]."
-  [idx version s]
-  (when-let [t (db/one idx "SELECT id FROM transcripts WHERE version = :v AND rel = :rel;" {:v version :rel (:rel s)})]
-    (->> (db/query idx (str "SELECT start, end, words FROM cues WHERE transcript_id = :t AND end > :a AND start < :b "
+  "Every word the file of segment `s` has between its in and out, handles included, from the index: [[w start end]].
+  In `target` en, a line said in another language is its English, spread over the line."
+  [idx version s target]
+  (when-let [t (db/one idx "SELECT id, json_sha256 FROM transcripts WHERE version = :v AND rel = :rel;"
+                       {:v version :rel (:rel s)})]
+    (->> (db/query idx (str "SELECT n, start, end, words FROM cues WHERE transcript_id = :t AND end > :a AND start < :b "
                             "ORDER BY n;")
                    {:t (:id t) :a (:start s) :b (:end s)})
-         (mapcat (fn [q] (map (fn [[w ws we]] [w (or ws (:start q)) (or we ws (:end q))])
-                              (json/parse-string (:words q)))))
+         (mapcat (let [english (when (= "en" target) (translations/for-transcript idx (:json_sha256 t)))]
+                   (fn [q]
+                     (let [{:keys [en lang]} (get english (:n q))]
+                       (if (and (seq en) lang (not= "en" lang))
+                         (spread en (:start q) (:end q))
+                         (map (fn [[w ws we]] [w (or ws (:start q)) (or we ws (:end q))])
+                              (json/parse-string (:words q))))))))
          (filter (fn [[_ ws]] (and (>= ws (:start s)) (< ws (:end s)))))
          vec)))
 
 (defn subtitles
   "What's said in `segments`, as [start end text] in seconds on the timeline Resolve builds: every word of each
   clip's range (handles included), each clip starting where the frames before it end (the plan's frames, at each
-  clip's own rate, counted at the timeline's `rate`), so the subtitles sit on the words however the frames round."
-  [idx version segments rate]
+  clip's own rate, counted at the timeline's `rate`), so the subtitles sit on the words however the frames round.
+  In `target` (see `subtitle-languages`)."
+  [idx version segments rate target]
   (let [tfps (tc/rate-value rate)
         offsets (map #(/ % tfps) (reductions + 0 (map (fn [[a b]] (- b a)) (clip-frames segments rate))))]
     ;; a clip's lines end where its frames end, never in the next clip
     (vec (mapcat (fn [s offset next-offset]
                    (keep (fn [[a b text]] (let [b (min b next-offset)] (when (> b a) [a b text])))
-                         (cuts/srt-entries (assoc s :words (words-in idx version s)) offset)))
+                         (cuts/srt-entries (assoc s :words (words-in idx version s target)) offset)))
                  segments offsets (rest offsets)))))
 
 (defn- python
