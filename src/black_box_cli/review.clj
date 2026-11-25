@@ -281,7 +281,7 @@
                        (and (= :get request-method) (= "/api/around" rest*))
                        (json-ok (or (around/around {:meta (:meta ctx) :index-path (:index (index/paths ctx))
                                                     :version (:transcripts doc)}
-                                                   (get q "rel") (min 12 (max 1 (or (parse-long (get q "n" "3")) 3))))
+                                                   (get q "rel") (min 24 (max 1 (or (parse-long (get q "n" "3")) 3))))
                                     {:clips [] :more_before false :more_after false}))
 
                        (and (= :get request-method) (= "/api/file" rest*))

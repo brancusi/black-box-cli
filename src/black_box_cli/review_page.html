@@ -1,7 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
 <meta charset="utf-8">
+<meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Selects review</title>
 <link rel="icon" href="data:,">
@@ -31,7 +32,7 @@ html, body { margin: 0; background: var(--ground); color: var(--ink); font: 400 
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :where(button, input, select, [tabindex]):focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
-kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border: 1px solid var(--line-strong); font: 11px/1 var(--font-mono); color: var(--muted); vertical-align: 1px; }
+kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border: 1px solid var(--line-strong); font: 11px/1 var(--font-mono); color: var(--muted); vertical-align: 1px; margin: 0 2px; }
 .ghost { display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; border: 1px solid var(--line); background: transparent; color: var(--muted); white-space: nowrap; }
 .ghost:hover { color: var(--ink); border-color: var(--line-strong); }
 
@@ -165,7 +166,7 @@ body.in-detail .titles { display: none; }
 body.in-detail header.top { padding-top: 8px; }
 .detail.on { display: grid; grid-template-columns: minmax(0, 1.55fr) clamp(340px, 30vw, 460px); }
 .d-left { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
-.d-left video { display: block; flex: none; aspect-ratio: var(--ar, 16 / 9); height: auto; background: var(--video);
+.d-left video { display: block; flex: none; align-self: center; aspect-ratio: var(--ar, 16 / 9); height: auto; background: var(--video);
   width: min(100%, calc((100vh - var(--top, 0px) - var(--foot, 0px) - var(--around, 372px)) * var(--ar-n, 1.7778))); }
 .d-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .d-head b { font: 800 20px/24px var(--font-brand); letter-spacing: -.03em; }
@@ -175,14 +176,24 @@ body.in-detail header.top { padding-top: 8px; }
 .track .rng { position: absolute; top: 0; bottom: 0; background: var(--range); border-left: 2px solid var(--mustard); border-right: 2px solid var(--mustard); }
 .track .head { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
 .d-tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.d-tools .keys { color: var(--faint); font-size: 12px; margin-left: auto; }
+.d-tools .keys { color: var(--faint); font-size: 12px; margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 4px 0; }
+.d-tools .keys .k { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.d-tools .keys .k kbd { margin: 0; }
+.d-tools .keys .k kbd:last-of-type { margin-right: 2px; }
 .note#d-note { padding: 0; }
 /* the clips its camera shot before and after it: ghosts, with the time between them */
 .around { flex: none; border-top: 1px solid var(--line); padding-top: 10px; }
 .around .a-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--faint); font-size: 12px; margin-bottom: 8px; }
 .around .a-head b { color: var(--ink); font-weight: 600; }
-.around .a-row { display: flex; align-items: stretch; gap: 0; overflow-x: auto; padding-bottom: 4px; }
-.around .more { flex: none; align-self: center; font-size: 12px; padding: 4px 8px; }
+.around .a-head .ctl { display: flex; gap: 6px; align-items: center; flex: none; }
+.around .more { font-size: 12px; line-height: 16px; padding: 2px 8px; }
+.around .a-row { display: flex; align-items: flex-start; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
+.around .a-row::before, .around .a-row::after { content: ""; flex: none; width: 24px; }
+@keyframes gh-in { from { opacity: 0; transform: translateX(calc(var(--from, 0) * 18px)); } }
+.gh.enter, .gap.enter { animation: gh-in .22s ease-out both; }
+.gh.slide, .gap.slide { transition: transform .26s cubic-bezier(.2, .7, .2, 1); }
 .gh { flex: none; width: 132px; cursor: pointer; opacity: .62; transition: opacity .12s; }
 .gh:hover, .gh.cur { opacity: 1; }
 .gh .gm { position: relative; aspect-ratio: 16 / 9; background: var(--video); outline: 1px dashed var(--line-strong); outline-offset: -1px; }
@@ -200,11 +211,14 @@ body.in-detail header.top { padding-top: 8px; }
 .cue-i.mute { border-style: dashed; color: var(--faint); }
 .cue-i.slow { border-color: var(--mustard); color: var(--mustard-deep); }
 .cue-i.rev { border-color: var(--green); color: var(--green); }
-.gap { flex: none; align-self: flex-start; display: flex; flex-direction: column; align-items: center; justify-content: center; height: calc(132px * 9 / 16); color: var(--faint); font-size: 10.5px; line-height: 13px; text-align: center; }
-.gap::before { content: ""; display: block; height: 1px; width: 100%; background: var(--line-strong); margin-bottom: 4px; }
+/* the time between two shots: one width for all, its length written on the line */
+.gap { flex: none; width: 64px; height: calc(132px * 9 / 16); position: relative; display: grid; place-items: center; color: var(--faint); font-size: 10.5px; line-height: 14px; text-align: center; white-space: nowrap; }
+.gap::before { content: ""; position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; background: var(--line-strong); }
+.gap span { position: relative; padding: 0 4px; background: var(--ground); }
 .gap.long { color: var(--mustard-deep); }
-.gap.long::before { background: var(--mustard); height: 2px; }
+.gap.long::before { background: var(--mustard); }
 .gap.day { color: var(--ink); font-weight: 600; }
+.gap.day::before { height: 0; border-top: 1px dashed var(--line-strong); background: none; }
 .d-right { border-left: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
 .d-right .t-head { padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; color: var(--faint); }
 .d-right .t-head b { color: var(--ink); font-weight: 600; }
@@ -292,7 +306,7 @@ header.top .langs button { padding: 0 10px; }
       <button class="ghost" id="d-pick"><span class="sw"><span>Select</span><span class="off">Selected ✓</span></span> <kbd>s</kbd></button>
       <button class="ghost" id="d-prev">‹ Prev <kbd>←</kbd></button>
       <button class="ghost" id="d-next">Next › <kbd>→</kbd></button>
-      <span class="keys"><kbd>space</kbd> play · <kbd>j</kbd>/<kbd>l</kbd> 5 s · <kbd>shift</kbd> <kbd>←</kbd>/<kbd>→</kbd> shot before/after · <kbd>?</kbd> keys</span>
+      <span class="keys"><span class="k"><kbd>space</kbd>play</span><span class="k"><kbd>j</kbd><kbd>l</kbd>5 s back, on</span><span class="k"><kbd>shift</kbd><kbd>←</kbd><kbd>→</kbd>shot before, after</span><span class="k"><kbd>?</kbd>keys</span></span>
     </div>
     <div class="note" id="d-note"></div>
     <div class="around" id="d-around" hidden></div>
@@ -703,6 +717,10 @@ header.top .langs button { padding: 0 10px; }
   }
   // ---------- around the open clip: what its camera shot before and after, as ghosts
   var aroundN = 3, aroundOf = {}, anchor = null, ghosts = [];
+  var more = 0; // -1 or 1 while more shots load on that side
+  function dayText(d) {
+    try { return new Date(d + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }); } catch (e) { return d; }
+  }
   function gapText(g) {
     if (g < 60) return Math.round(g) + " s";
     if (g < 3600) return Math.round(g / 60) + " min";
@@ -729,33 +747,58 @@ header.top .langs button { padding: 0 10px; }
     var me = gs.filter(function (g) { return g.current; })[0] || {};
     var html = ['<div class="a-head"><span><b>Shot around it</b> · ' + esc(me.device || "the same camera") +
                 ", in the order it shot them · hover to scrub, click to open</span>" +
-                '<span><kbd>shift</kbd> <kbd>←</kbd>/<kbd>→</kbd></span></div><div class="a-row">'];
-    if (res.more_before) html.push('<button class="ghost more" data-more="1" title="Show more">‹ earlier</button>');
+                '<span class="ctl"><button class="ghost more" data-more="-1"' + (res.more_before ? "" : " disabled") + '>‹ Earlier</button>' +
+                '<button class="ghost more" data-more="1"' + (res.more_after ? "" : " disabled") + ">Later ›</button></span></div>" +
+                '<div class="a-row">'];
     gs.forEach(function (g, i) {
-      if (i > 0 && g.gap !== null && g.gap !== undefined) {
-        var day = gs[i - 1].day !== g.day;
-        // the time between two shots, wider as it grows: a break reads apart from a quick retake
-        var w = Math.round(22 + Math.min(54, 10 * Math.log10(1 + g.gap)));
-        html.push('<div class="gap' + (day ? " day" : g.gap >= 600 ? " long" : "") + '" style="width:' + w + 'px" title="' +
-                  esc(gapText(g.gap)) + ' between them">' + (day ? esc(g.day.slice(5)) : esc(gapText(g.gap))) + "</div>");
-      } else if (i > 0) html.push('<div class="gap" style="width:18px"></div>');
+      if (i > 0) {
+        var day = gs[i - 1].day !== g.day, known = g.gap !== null && g.gap !== undefined;
+        // the time between two shots: a new day says its date, ten minutes or more is marked
+        var label = day ? dayText(g.day) : known ? gapText(g.gap) : "";
+        html.push('<div class="gap' + (day ? " day" : known && g.gap >= 600 ? " long" : "") + '" data-k="gap:' + esc(g.rel) + '" title="' +
+                  (known ? esc(gapText(g.gap)) + " between them" : "") + (day ? " · " + esc(g.day) : "") + '">' + (label ? "<span>" + esc(label) + "</span>" : "") + "</div>");
+      }
       var rv = inReview(g.rel), sel = extraN[g.rel] !== undefined && picked[extraN[g.rel]];
       var cues = [];
       cues.push(g.lines ? '<span class="cue-i" title="' + g.lines + ' lines said">“ ' + g.lines + "</span>" : '<span class="cue-i mute" title="Nothing said: picture only">no words</span>');
       if (g.slow_motion) cues.push('<span class="cue-i slow" title="Slow motion' + (g.fps ? ", shot at " + g.fps + " fps" : "") + '">slow ' + esc(g.slow_motion) + "</span>");
       if (rv.length && !g.current) cues.push('<span class="cue-i rev" title="Already in this review">in review</span>');
       if (!g.proxy) cues.push('<span class="cue-i mute" title="No proxy on this Mac yet">no proxy</span>');
-      html.push('<div class="gh' + (g.current ? " cur" : "") + (rv.length ? " inrev" : "") + (sel ? " sel" : "") + '" data-i="' + i + '" title="' +
+      html.push('<div class="gh' + (g.current ? " cur" : "") + (rv.length ? " inrev" : "") + (sel ? " sel" : "") + '" data-i="' + i + '" data-k="' + esc(g.rel) + '" title="' +
                 esc(g.name + " · " + (g.day || "") + " " + (g.at || "")) + '"><div class="gm">' +
                 (g.proxy ? '<img class="still" loading="lazy" src="thumb?rel=' + encodeURIComponent(g.rel) + "&at=" + (g.duration / 2).toFixed(2) + "&t=" + encodeURIComponent(TOKEN) + '" alt="">' : "") +
                 '<span class="len">' + fmt(g.duration) + '</span><div class="bar"></div></div>' +
                 '<div class="g-meta"><span class="at">' + esc(g.at || "") + "</span>" + cues.join("") + "</div></div>");
     });
-    if (res.more_after) html.push('<button class="ghost more" data-more="1" title="Show more">later ›</button>');
     html.push("</div>");
+    // Where each shot and gap was on screen, so what stays can slide to its new place and what's new fades in.
+    var was = {}, oldRow = box.querySelector(".a-row"), oldCur = box.querySelector(".gh.cur");
+    if (oldRow && !box.hidden) Array.prototype.forEach.call(oldRow.querySelectorAll("[data-k]"), function (el) { was[el.dataset.k] = el.getBoundingClientRect().left; });
+    var keepAt = more && oldCur ? oldCur.getBoundingClientRect().left : null;
     box.innerHTML = html.join(""); box.hidden = false;
     var row = box.querySelector(".a-row"), on = box.querySelector(".gh.cur");
-    if (on) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
+    if (on) {
+      if (keepAt !== null) row.scrollLeft += on.getBoundingClientRect().left - keepAt; // more: the open shot stays put
+      else row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
+    }
+    var curX = on ? on.getBoundingClientRect().left : 0, moved = [];
+    Array.prototype.forEach.call(row.querySelectorAll("[data-k]"), function (el, i) {
+      var x = el.getBoundingClientRect().left, old = was[el.dataset.k];
+      if (old === undefined) {
+        el.style.setProperty("--from", x < curX ? -1 : 1);
+        el.style.animationDelay = Math.min(160, 18 * Math.abs(i - (on ? Array.prototype.indexOf.call(row.children, on) : 0))) + "ms";
+        el.classList.add("enter");
+      } else if (Math.abs(old - x) > 0.5) { el.style.transform = "translateX(" + (old - x) + "px)"; moved.push(el); }
+    });
+    if (moved.length) {
+      row.getBoundingClientRect(); // take the old places, then slide from them
+      moved.forEach(function (el) { el.classList.add("slide"); el.style.transform = ""; });
+    }
+    if (more) { // then bring the new ones into view
+      var news = row.querySelectorAll(".gh.enter"), edge = more < 0 ? news[0] : news[news.length - 1];
+      if (edge) row.scrollTo({ left: more < 0 ? edge.offsetLeft - 24 : edge.offsetLeft + edge.offsetWidth - row.clientWidth + 24, behavior: "smooth" });
+    }
+    more = 0;
     Array.prototype.forEach.call(box.querySelectorAll(".gh"), function (el) {
       var g = gs[+el.dataset.i], gm = el.querySelector(".gm"), bar = el.querySelector(".bar"), len = el.querySelector(".len");
       if (!g.proxy || g.current) return;
@@ -781,7 +824,8 @@ header.top .langs button { padding: 0 10px; }
     if (i >= 0 && ghosts[i + d]) openGhost(ghosts[i + d]);
   }
   $("d-around").addEventListener("click", function (e) {
-    if (e.target.closest(".more")) { aroundN = Math.min(12, aroundN + 3); loadAround(); return; }
+    var m = e.target.closest(".more");
+    if (m) { if (!m.disabled) { more = +m.dataset.more; aroundN = Math.min(24, aroundN + 4); loadAround(); } return; }
     var el = e.target.closest(".gh"); if (el) openGhost(ghosts[+el.dataset.i]);
   });
   function closeDetail() { dv.pause(); $("detail").classList.remove("on"); document.body.classList.remove("in-detail"); cur = null; render(); }

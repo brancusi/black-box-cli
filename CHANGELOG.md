@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- The shots-around strip: every gap the same width with its length on the line (a new day by its date), Earlier
+  and Later in its header, shots fading in as they load and sliding to their places when more come or another shot
+  opens.
+- An open clip's player sits centred over its column, not against its left edge.
+- The page asks browsers not to translate it: Chrome's Translate turned 16:38 into 4:38 PM and ran keys into
+  words. Keys keep their spacing either way.
+
 ## 0.1.20 (2026-11-25)
 
 - A review's open clip has a strip under it: the shots its camera took before and after it, in the order it shot
