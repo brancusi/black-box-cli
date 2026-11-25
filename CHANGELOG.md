@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.32 (2026-11-25)
 
 - Dragging on the open clip's timeline marks a span (the picture follows the mouse); ↵ makes it the in and out, esc
   drops it, a click still just goes there. Dragged on the lines' lane, the span takes whole lines.
