@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- An open clip in a review takes Resolve's keys: J K L shuttle (L again 2×, 4×, 8×, 16×; J backward, with its sound,
+  cut a few seconds at a time from the proxy by the review server and reversed on the page; K held with J or L a
+  frame, or slowly when held), ← → a frame (Shift: a second), ↑ ↓ the previous or next clip (Shift: the shot before
+  or after, in the strip), Shift+I/O go to the in or out, ⌥I ⌥O ⌥X clear them, Home and End. A badge shows the speed.
+- Import is ⌘↵ now, from either view: Shift+I is Resolve's go to in, and `i` in the gallery no longer imports.
+
 ## 0.1.21 (2026-11-25)
 
 - The shots-around strip: every gap the same width with its length on the line (a new day by its date), Earlier

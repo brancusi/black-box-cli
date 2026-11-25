@@ -155,6 +155,13 @@
                                   {:headers {"range" "bytes=0-3"}}))))
         (is (= 404 (:status (get* (str "/" id "/proxy?rel=media/2026/09/16/src/fx3/C5280.MP4&t=" token) {}))) "no proxy of it")
         (is (= 404 (:status (get* (str "/" id "/proxy?rel=..%2F..%2Fetc%2Fpasswd&t=" token) {})))))
+      (testing "a few seconds of a clip's sound, for J: a WAV from its proxy, never of a file the index doesn't know"
+        (let [r (get* (str "/" id "/audio?rel=media/2026/09/16/src/fx3/C5274.MP4&from=1&dur=2&t=" token) {:as :bytes})]
+          (is (#{200 404} (:status r)) "404 only on a Mac without ffmpeg")
+          (when (= 200 (:status r))
+            (is (= "audio/wav" (get-in r [:headers "content-type"])))
+            (is (= "RIFF" (String. ^bytes (java.util.Arrays/copyOfRange ^bytes (:body r) 0 4)))))
+          (is (= 404 (:status (get* (str "/" id "/audio?rel=%2FVolumes%2Fx.MP4&t=" token) {}))))))
       (testing "what the editor did is kept beside the review, appended, never in review.json"
         (let [before (slurp (str (fs/path local "reviews" id "review.json")))
               post #(http/post (str "http://127.0.0.1:" port "/" id "/api/state?t=" token)

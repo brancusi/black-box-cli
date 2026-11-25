@@ -35,8 +35,9 @@
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
   :seconds 5.721},
- "e9a46e8502ecd538"
- {:text "New in version 0.1.21: a calmer strip.", :seconds 4.833},
+ "e29e2f1bc9d6d056"
+ {:text "New in version 0.1.22: resolve's keys in a review.",
+  :seconds 5.721},
  "ee646e730511565f"
  {:text
   "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",

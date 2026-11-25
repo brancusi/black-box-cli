@@ -272,17 +272,19 @@ server stopped says so and reconnects once any review is opened again. `blackbox
 the foreground, only to see why it won't start (`error.code review-server`).
 
 What they can do on the page, if they ask: move the mouse across a clip to scrub through it, in to out; click it to open it with sound and
-its file's whole transcript (a word jumps there; `i` and `o` set the in and out; ← → move between clips). `s`
-selects the clip under the mouse or the open one; the selected gather at the top in the order picked, which is
-their order on the timeline. `i` in the gallery, Shift+I anywhere, or the Import into Resolve button sends them
-to `online` (below): a new timeline from the camera originals, with the handles, Into (open project or new
-project) and Recorders (synced or off) chosen in the bar at the bottom; a toast says how it went. `?` lists the
+its file's whole transcript (a word jumps there). An open clip takes Resolve's keys, so editors don't change habits:
+J K L shuttle (each press faster, backward with its sound; K held with J or L steps a frame or plays slowly),
+← → a frame (Shift: a second), ↑ ↓ the previous or next clip, `i` `o` mark in and out, Shift+I/O go to them, ⌥I ⌥O
+⌥X clear them. `s` selects the clip under the mouse or the open one; the selected gather at the top in the order
+picked, which is their order on the timeline. ⌘↵ or the Import into Resolve button sends them to `online` (below):
+a new timeline from the camera originals, with the handles, Into (open project or new project) and Recorders
+(synced or off) chosen in the bar at the bottom; a toast says how it went. `?` lists the
 keys. A review has a language, English unless `--language it` (any code) says otherwise: a clip said in another
 is marked on its picture ("Italian"), and the header counts them (`in_another_language` in the output too). A line
 said in Italian shows its English ("Translated from Italian"), with the Italian word for word under it (what the cut
 follows, lit word by word as it plays); English, Both and As spoken at the top (or `t`) switch between them.
 Under an open clip, a strip shows the shots its camera took before and after it, in the order it shot them, with
-the time between them (Shift+← → step through them); a shot opens like any clip, and `s` adds it, trimmed with `i`
+the time between them (Shift+↑ ↓ step through them); a shot opens like any clip, and `s` adds it, trimmed with `i`
 and `o`, to an "Added by you" group. What they select, trim and add is kept in the review's folder
 (`state.jsonl`, the last line is the latest) and comes back when the page is reloaded; read it to see what an
 editor picked.

@@ -8,6 +8,7 @@
   (:require
    [babashka.fs :as fs]
    [babashka.http-client :as hc]
+   [babashka.process :as process]
    [black-box-cli.archive :as archive]
    [black-box-cli.around :as around]
    [black-box-cli.cuts :as cuts]
@@ -129,6 +130,19 @@
   (into {} (for [kv (str/split (or qs "") #"&") :when (seq kv)
                  :let [[k v] (str/split kv #"=" 2)]]
              [k (java.net.URLDecoder/decode (or v "") "UTF-8")])))
+
+(defn audio-window
+  "The sound of `proxy` from `from` for `dur` seconds (at most a minute) as a small WAV (mono, 24 kHz), for playing
+  it backwards on the page: its bytes, or nil without ffmpeg or a sound there."
+  [env proxy from dur]
+  (when-let [ffmpeg (tools/find-tool env "ffmpeg")]
+    (let [tmp (fs/create-temp-file {:prefix "bbcli-audio-" :suffix ".wav"})]
+      (try
+        (let [{:keys [exit]} (process/sh [ffmpeg "-nostdin" "-v" "error" "-ss" (tc/fixed (max 0.0 from) 3) "-t"
+                                          (tc/fixed (min 60.0 (max 0.05 dur)) 3) "-i" (str proxy) "-vn" "-ac" "1"
+                                          "-ar" "24000" "-c:a" "pcm_s16le" "-f" "wav" "-y" (str tmp)])]
+          (when (and (zero? exit) (> (fs/size tmp) 44)) (fs/read-all-bytes tmp)))
+        (finally (fs/delete-if-exists tmp))))))
 
 (defn last-state
   "What the editor last did on review `folder`'s page (the last line of its state.jsonl), or nil."
@@ -289,6 +303,16 @@
                          (if (around/known? path rel)
                            (json-ok {:rel rel :lines (or (file-lines path (:transcripts doc) rel) [])})
                            {:status 404}))
+
+                       ;; a few seconds of a clip's sound, for playing it backwards (J): from its proxy only
+                       (and (= :get request-method) (= "/audio" rest*))
+                       (let [rel (get q "rel")
+                             p (when (around/known? (:index (index/paths ctx)) rel) (archive/proxy-of (:meta ctx) rel))
+                             wav (when p (audio-window (:env ctx) p (or (parse-double (get q "from" "0")) 0.0)
+                                                       (or (parse-double (get q "dur" "6")) 6.0)))]
+                         (if wav
+                           {:status 200 :headers {"content-type" "audio/wav" "cache-control" "no-store"} :body wav}
+                           {:status 404 :body "no sound of that here"}))
 
                        (and (= :get request-method) (#{"/proxy" "/thumb"} rest*))
                        (let [rel (get q "rel")
