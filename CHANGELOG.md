@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.42 (2026-11-25)
 
 - A camera's transcript is filled from its recorders: where its own transcript has nothing (a far mic loses
   voices), the lines the lav recorders synced with it heard (Black Box's sync map, confidence 0.5 and up) are put on
