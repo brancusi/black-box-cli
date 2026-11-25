@@ -7,4 +7,5 @@
                 dev {:linters {:discouraged-var {:level :off}}}
                 fiddle {:linters {:discouraged-var {:level :off}}}
                 narrate {:linters {:discouraged-var {:level :off}}}
-                release {:linters {:discouraged-var {:level :off}}}}}
+                release {:linters {:discouraged-var {:level :off}}}
+                review-dev {:linters {:discouraged-var {:level :off}}}}}

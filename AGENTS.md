@@ -93,6 +93,14 @@ Work through one long-lived Babashka REPL, shared by people and agents.
 3. `dev/fiddle.clj` walks through it: the command line, errors and exit codes, the namespaces underneath.
 4. Never leave a definition only in the REPL: it must be in a file. `bb test` from the shell is the truth.
 
+## The review page, live
+
+`bb review-dev [review-id]` serves this Mac's own reviews from the checkout on 127.0.0.1:7388, beside the installed
+server on 7387, and opens the review (the newest by default). The page is read from `src/` on every request, so an
+edit to `review_page.html` shows on reload; an edit to a `.clj` under `src/` restarts the server. Its pages say DEV in
+the corner, and it never writes the review server's state file, so `blackbox review open` keeps going to the
+installed one. Run it in the background; selections and imports made on it are real (they're the person's reviews).
+
 In VS Code with Calva, opening the folder does this: `.vscode/settings.json` jacks in with `bb nrepl`, runs
 `(dev)`, and connects instead if `.nrepl-port` already exists. `ctrl+alt+space` then `l`, `t`, `n`, `g` or `h` runs
 `(reload)`, `(tests)`, the current file's tests, `(goldens)` or the home view; `c` runs the selected arguments as a

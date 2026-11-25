@@ -209,6 +209,12 @@
         {:error {:code code :message message} :help (vec help)}
         (throw e)))))
 
+(defn dev?
+  "Whether this server runs from a checkout beside the installed one (`bb review-dev`): it doesn't take the review
+  server's place in the state file, so `review open` keeps going to the installed one, and its pages say DEV."
+  [{:keys [env]}]
+  (= "1" (get env "BLACKBOX_REVIEW_DEV")))
+
 (def default-port
   "Where the review server listens unless that port is taken: the same every time, so a review's address keeps
   working across restarts."
@@ -291,7 +297,7 @@
                      (cond
                        (and (= :get request-method) (= "/" rest*))
                        {:status 200 :headers {"content-type" "text/html; charset=utf-8" "cache-control" "no-store"}
-                        :body (page (fresh ctx doc))} ; this CLI's page, so a review made earlier gets its fixes
+                        :body (page (cond-> (fresh ctx doc) (dev? ctx) (assoc :dev true)))} ; this CLI's page, so a review made earlier gets its fixes
 
                        (and (= :get request-method) (re-matches #"/media/\d+" rest*))
                        (if-let [p (get media (parse-long (subs rest* 7)))]
@@ -568,8 +574,9 @@
   [{:keys [opts] :as ctx}]
   (let [{:keys [review-server]} (index/paths ctx)
         {:keys [port token done]} (start! ctx (or (:port opts) default-port))]
-    (write-state! review-server {:token token :port port :cli version/version
-                                 :pid (.pid (java.lang.ProcessHandle/current))})
+    (when-not (dev? ctx)
+      (write-state! review-server {:token token :port port :cli version/version
+                                   :pid (.pid (java.lang.ProcessHandle/current))}))
     (out/emit! (array-map :serving (str "127.0.0.1:" port) :reviews (out/home-path (:reviews (index/paths ctx)) (:home ctx))
                           :stops (str "after " idle-hours " h with no page calling"))
                [] (or (:fmt ctx) :toon))

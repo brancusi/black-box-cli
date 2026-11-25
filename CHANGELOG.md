@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- `bb review-dev` (for working on the CLI): this checkout's review server beside the installed one, on this Mac's
+  reviews; its pages say DEV, and it leaves the installed server in charge.
+
 ## 0.1.42 (2026-11-25)
 
 - A camera's transcript is filled from its recorders: where its own transcript has nothing (a far mic loses

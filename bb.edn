@@ -21,6 +21,10 @@
                  :extra-paths ["test"]
                  :requires ([black-box-cli.golden :as golden])
                  :task (golden/report! *command-line-args*)}
+         review-dev {:doc "This checkout's review server on this Mac's own reviews, beside the installed one: bb review-dev [review-id] [--port 7388]. Opens the review (the newest by default); the page reloads with edits, a .clj edit restarts it. Pages say DEV."
+                     :extra-paths ["dev"]
+                     :requires ([review-dev])
+                     :task (review-dev/run *command-line-args*)}
          nrepl {:doc "The REPL, with dev/ and test/ on the classpath: bb nrepl [port]. Writes .nrepl-port. Calva's jack-in runs it."
                 :extra-paths ["dev" "test"]
                 :requires ([babashka.fs :as fs]

@@ -193,6 +193,7 @@ footer.bar .count { font-weight: 600; min-width: 22ch; white-space: nowrap; }
 .toast.show { pointer-events: auto; }
 .toast .x { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border: 0; background: none; color: inherit; opacity: .6; font-size: 18px; line-height: 1; cursor: pointer; }
 .toast .x:hover { opacity: 1; }
+.devmark { position: fixed; left: 0; bottom: 0; z-index: 40; padding: 2px 8px; background: #c2410c; color: #fff; font: 700 10px/16px var(--font-mono); letter-spacing: .1em; pointer-events: none; }
 .toast b { font-weight: 600; }
 .toast span { opacity: .75; font-size: 12px; }
 
@@ -617,7 +618,9 @@ header.top .langs button { padding: 0 10px; }
   }
 
   // ---------- header and groups
-  $("title").textContent = D.title; document.title = D.title + " · selects";
+  $("title").textContent = D.title; document.title = (D.dev ? "DEV · " : "") + D.title + " · selects";
+  // served from a checkout (bb review-dev): say so, so it's never mistaken for the installed one
+  if (D.dev) document.body.insertAdjacentHTML("beforeend", '<div class="devmark" title="Served from the black-box-cli checkout by bb review-dev">DEV</div>');
   var groups = D.groups.length ? D.groups : ["Clips"];
   var elsewhere = {};
   D.clips.forEach(function (c) { var g = clipLang(linesIn(c, c)); if (g) elsewhere[g] = (elsewhere[g] || 0) + 1; });
