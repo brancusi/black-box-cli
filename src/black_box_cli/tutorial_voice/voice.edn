@@ -7,9 +7,9 @@
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
- "5b05f4911a20212d"
- {:text "New in version 0.1.40: importing keeps the player still.",
-  :seconds 5.878},
+ "455ffa85ce9878c8"
+ {:text "New in version 0.1.41: a shorter import message.",
+  :seconds 5.329},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",

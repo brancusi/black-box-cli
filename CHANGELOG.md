@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The import's toast is short ("Imported into Resolve", how many clips, warnings counted and read on hover) and every
+  toast has a × to close it.
+
 ## 0.1.40 (2026-11-25)
 
 - Importing no longer shifts the open clip's player: how it's going is said in the toast (warnings in it too), and
