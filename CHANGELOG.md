@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.24 (2026-11-25)
 
 - The selection at the top is a reel: one strip the width of the page, each clip as wide as it is long, in order,
   so dozens fit. Click one to open it, drag it to move it, × or ⌥-click to drop it.
