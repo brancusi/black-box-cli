@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.20 (2026-11-25)
 
 - A review's open clip has a strip under it: the shots its camera took before and after it, in the order it shot
   them (on any day), ghosted, with the time between them (a day apart, ten minutes, a quick retake) and what each
