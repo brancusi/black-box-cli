@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.39 (2026-11-25)
 
 - Subtitles laid in Resolve (`online`, and a review's Import) are in English by default: a line said in Italian goes
   on as its English (Black Box's translation), spread over the line. `--subtitles-in spoken` lays them as said; the
