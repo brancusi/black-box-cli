@@ -3,8 +3,6 @@
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
   :seconds 6.113},
- "24b823ab24eb51d9"
- {:text "New in version 0.1.37: cleaner captions.", :seconds 4.989},
  "2a248d043f075888"
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
@@ -37,6 +35,9 @@
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
   :seconds 5.721},
+ "d198314290f1f7e1"
+ {:text "New in version 0.1.38: open a clip where you were.",
+  :seconds 5.407},
  "ee646e730511565f"
  {:text
   "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- A card opens where the mouse was on it: the scrub point on its picture, or the word under it in its text, and plays
+  on from there to its out.
+
 ## 0.1.37 (2026-11-25)
 
 - Captions sit on a tight plate in the page's own dark, each line on its own, in the page's sans (Archivo where

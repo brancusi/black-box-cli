@@ -747,14 +747,15 @@ header.top .langs button { padding: 0 10px; }
       a.addEventListener("mouseenter", scrub);
       a.addEventListener("mousemove", scrub);
       a.addEventListener("mouseleave", function () {
-        var rr = rangeOf(c); hover.off(c); // its still again
+        var rr = rangeOf(c); hover.off(c); delete a.dataset.tm; // its still again
         bar.style.width = "0"; len.textContent = fmt(rr.end - rr.start); markSnippet(snip, null);
       });
     }
     a.addEventListener("mouseenter", function () { hoverN = c.n; });
     a.addEventListener("mouseleave", function () { if (hoverN === c.n) hoverN = null; });
     a.querySelector(".pick").addEventListener("click", function (e) { e.stopPropagation(); toggle(c.n); });
-    a.addEventListener("click", function () { openDetail(c.n); });
+    // opened where the mouse was (the scrub point on the picture, the word on the text), playing on to its out
+    a.addEventListener("click", function () { openDetail(c.n, a.dataset.tm ? +a.dataset.tm : undefined, true); });
     return a;
   }
   function addedClips() { return order.map(function (n) { return clipBy[n]; }).filter(function (c) { return c.extra; }); }
@@ -966,9 +967,9 @@ header.top .langs button { padding: 0 10px; }
   var cur = null, words = [], follow = true, playClip = false, lastWord = null;
   var dv = $("d-video");
   // `at`: where to land (a time in the file), for a shot opened where it was scrubbed; else the clip's in.
-  function openDetail(n, at) {
+  function openDetail(n, at, toOut) {
     cur = n; var c = clipBy[n], f = D.files[c.rel] || { lines: [], duration: c.duration };
-    if (c.extra && !D.files[c.rel] && SERVER) fetchWords(c.rel, function () { if (cur === n) openDetail(n, dv.currentTime); });
+    if (c.extra && !D.files[c.rel] && SERVER) fetchWords(c.rel, function () { if (cur === n) openDetail(n, dv.currentTime, playClip); });
     if (!c.extra) anchor = null;
     stopAll(); showSpan(null);
     $("d-file").textContent = c.file; $("d-note").textContent = c.note || ""; $("d-path").innerHTML = crumbs(c.rel); $("d-path").title = c.rel;
@@ -1000,8 +1001,9 @@ header.top .langs button { padding: 0 10px; }
     document.body.classList.add("in-detail"); tray();
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
     hover.pause();
-    // the clip plays once, in to out, with sound; opened at a moment (a shot from the strip), it plays on from there
-    playClip = typeof at !== "number"; dv.play().catch(function () {}); showCap();
+    // the clip plays once, in to out, with sound (from the moment it was opened at, from a card); a shot from the
+    // strip plays on from where it was opened
+    playClip = typeof at !== "number" || !!toOut; dv.play().catch(function () {}); showCap();
     var first = null;
     if (typeof at === "number") Array.prototype.forEach.call(document.querySelectorAll("#d-transcript .cue"), function (q) { if (+q.dataset.s <= at + 0.05) first = q; });
     first = first || document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
