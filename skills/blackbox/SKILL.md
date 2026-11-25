@@ -290,7 +290,7 @@ shot opens like any clip, where it was scrubbed to, and `s` adds it, trimmed wit
 and `o`, to an "Added by you" group. What they select, trim and add is kept in the review's folder
 (`state.jsonl`, the last line is the latest) and comes back when the page is reloaded; read it to see what an
 editor picked. The open clip's timeline is its sound's waveform with each line said marked above it (a click on one
-goes to it), its in and out shaded; captions show what's said in the review's language (`c`).
+goes to it), its in and out shaded; a span dragged on it becomes the in and out with ↵; captions show what's said in the review's language (`c`).
 
 `blackbox review list` lists them; `blackbox review open <id>` opens one again, with Import working. review.html
 opened from Finder plays and reads but can't import. Reviews are kept until someone deletes them: to free space,

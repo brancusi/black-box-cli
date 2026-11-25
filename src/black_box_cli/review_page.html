@@ -212,6 +212,10 @@ button:focus, video:focus, [tabindex]:focus { outline: none; }
 .track .rng { position: absolute; top: 0; bottom: 0; background: var(--range); border-left: 2px solid var(--mustard); border-right: 2px solid var(--mustard); pointer-events: none; }
 .track .head { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; }
 .track .head::before { content: ""; position: absolute; top: 0; left: -4px; border: 5px solid transparent; border-top-color: var(--ink); }
+/* a span dragged on the timeline: ↵ makes it the in and out */
+.track .span { position: absolute; top: 0; bottom: 0; background: rgba(255,255,255,.14); border-left: 1px solid var(--ink); border-right: 1px solid var(--ink); pointer-events: none; }
+.track .span[hidden] { display: none; }
+.track .span span { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap; font: 11px/16px var(--font-mono); color: var(--ink); padding: 1px 6px; background: var(--surface); border: 1px solid var(--line-strong); }
 .track .hov { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line-strong); pointer-events: none; }
 .track .hov span { position: absolute; bottom: calc(100% + 6px); left: 0; white-space: nowrap; max-width: min(480px, 90vw); overflow: hidden; text-overflow: ellipsis;
   font: 12px/18px var(--font-mono); padding: 1px 7px; background: var(--ink); color: var(--ground); }
@@ -239,8 +243,8 @@ button:focus, video:focus, [tabindex]:focus { outline: none; }
 /* the ends of the strip: loading more, or the camera's first or last shot */
 .a-load, .a-end { flex: none; width: 96px; height: calc(132px * 9 / 16); display: grid; place-content: center; justify-items: center; gap: 6px;
   color: var(--faint); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; }
-.a-end { width: 72px; }
-.a-end span { padding: 2px 6px; border: 1px dashed var(--line-strong); }
+.a-end { width: 96px; }
+.a-end span { padding: 2px 6px; border: 1px dashed var(--line-strong); white-space: nowrap; }
 .spin { width: 18px; height: 18px; border: 2px solid var(--line-strong); border-top-color: var(--mustard); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .around .more { font-size: 12px; line-height: 16px; padding: 2px 8px; }
@@ -391,7 +395,7 @@ header.top .langs button { padding: 0 10px; }
     <video id="d-video" playsinline tabindex="-1"></video>
     <div class="cap d-cap" id="d-cap" hidden></div>
     <div class="player">
-      <div class="track" id="d-track"><canvas id="d-wave"></canvas><div class="rng" id="d-rng"></div><div class="hov" id="d-hov" hidden><span></span></div><div class="head" id="d-head"></div></div>
+      <div class="track" id="d-track"><canvas id="d-wave"></canvas><div class="rng" id="d-rng"></div><div class="span" id="d-span" hidden><span><kbd>↵</kbd> in and out</span></div><div class="hov" id="d-hov" hidden><span></span></div><div class="head" id="d-head"></div></div>
       <div class="ctl">
         <button class="pbtn" id="d-pp" title="Play or stop (space)"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg></button>
         <span class="time" id="d-time">0:00.0 <i>/</i> 0:00.0</span>
@@ -442,6 +446,7 @@ header.top .langs button { padding: 0 10px; }
       </section>
       <section><h4>Marks</h4>
         <div class="row"><span class="ks"><kbd>i</kbd><kbd>o</kbd></span><span class="what">Mark in or out</span></div>
+        <div class="row"><span class="ks"><em>drag</em> <i>then</i> <kbd>↵</kbd></span><span class="what">A span of the timeline as in and out</span></div>
         <div class="row"><span class="ks"><kbd>shift</kbd><i>+</i><kbd>I</kbd><kbd>O</kbd></span><span class="what">Go to the in or the out</span></div>
         <div class="row"><span class="ks"><kbd>⌥</kbd><i>+</i><kbd>I</kbd><kbd>O</kbd><kbd>X</kbd></span><span class="what">Clear in, out, or both</span></div>
         <div class="row"><span class="ks"><kbd>s</kbd></span><span class="what">Select or deselect</span></div>
@@ -895,7 +900,7 @@ header.top .langs button { padding: 0 10px; }
     cur = n; var c = clipBy[n], f = D.files[c.rel] || { lines: [], duration: c.duration };
     if (c.extra && !D.files[c.rel] && SERVER) fetchWords(c.rel, function () { if (cur === n) openDetail(n, dv.currentTime); });
     if (!c.extra) anchor = null;
-    stopAll();
+    stopAll(); showSpan(null);
     $("d-file").textContent = c.file; $("d-note").textContent = c.note || "";
     var src = srcOf(c);
     if (dv.dataset.k !== src) { dv.dataset.k = src; dv.src = src; }
@@ -1460,7 +1465,17 @@ header.top .langs button { padding: 0 10px; }
       tip.textContent = l ? (enOf(l) || l.text) : fmt(t);
       var w = tip.offsetWidth, left = Math.max(0, Math.min(b.width - w, x - w / 2));
       tip.style.transform = "translateX(" + (left - x) + "px)";
-      if (drag) { tv === dv || peek.close(); dv.currentTime = t; }
+      if (drag) {
+        tv === dv || peek.close(); dv.currentTime = t;
+        // dragged far enough, it marks a span (whole lines when it started on the lines' lane)
+        if (!drag.span && Math.abs(e.clientX - drag.x) < 4) return;
+        var a0 = Math.min(drag.t, t), a1 = Math.max(drag.t, t);
+        if (drag.lines) {
+          var ls = (D.files[clipBy[cur].rel] || {}).lines || [], hit = ls.filter(function (q) { return q.end > a0 && q.start < a1; });
+          if (hit.length) { a0 = hit[0].start; a1 = hit[hit.length - 1].end; }
+        }
+        drag.span = true; showSpan({ s: a0, e: a1 });
+      }
     });
     tr.addEventListener("pointerleave", function () { hov.hidden = true; });
     tr.addEventListener("pointerdown", function (e) {
@@ -1469,11 +1484,30 @@ header.top .langs button { padding: 0 10px; }
       var b = tr.getBoundingClientRect(), t = at(e);
       // on the lines' lane, a click lands on the start of the line
       if (e.clientY - b.top < 14) { var l = lineAt(t); if (l) t = l.start; }
-      drag = { playing: !dv.paused || !!back }; stopAll(); playClip = false; dv.currentTime = t;
+      var lane = e.clientY - b.top < 14;
+      drag = { playing: !dv.paused || !!back, x: e.clientX, t: at(e), lines: lane, span: false };
+      showSpan(null); stopAll(); playClip = false; dv.currentTime = t;
     });
-    var end = function () { if (!drag) return; var was = drag.playing; drag = null; if (was) { shuttle = 1; forward(1); } };
+    var end = function () {
+      if (!drag) return; var was = drag.playing, marked = drag.span; drag = null;
+      if (marked && span) { dv.currentTime = span.s; return; } // a span: the playhead at its start, ↵ to use it
+      if (was) { shuttle = 1; forward(1); }
+    };
     tr.addEventListener("pointerup", end); tr.addEventListener("pointercancel", end);
   })();
+  // the span marked on the timeline, if any
+  var span = null;
+  function showSpan(sp) {
+    span = sp && sp.e - sp.s > 0.04 ? sp : null;
+    var el = $("d-span"); el.hidden = !span;
+    if (span) { var d = durNow(); el.style.left = (100 * span.s / d) + "%"; el.style.width = (100 * (span.e - span.s) / d) + "%"; }
+  }
+  function useSpan() {
+    if (!span || cur === null) return false;
+    ranges[cur] = { start: span.s, end: span.e }; showSpan(null); marks(); count(); save();
+    toast("In and out set", fmt(ranges[cur].start) + " to " + fmt(ranges[cur].end) + " · " + fmt(ranges[cur].end - ranges[cur].start) + ".", "ok", 1600);
+    return true;
+  }
   // ---------- the controls under it
   var ICONS = { play: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>', pause: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z" fill="currentColor"/></svg>', vol: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>', mute: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' };
   function playPause() { if (tv !== dv) peek.close(); if (dv.paused && !back) { shuttle = 1; forward(1); } else stopAll(); }
@@ -1530,6 +1564,8 @@ header.top .langs button { padding: 0 10px; }
       else if (peek.on() && (k === "o" || k === "Enter")) { e.preventDefault(); peek.openHere(); }
       else if ((lk === "s" || k === "x") && (peek.on() || ghostAt)) { var sg = peek.on() ? peek.shot() : ghostAt.g; toggle(ghostN(sg, true)); }
       else if (peek.on() && /^[iIO]$/.test(k)) { /* marks are the open clip's: not while looking closer */ }
+      else if (k === "Escape" && span) showSpan(null);
+      else if (k === "Enter" && !e.metaKey && !e.ctrlKey && span) { e.preventDefault(); useSpan(); }
       else if (k === "Escape") closeDetail();
       else if (k === " ") { e.preventDefault(); playPause(); }
       else if (lk === "c" && !e.altKey) toggleCaps();
