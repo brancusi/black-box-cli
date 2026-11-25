@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.30 (2026-11-25)
 
 - The open clip's player is the page's own: a tall timeline of its sound's waveform with each line said marked above
   it (click one to go to it), the in and out shaded, drag anywhere to scrub with the time and line under the mouse;
