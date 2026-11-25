@@ -275,8 +275,8 @@ What they can do on the page, if they ask: move the mouse across a clip to scrub
 its file's whole transcript (a word jumps there). An open clip takes Resolve's keys, so editors don't change habits:
 J K L shuttle (each press faster, backward with its sound; K held with J or L steps a frame or plays slowly),
 ← → a frame (Shift: a second), ↑ ↓ the previous or next clip, `i` `o` mark in and out, Shift+I/O go to them, ⌥I ⌥O
-⌥X clear them. `s` selects the clip under the mouse or the open one; the selected gather at the top in the order
-picked, which is their order on the timeline. ⌘↵ or the Import into Resolve button sends them to `online` (below):
+⌥X clear them. `s` selects the clip under the mouse or the open one; the selected gather at the top as a reel, each
+as wide as it is long, in the order picked, which is their order on the timeline (drag one to move it). ⌘↵ or the Import into Resolve button sends them to `online` (below):
 a new timeline from the camera originals, with the handles, Into (open project or new project) and Recorders
 (synced or off) chosen in the bar at the bottom; a toast says how it went. `?` lists the
 keys. A review has a language, English unless `--language it` (any code) says otherwise: a clip said in another

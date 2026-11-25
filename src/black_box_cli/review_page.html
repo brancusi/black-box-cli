@@ -38,7 +38,8 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 
 /* header: title, groups, the selected */
 header.top { position: sticky; top: 0; z-index: 12; background: var(--ground); border-bottom: 1px solid var(--line); padding: 12px 20px 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; }
-header.top .titles, header.top .tray { grid-column: 1; }
+header.top .titles { grid-column: 1; }
+header.top .tray { grid-column: 1 / -1; }
 header.top .tools { grid-column: 2; grid-row: 1; display: flex; gap: 6px; align-items: flex-start; }
 header.top h1 { margin: 0; font: 800 22px/26px var(--font-brand); letter-spacing: -.035em; }
 header.top .sub { color: var(--faint); margin-top: 2px; }
@@ -51,16 +52,26 @@ nav.groups button.on { background: var(--ink); color: var(--ground); border-colo
 .tray .label { color: var(--faint); white-space: nowrap; margin-right: 6px; }
 .tray .label b { color: var(--ink); font-weight: 600; }
 .tray .label { flex: none; }
+.tray { gap: 12px; }
 .tray .label .n { display: inline-block; min-width: 11ch; }
 .tray .label .d { display: inline-block; min-width: 7ch; text-align: right; }
 .tray .hint { color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.chip { flex: none; display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line); padding: 2px 8px 2px 2px; cursor: pointer; font-size: 12px; color: var(--ink); }
-.chip:hover { border-color: var(--line-strong); }
-.chip.cur { border-color: var(--mustard); box-shadow: inset 0 -2px 0 var(--mustard); }
-.chip img, .chip .ph { width: 52px; height: 29px; object-fit: cover; background: var(--video); display: block; }
-.chip .k { color: var(--faint); }
-.chip .x { color: var(--faint); padding: 0 2px; }
-.chip .x:hover { color: var(--danger); }
+/* the selection as the timeline it will become: each clip as wide as it is long, in order; dozens fit */
+.reel { flex: 1 1 auto; min-width: 0; display: flex; gap: 2px; height: 30px; }
+.seg { position: relative; flex: var(--len) 1 0; min-width: 10px; background: var(--video) center / cover no-repeat; cursor: pointer; outline: 1px solid var(--line); outline-offset: -1px; overflow: hidden; }
+.seg::after { content: ""; position: absolute; inset: 0; background: rgba(14,14,13,.35); transition: background .1s; }
+.seg:hover::after { background: transparent; }
+.seg.cur { outline: 2px solid var(--mustard); outline-offset: -2px; }
+.seg.cur::after { background: transparent; }
+.seg.added { outline-style: dashed; }
+.seg .k { position: absolute; left: 3px; bottom: 2px; z-index: 1; font: 600 10px/12px var(--font-mono); color: var(--video-fg); text-shadow: 0 0 3px #000; pointer-events: none; }
+.seg .x { position: absolute; right: 0; top: 0; z-index: 1; width: 14px; height: 14px; display: none; place-items: center; font-size: 11px; line-height: 1; background: rgba(14,14,13,.8); color: var(--video-fg); }
+.seg:hover .x { display: grid; }
+.seg .x:hover { background: var(--danger); }
+.seg.narrow .k, .seg.narrow .x { display: none; }
+.seg.drag { opacity: .35; }
+.seg.before { box-shadow: -3px 0 0 var(--mustard); }
+.seg.after { box-shadow: 3px 0 0 var(--mustard); }
 
 /* the gallery */
 main { padding: 4px 20px 120px; }
@@ -607,45 +618,67 @@ header.top .langs button { padding: 0 10px; }
     order.forEach(function (n) { picked[n] = true; });
     ranges = {}; Object.keys(st.ranges || {}).forEach(function (n) { if (clipBy[n]) ranges[n] = st.ranges[n]; });
   }
-  var trayLen = 0;
   function tray() {
     var t = $("tray");
     if (!order.length) {
       t.innerHTML = '<span class="hint">Nothing selected yet: press <kbd>s</kbd> on a clip (hover it, or open it), or tick its box. <kbd>?</kbd> shows every key.</span>';
     } else {
       var len = order.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
-      var keep = t.scrollLeft;
+      // One strip, the timeline to be: each clip as wide as it is long, in the order picked. Click one to open it,
+      // drag it to move it, × (or ⌥-click) to drop it.
       t.innerHTML = '<span class="label"><b class="n">' + order.length + ' selected</b> · <span class="d">' + fmt(len) + "</span>" + (SERVER ? " · <kbd>⌘</kbd><kbd>↵</kbd> imports them" : "") + "</span>" +
-        order.map(function (n, i) {
-          var c = clipBy[n], r = rangeOf(c), th = thumbURL(c);
-          return '<span class="chip' + (n === cur ? " cur" : "") + '" data-n="' + n + '" title="' + esc(c.file + (c.note ? " · " + c.note : "")) + '">' +
-            (th ? '<img src="' + esc(th) + '" alt="">' : '<span class="ph"></span>') +
-            '<span><span class="k">' + (i + 1) + "</span> " + fmt(r.end - r.start) + '</span><span class="x" title="Drop it">×</span></span>';
-        }).join("");
-    }
-    if (order.length) t.scrollLeft = keep;
-    // The chips move only to show the open clip's, or one just added; otherwise they stay where they are.
-    var grew = order.length > trayLen; trayLen = order.length;
-    var on = t.querySelector(".chip.cur") || (grew ? t.lastElementChild : null);
-    if (on && order.length) { // sideways only: the page itself never moves
-      if (on.offsetLeft < t.scrollLeft) t.scrollLeft = on.offsetLeft;
-      else if (on.offsetLeft + on.offsetWidth > t.scrollLeft + t.clientWidth) t.scrollLeft = on.offsetLeft + on.offsetWidth - t.clientWidth;
+        '<div class="reel">' + order.map(function (n, i) {
+          var c = clipBy[n], r = rangeOf(c), th = thumbURL(c), l = Math.max(0.1, r.end - r.start);
+          return '<div class="seg' + (n === cur ? " cur" : "") + (c.extra ? " added" : "") + '" draggable="true" data-n="' + n + '" style="--len:' + l.toFixed(2) +
+            (th ? ";background-image:url(&quot;" + esc(th) + "&quot;)" : "") + '" title="' + esc((i + 1) + " · " + c.file + " · " + fmt(l) + (c.note ? " · " + c.note : "") + "\nclick: open · drag: move · ⌥-click or ×: drop") + '">' +
+            '<span class="k">' + (i + 1) + '</span><span class="x" title="Drop it">×</span></div>';
+        }).join("") + "</div>";
+      Array.prototype.forEach.call(t.querySelectorAll(".seg"), function (el) { el.classList.toggle("narrow", el.offsetWidth < 28); });
     }
     layoutTop();
   }
+  // Moving a clip on the reel: drag it before or after another.
+  var dragN = null;
+  $("tray").addEventListener("dragstart", function (e) {
+    var el = e.target.closest(".seg"); if (!el) return;
+    dragN = +el.dataset.n; el.classList.add("drag");
+    try { e.dataTransfer.setData("text/plain", String(dragN)); e.dataTransfer.effectAllowed = "move"; } catch (x) {}
+  });
+  $("tray").addEventListener("dragover", function (e) {
+    var el = e.target.closest(".seg"); if (dragN === null || !el) return;
+    e.preventDefault();
+    var b = el.getBoundingClientRect(), after = e.clientX > b.left + b.width / 2;
+    Array.prototype.forEach.call(document.querySelectorAll(".seg.before, .seg.after"), function (x) { x.classList.remove("before", "after"); });
+    if (+el.dataset.n !== dragN) el.classList.add(after ? "after" : "before");
+  });
+  $("tray").addEventListener("drop", function (e) {
+    var el = e.target.closest(".seg"); if (dragN === null || !el) return;
+    e.preventDefault();
+    var to = +el.dataset.n, after = el.classList.contains("after");
+    if (to !== dragN) {
+      order = order.filter(function (m) { return m !== dragN; });
+      var i = order.indexOf(to); order.splice(after ? i + 1 : i, 0, dragN);
+      save();
+    }
+    dragN = null; count();
+  });
+  $("tray").addEventListener("dragend", function () {
+    dragN = null;
+    Array.prototype.forEach.call(document.querySelectorAll(".seg.drag, .seg.before, .seg.after"), function (x) { x.classList.remove("drag", "before", "after"); });
+  });
   function layoutTop() {
     document.documentElement.style.setProperty("--top", $("top").offsetHeight + "px");
     document.documentElement.style.setProperty("--foot", document.querySelector("footer.bar").offsetHeight + "px");
   }
-  window.addEventListener("resize", layoutTop);
+  window.addEventListener("resize", function () { if (order.length) tray(); else layoutTop(); });
   $("tray").addEventListener("wheel", function (e) {
     var t = $("tray"); if (t.scrollWidth <= t.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
     t.scrollLeft += e.deltaY; e.preventDefault();
   }, { passive: false });
   $("tray").addEventListener("click", function (e) {
-    var chip = e.target.closest(".chip"); if (!chip) return;
+    var chip = e.target.closest(".seg"); if (!chip) return;
     var n = +chip.dataset.n;
-    if (e.target.closest(".x")) { toggle(n); return; }
+    if (e.target.closest(".x") || e.altKey) { toggle(n); return; }
     openDetail(n);
   });
   function count() {
@@ -969,7 +1002,11 @@ header.top .langs button { padding: 0 10px; }
   }
   function setRange(which) {
     var c = clipBy[cur], r = rangeOf(c), t = dv.currentTime, nr = { start: r.start, end: r.end };
-    if (which === "in") nr.start = Math.min(t, r.end - 0.1); else nr.end = Math.max(t, r.start + 0.1);
+    var d = dv.duration || c.duration || (D.files[c.rel] || {}).duration || 1e9;
+    var base = c.extra ? { start: 0, end: d } : { start: c.start, end: c.end };
+    // As in Resolve: an in past the out (or an out before the in) drops the other mark, never a sliver of a clip.
+    if (which === "in") { nr.start = t; if (nr.end <= t + 0.04) nr.end = base.end > t + 0.04 ? base.end : d; }
+    else { nr.end = t; if (nr.start >= t - 0.04) nr.start = base.start < t - 0.04 ? base.start : 0; }
     ranges[cur] = nr; marks(); count(); save();
   }
   function wordAt(t) {

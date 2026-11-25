@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.23" :date "2026-11-25"
+  [{:version "0.1.24" :date "2026-11-25"
+    :items [{:title "The selection as a reel" :lesson "review" :run "blackbox review open kiln"
+             :what "The clips you select line up at the top like the timeline they'll become, each as wide as it is long. Drag one to change the order."}]}
+   {:version "0.1.23" :date "2026-11-25"
     :items [{:title "Open a shot where you scrubbed" :lesson "review" :run "blackbox review open kiln"
              :what "Scrub a shot in the strip under an open clip to the moment you want, click, and it opens right there."}]}
    {:version "0.1.22" :date "2026-11-25"

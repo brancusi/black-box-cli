@@ -3,13 +3,13 @@
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
   :seconds 6.113},
+ "236e3d12abfbc338"
+ {:text "New in version 0.1.24: the selection as a reel.",
+  :seconds 5.251},
  "2a248d043f075888"
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
- "374ef0516c320262"
- {:text "New in version 0.1.23: open a shot where you scrubbed.",
-  :seconds 5.564},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",

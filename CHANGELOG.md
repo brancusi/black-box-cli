@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- The selection at the top is a reel: one strip the width of the page, each clip as wide as it is long, in order,
+  so dozens fit. Click one to open it, drag it to move it, × or ⌥-click to drop it.
+- In and out as in Resolve: an in marked past the out (or an out before the in) drops the other mark, instead of
+  leaving a clip a tenth of a second long that stops as soon as it plays.
+
 ## 0.1.23 (2026-11-25)
 
 - Clicking a shot in the strip opens it where it was scrubbed to, playing from there, its transcript at that line:
