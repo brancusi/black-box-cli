@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Clicking a shot in the strip opens it where it was scrubbed to, playing from there, its transcript at that line:
+  the moment an editor was hunting for, not the shot's start.
+
 ## 0.1.22 (2026-11-25)
 
 - An open clip in a review takes Resolve's keys: J K L shuttle (L again 2×, 4×, 8×, 16×; J backward, with its sound,

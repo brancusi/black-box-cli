@@ -7,6 +7,9 @@
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
+ "374ef0516c320262"
+ {:text "New in version 0.1.23: open a shot where you scrubbed.",
+  :seconds 5.564},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
@@ -34,9 +37,6 @@
  "c55f36933b66060d"
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
-  :seconds 5.721},
- "e29e2f1bc9d6d056"
- {:text "New in version 0.1.22: resolve's keys in a review.",
   :seconds 5.721},
  "ee646e730511565f"
  {:text

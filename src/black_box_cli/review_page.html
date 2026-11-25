@@ -686,15 +686,17 @@ header.top .langs button { padding: 0 10px; }
   // ---------- the detail view
   var cur = null, words = [], follow = true, playClip = false, lastWord = null;
   var dv = $("d-video");
-  function openDetail(n) {
+  // `at`: where to land (a time in the file), for a shot opened where it was scrubbed; else the clip's in.
+  function openDetail(n, at) {
     cur = n; var c = clipBy[n], f = D.files[c.rel] || { lines: [], duration: c.duration };
-    if (c.extra && !D.files[c.rel] && SERVER) fetchWords(c.rel, function () { if (cur === n) openDetail(n); });
+    if (c.extra && !D.files[c.rel] && SERVER) fetchWords(c.rel, function () { if (cur === n) openDetail(n, dv.currentTime); });
     if (!c.extra) anchor = null;
     stopAll();
     $("d-file").textContent = c.file; $("d-note").textContent = c.note || "";
     var src = srcOf(c);
     if (dv.dataset.k !== src) { dv.dataset.k = src; dv.src = src; }
-    dv.currentTime = rangeOf(c).start;
+    var startAt = typeof at === "number" ? at : rangeOf(c).start;
+    dv.currentTime = startAt;
     words = []; var html = [], spk = null;
     f.lines.forEach(function (l, i) {
       var ws = (l.words && l.words.length ? l.words : [[l.text, l.start, l.end]]).map(function (w) {
@@ -720,7 +722,9 @@ header.top .langs button { padding: 0 10px; }
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
     hover.pause();
     playClip = true; dv.play().catch(function () {}); // the clip plays once, with sound; space carries on
-    var first = document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
+    var first = null;
+    if (typeof at === "number") Array.prototype.forEach.call(document.querySelectorAll("#d-transcript .cue"), function (q) { if (+q.dataset.s <= at + 0.05) first = q; });
+    first = first || document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
   }
   // ---------- around the open clip: what its camera shot before and after, as ghosts
   var aroundN = 3, aroundOf = {}, anchor = null, ghosts = [];
@@ -820,11 +824,11 @@ header.top .langs button { padding: 0 10px; }
     });
   }
   // A ghost opens as itself: the review's clip when it's one, else the whole file, to trim with i and o and add with s.
-  function openGhost(g) {
+  function openGhost(g, at) {
     if (!g || g.current) return;
     var rv = inReview(g.rel);
     if (!clipBy[cur].extra) anchor = cur;
-    openDetail(rv.length ? rv[0].n : extra(g).n);
+    openDetail(rv.length ? rv[0].n : extra(g).n, at);
   }
   function shot(d) {
     var i = ghosts.findIndex(function (g) { return g.current; });
@@ -833,7 +837,11 @@ header.top .langs button { padding: 0 10px; }
   $("d-around").addEventListener("click", function (e) {
     var m = e.target.closest(".more");
     if (m) { if (!m.disabled) { more = +m.dataset.more; aroundN = Math.min(24, aroundN + 4); loadAround(); } return; }
-    var el = e.target.closest(".gh"); if (el) openGhost(ghosts[+el.dataset.i]);
+    var el = e.target.closest(".gh"); if (!el) return;
+    // opened where it was scrubbed to: the moment they were hunting for, not its start
+    var g = ghosts[+el.dataset.i], b = el.getBoundingClientRect();
+    var f = Math.min(1, Math.max(0, (e.clientX - b.left) / b.width));
+    openGhost(g, g.proxy ? f * Math.max(0, g.duration - 0.04) : undefined);
   });
   function closeDetail() { stopAll(); $("detail").classList.remove("on"); document.body.classList.remove("in-detail"); cur = null; render(); }
   function marks() {

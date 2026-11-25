@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.22" :date "2026-11-25"
+  [{:version "0.1.23" :date "2026-11-25"
+    :items [{:title "Open a shot where you scrubbed" :lesson "review" :run "blackbox review open kiln"
+             :what "Scrub a shot in the strip under an open clip to the moment you want, click, and it opens right there."}]}
+   {:version "0.1.22" :date "2026-11-25"
     :items [{:title "Resolve's keys in a review" :lesson "review" :run "blackbox review open kiln"
              :what "Open a clip and edit as in Resolve: J K L shuttle (backward with sound), arrows step frames, up and down change clips, I and O mark. Import is now command-return."}]}
    {:version "0.1.21" :date "2026-11-25"
