@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.26 (2026-11-25)
 
 - The selection at the top shows as many clips as fit, then "+N more · View all": a panel of every selected clip in
   timeline order, each with its picture, number, length, file and note. Drag a clip (there or at the top) to move
