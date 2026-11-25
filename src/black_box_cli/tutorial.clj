@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.35" :date "2026-11-25"
+  [{:version "0.1.36" :date "2026-11-25"
+    :items [{:title "A steadier right-click menu" :lesson "review" :run "blackbox review open kiln"
+             :what "The right-click menu on a clip stays open until you click elsewhere or press esc, and takes the arrow keys."}]}
+   {:version "0.1.35" :date "2026-11-25"
     :items [{:title "Right-click a clip to copy its id" :lesson "review" :run "blackbox review open kiln"
              :what "In a review, right-click a clip to copy its clip id (at a moment, or in to out) and paste it to your agent with a question; blackbox takes it wherever it takes a file."}]}
    {:version "0.1.34" :date "2026-11-25"

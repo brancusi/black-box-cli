@@ -11,9 +11,9 @@
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
   :seconds 7.889},
- "64816eefef4a1725"
- {:text "New in version 0.1.35: right-click a clip to copy its id.",
-  :seconds 6.348},
+ "5d6120fe93336201"
+ {:text "New in version 0.1.36: a steadier right-click menu.",
+  :seconds 5.407},
  "8536408f509e5a99"
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",

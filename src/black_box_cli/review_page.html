@@ -273,7 +273,7 @@ button:focus, video:focus, [tabindex]:focus { outline: none; }
 .ctx[hidden] { display: none; }
 .ctx .c-head { padding: 6px 10px 4px; font-size: 11px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
 .ctx button { display: flex; justify-content: space-between; gap: 18px; width: 100%; padding: 7px 10px; border: 0; background: none; color: var(--ink); font: 13px/18px var(--font-mono); text-align: left; cursor: pointer; }
-.ctx button:hover { background: var(--sunken); }
+.ctx button.on { background: var(--sunken); }
 .ctx button code { color: var(--muted); font: inherit; }
 .ctx .c-foot { padding: 6px 10px; border-top: 1px solid var(--line); margin-top: 4px; font-size: 11px; color: var(--faint); }
 /* the gallery behind an open clip doesn't scroll (its scrollbar showed through, scrolling nothing) */
@@ -1589,8 +1589,12 @@ header.top .langs button { padding: 0 10px; }
   }
   // ---------- right click on a clip (a card, a shot in the strip, the open one): copy what an agent needs to find it
   (function () {
-    var menu = $("ctx"), items = [];
-    var hide = function () { menu.hidden = true; };
+    var menu = $("ctx"), items = [], openedAt = 0, on = -1;
+    var hide = function () { menu.hidden = true; on = -1; };
+    var focusItem = function (i) {
+      var bs = menu.querySelectorAll("button"); on = i;
+      Array.prototype.forEach.call(bs, function (b, k) { b.classList.toggle("on", k === i); });
+    };
     var copy = function (text, what) {
       var done = function () { toast("Copied " + what, text + " · paste it to your agent.", "ok", 2200); };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { prompt("Copy:", text); });
@@ -1624,15 +1628,32 @@ header.top .langs button { padding: 0 10px; }
         menu.innerHTML = '<div class="c-head">' + esc(it.file) + "</div>" +
           items.map(function (m, i) { return '<button data-i="' + i + '"><span>' + esc(m[0]) + "</span><code>" + esc(m[1].length > 26 ? m[1].slice(0, 25) + "…" : m[1]) + "</code></button>"; }).join("") +
           '<div class="c-foot">An agent finds it with <code>blackbox transcript ' + esc(id) + "</code></div>";
-        menu.hidden = false;
-        var w = menu.offsetWidth, h = menu.offsetHeight;
-        menu.style.left = Math.max(4, Math.min(innerWidth - w - 4, x)) + "px"; menu.style.top = Math.max(4, Math.min(innerHeight - h - 4, y)) + "px";
+        menu.hidden = false; openedAt = Date.now();
+        // as a system menu: its corner just off the pointer, flipped to the other side where it would leave the window
+        var w = menu.offsetWidth, h = menu.offsetHeight, G = 2;
+        var left = x + G + w > innerWidth - 8 ? x - G - w : x + G, top = y + G + h > innerHeight - 8 ? y - G - h : y + G;
+        menu.style.left = Math.max(8, left) + "px"; menu.style.top = Math.max(8, top) + "px";
+        focusItem(-1);
       }).catch(function () { toast("Can't work out the clip ID", "This browser has no SHA-256 here; open the review with `blackbox review open`.", "err", 3000); });
     });
     menu.addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; var m = items[+b.dataset.i]; hide(); copy(m[1], m[2]); });
-    document.addEventListener("mousedown", function (e) { if (!menu.hidden && !menu.contains(e.target)) hide(); }, true);
-    document.addEventListener("keydown", function (e) { if (!menu.hidden && e.key === "Escape") { e.stopImmediatePropagation(); hide(); } }, true);
-    window.addEventListener("scroll", hide, true); window.addEventListener("blur", hide);
+    menu.addEventListener("mousemove", function (e) { var b = e.target.closest("button"); focusItem(b ? +b.dataset.i : -1); });
+    // it closes only when the editor means it: a click elsewhere, esc, the wheel, the window resized or left. The page
+    // scrolling itself (words following the mouse, the transcript following the clip) never closes it.
+    document.addEventListener("mousedown", function (e) { if (!menu.hidden && !menu.contains(e.target) && Date.now() - openedAt > 150) hide(); }, true);
+    document.addEventListener("wheel", function (e) { if (!menu.hidden && !menu.contains(e.target)) hide(); }, { capture: true, passive: true });
+    window.addEventListener("resize", hide); window.addEventListener("blur", hide);
+    document.addEventListener("keydown", function (e) {
+      if (menu.hidden) return;
+      var k = e.key, n = items.length;
+      if (k === "Escape") hide();
+      else if (k === "ArrowDown") focusItem((on + 1) % n);
+      else if (k === "ArrowUp") focusItem(on <= 0 ? n - 1 : on - 1);
+      else if ((k === "Enter" || k === " ") && on >= 0) { var m = items[on]; hide(); copy(m[1], m[2]); }
+      else if (k !== "Shift" && k !== "Meta" && k !== "Alt" && k !== "Control") hide();
+      else return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }, true);
   })();
   // a clicked button gives its focus back, so space and the arrows stay the player's
   document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("button"); if (b) b.blur(); });

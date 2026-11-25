@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- The right-click menu behaves as a system one: it opens just off the pointer and flips where it would leave the
+  window; it closes on a click elsewhere, esc, the wheel or leaving the window, never because the page scrolled
+  itself (a card's words following the mouse closed it); ↑ ↓ and ↵ pick from it.
+
 ## 0.1.35 (2026-11-25)
 
 - A clip id (`k7f3q2ab`, the first part of its line ids) is taken for its file wherever a file is: `transcript`,
