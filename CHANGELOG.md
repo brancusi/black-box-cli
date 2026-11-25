@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.31 (2026-11-25)
 
 - The timeline's bubble says only the line under the mouse (the time where nothing is said), and stays inside the
   timeline at either end.
