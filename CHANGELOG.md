@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Importing no longer shifts the open clip's player: how it's going is said in the toast (warnings in it too), and
+  the bar's own status line (the review server lost or back) floats above the bar instead of growing it.
+
 ## 0.1.39 (2026-11-25)
 
 - Subtitles laid in Resolve (`online`, and a review's Import) are in English by default: a line said in Italian goes

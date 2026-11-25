@@ -7,6 +7,9 @@
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
+ "5b05f4911a20212d"
+ {:text "New in version 0.1.40: importing keeps the player still.",
+  :seconds 5.878},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
@@ -35,9 +38,6 @@
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
   :seconds 5.721},
- "e4bfbbf25e1505aa"
- {:text "New in version 0.1.39: english subtitles in Resolve.",
-  :seconds 5.642},
  "ee646e730511565f"
  {:text
   "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",

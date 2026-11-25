@@ -179,7 +179,9 @@ footer.bar .count { font-weight: 600; min-width: 22ch; white-space: nowrap; }
 .go kbd { border-color: rgba(26,20,8,.5); color: #1a1408; }
 .go:hover:not(:disabled) { filter: brightness(1.06); }
 .go:disabled { opacity: .4; cursor: default; }
-.status { flex-basis: 100%; color: var(--muted); font-size: 12px; padding-top: 2px; border-top: 1px solid var(--line); }
+/* above the bar, over the page: never part of the bar's height (the player is sized from it) */
+.status { position: absolute; right: 20px; bottom: calc(100% + 8px); max-width: min(640px, calc(100vw - 40px)); padding: 6px 10px;
+  background: var(--surface); border: 1px solid var(--line-strong); color: var(--muted); font-size: 12px; }
 .status:empty { display: none; }
 .status.ok { color: var(--green); }
 .status.err { color: var(--danger); }
@@ -1749,7 +1751,11 @@ header.top .langs button { padding: 0 10px; }
 
   // ---------- importing
   var busy = false;
-  function status(text, kind) { var s = $("status"); s.textContent = text; s.className = "status" + (kind ? " " + kind : ""); layoutTop(); }
+  var statusTimer = null;
+  function status(text, kind) {
+    var s = $("status"); s.textContent = text; s.className = "status" + (kind ? " " + kind : "");
+    clearTimeout(statusTimer); if (kind === "ok") statusTimer = setTimeout(function () { s.textContent = ""; }, 5000);
+  }
   // A toast says how an import went, over the gallery or an open clip; a result stays until the next one.
   var toastTimer = null;
   function toast(title, detail, kind, ms) {
@@ -1766,7 +1772,7 @@ header.top .langs button { padding: 0 10px; }
   }
   function doImport() {
     var clips = order.map(function (n) { var c = clipBy[n], r = rangeOf(c); var o = { n: n, start: r.start, end: r.end }; if (c.extra) o.rel = c.rel; return o; });
-    busy = true; count(); status("Building the timeline in Resolve from the camera originals… (Resolve may start first)");
+    busy = true; count(); // the toast says how it's going: nothing in the bar changes size, so the player stays put
     toast("Importing " + clips.length + " clip" + (clips.length > 1 ? "s" : "") + " into Resolve…", "From the camera originals" + ($("audio").checked ? ", with the synced recorders" : "") + ". Resolve may start first.");
     fetch("api/import?t=" + encodeURIComponent(TOKEN), {
       method: "POST", headers: { "content-type": "application/json" },
@@ -1774,17 +1780,15 @@ header.top .langs button { padding: 0 10px; }
     }).then(function (r) { return r.json(); }).then(function (res) {
       busy = false; count();
       if (res.error) {
-        status("Not imported: " + res.error.message + (res.help && res.help.length ? " — " + res.help[0] : ""), "err");
-        toast("Not imported", res.error.message, "err", 12000); return;
+        toast("Not imported", res.error.message + (res.help && res.help.length ? " — " + res.help[0] : ""), "err", 20000); return;
       }
       var r = res.resolve || {};
       var rec = !$("audio").checked ? "recorders left out" : !r.audio_placed || r.audio_placed === "0 of 0" ? "no recorders synced with these clips" : "recorders placed " + r.audio_placed;
       var subs = r.subtitles_placed ? r.subtitles_placed + " subtitle" + (r.subtitles_placed == 1 ? "" : "s") : "no subtitles";
-      toast("✓ \"" + r.timeline + "\" in " + r.project, r.clips + " clip" + (r.clips == 1 ? "" : "s") + " · " + rec + " · " + subs + (Array.isArray(res.warnings) && res.warnings.length ? " · " + res.warnings.length + " warning(s), below" : ""), "ok", 9000);
-      status("Done: \"" + r.timeline + "\" in \"" + r.project + "\" · " + r.clips + " clips" +
-             (r.audio_placed ? " · recorders " + r.audio_placed : "") + (Array.isArray(res.warnings) && res.warnings.length ? " · " + res.warnings.length + " warning(s): " + res.warnings.join("; ") : "") +
-             " · edit " + res.id, "ok");
-    }).catch(function (e) { busy = false; count(); toast("Not imported", "The review's server didn't answer: ask your agent to open it again.", "err", 12000); status("Not imported: the review's server didn't answer (" + e + "). Run `blackbox review open " + D.id + "` again.", "err"); });
+      var warns = Array.isArray(res.warnings) && res.warnings.length ? res.warnings : [];
+      toast("✓ \"" + r.timeline + "\" in " + r.project, r.clips + " clip" + (r.clips == 1 ? "" : "s") + " · " + rec + " · " + subs +
+            (warns.length ? " · " + warns.join("; ") : ""), "ok", warns.length ? 16000 : 9000);
+    }).catch(function (e) { busy = false; count(); toast("Not imported", "The review's server didn't answer (" + e + "): run `blackbox review open " + D.id + "` again.", "err", 20000); });
   }
   if (SERVER) {
     // One review server serves every review; when it isn't running, this page waits for it and carries on.
