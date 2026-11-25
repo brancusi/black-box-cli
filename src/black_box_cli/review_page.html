@@ -298,12 +298,15 @@ html:has(body.in-detail), body.in-detail { overflow: hidden; }
 .cue-i.rev { border-color: var(--green); color: var(--green); }
 /* the time between two shots: one width for all, its length written on the line */
 /* captions: what's said, in the review's language */
-.cap { position: absolute; z-index: 2; padding: 0 12px; text-align: center; pointer-events: none; font: 500 15px/1.35 var(--font-read); color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 0 6px rgba(0,0,0,.6); transform: translateY(-100%); }
+.cap { position: absolute; z-index: 2; padding: 0 5%; text-align: center; text-wrap: balance; pointer-events: none; transform: translateY(-100%); }
+/* each line on its own tight plate: the page's ground, its sans, its ink */
+.cap span { display: inline; padding: 3px 9px; font: 500 15px/1.75 var(--font-brand); letter-spacing: .005em; color: #f2eee4;
+  background: rgba(20, 19, 16, .86); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .cap[hidden] { display: none; }
 .d-left { position: relative; }
 .p-v { position: relative; }
-.p-v .cap { left: 0; right: 0; top: auto; bottom: 8px; transform: none; font-size: 13px; }
+.p-v .cap { left: 0; right: 0; top: auto; bottom: 8px; transform: none; padding: 0 6%; }
+.p-v .cap span { font-size: 12.5px; padding: 2px 7px; }
 .p-v .speed { position: absolute; right: 6px; top: 6px; z-index: 2; font: 600 11px/18px var(--font-mono); padding: 0 6px; background: var(--mustard); color: #141310; }
 /* a closer look at a shot, over it */
 .peek { position: fixed; z-index: 20; width: min(400px, 90vw); background: var(--video); border: 1px solid var(--line-strong); box-shadow: 0 14px 36px rgba(0,0,0,.5); cursor: ew-resize; }
@@ -568,6 +571,10 @@ header.top .langs button { padding: 0 10px; }
   };
   // A caption: the line being said at `t` in `rel`, in the review's language (its English when it was said in another).
   var capsOn = true; try { capsOn = localStorage.getItem("bb-caps") !== "off"; } catch (e) {}
+  function capText(el, said) {
+    if (el.dataset.said !== said) { el.dataset.said = said; el.innerHTML = said ? "<span>" + esc(said) + "</span>" : ""; }
+    el.hidden = !said;
+  }
   function capAt(rel, t) {
     var ls = (D.files[rel] || {}).lines || [], best = null;
     for (var i = 0; i < ls.length; i++) { if (ls[i].start <= t + 0.05) best = ls[i]; else break; }
@@ -1198,7 +1205,7 @@ header.top .langs button { padding: 0 10px; }
     });
     var show = function (tm) {
       bar.style.width = (100 * tm / (g.duration || 1)) + "%"; when.textContent = fmt(tm) + " / " + fmt(g.duration);
-      var said = capsOn ? capAt(g.rel, tm) : ""; cap.textContent = said; cap.hidden = !said;
+      var said = capsOn ? capAt(g.rel, tm) : ""; capText(cap, said);
     };
     v.addEventListener("timeupdate", function () { if (g && !v.paused && !seeking) { t = v.currentTime; show(t); } });
     var place = function () {
@@ -1422,7 +1429,7 @@ header.top .langs button { padding: 0 10px; }
   }
   function showCap() {
     var el = $("d-cap"), said = capsOn && cur !== null ? capAt(clipBy[cur].rel, dv.currentTime) : "";
-    el.textContent = said; el.hidden = !said;
+    capText(el, said);
     if (said) { el.style.left = dv.offsetLeft + "px"; el.style.width = dv.offsetWidth + "px"; el.style.top = (dv.offsetTop + dv.offsetHeight - 14) + "px"; }
   }
   dv.addEventListener("seeked", function () { showCap(); hereMark(); if (cur !== null) $("d-head").style.left = (100 * dv.currentTime / durNow()) + "%"; });

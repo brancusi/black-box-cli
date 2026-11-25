@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Captions sit on a tight plate in the page's own dark, each line on its own, in the page's sans (Archivo where
+  installed), balanced across lines; no drop shadow.
+
 ## 0.1.36 (2026-11-25)
 
 - The right-click menu behaves as a system one: it opens just off the pointer and flips where it would leave the

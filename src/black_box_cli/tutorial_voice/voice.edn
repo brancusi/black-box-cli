@@ -3,6 +3,8 @@
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
   :seconds 6.113},
+ "24b823ab24eb51d9"
+ {:text "New in version 0.1.37: cleaner captions.", :seconds 4.989},
  "2a248d043f075888"
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
@@ -11,9 +13,6 @@
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
   :seconds 7.889},
- "5d6120fe93336201"
- {:text "New in version 0.1.36: a steadier right-click menu.",
-  :seconds 5.407},
  "8536408f509e5a99"
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",
