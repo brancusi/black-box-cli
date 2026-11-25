@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.29 (2026-11-25)
 
 - The open clip stands out in the strip: a yellow ring around it (it was drawn under the picture and lost), an OPEN
   tag, its time in bold, its in and out and the playhead moving inside it; the shots around it dimmer.
