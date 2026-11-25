@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.21 (2026-11-25)
 
 - The shots-around strip: every gap the same width with its length on the line (a new day by its date), Earlier
   and Later in its header, shots fading in as they load and sliding to their places when more come or another shot
