@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.32:** Drag a span, ↵ for in and out ([more](#whats-new))
+**What's new in 0.1.33:** Words under the mouse, exactly ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -291,6 +291,10 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.33 (2026-11-25)
+
+- **Words under the mouse, exactly:** On a card's words, the picture follows the word nearest the mouse, even between words. `blackbox review open kiln`
 
 ### 0.1.32 (2026-11-25)
 

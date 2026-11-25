@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.32" :date "2026-11-25"
+  [{:version "0.1.33" :date "2026-11-25"
+    :items [{:title "Words under the mouse, exactly" :lesson "review" :run "blackbox review open kiln"
+             :what "On a card's words, the picture follows the word nearest the mouse, even between words."}]}
+   {:version "0.1.32" :date "2026-11-25"
     :items [{:title "Drag a span, ↵ for in and out" :lesson "review" :run "blackbox review open kiln"
              :what "Drag along the open clip's timeline to mark a span, then press return to make it the in and out; on the lines above the waveform it takes whole lines."}]}
    {:version "0.1.31" :date "2026-11-25"

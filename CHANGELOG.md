@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- On a card's words, the mouse between two words lands on the nearer one, never back on the start of its line; on a
+  line known only as a whole (its English), as far along it as the mouse is.
+
 ## 0.1.32 (2026-11-25)
 
 - Dragging on the open clip's timeline marks a span (the picture follows the mouse); ↵ makes it the in and out, esc

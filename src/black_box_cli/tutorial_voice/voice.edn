@@ -7,6 +7,9 @@
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
+ "5a2af7af31ea9a6f"
+ {:text "New in version 0.1.33: words under the mouse, exactly.",
+  :seconds 6.426},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
@@ -15,9 +18,6 @@
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",
   :seconds 8.124},
- "9bc87b24c5055153"
- {:text "New in version 0.1.32: drag a span, ↵ for in and out.",
-  :seconds 6.687},
  "a611f3e3e2f9abd1"
  {:text
   "Ask for a rough cut and it plays seconds later. Every edit is kept, so you can always go back.",
