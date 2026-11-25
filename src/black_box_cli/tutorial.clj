@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.29" :date "2026-11-25"
+  [{:version "0.1.30" :date "2026-11-25"
+    :items [{:title "A player made for review" :lesson "review" :run "blackbox review open kiln"
+             :what "The open clip's timeline shows its sound and where each line is said; the shots around it scroll on and on; hovering a card's words shows where they're said."}]}
+   {:version "0.1.29" :date "2026-11-25"
     :items [{:title "Where you are in the strip" :lesson "review" :run "blackbox review open kiln"
              :what "The clip you have open is marked OPEN in the strip of shots around it, with its in, out and playhead inside."}]}
    {:version "0.1.28" :date "2026-11-25"

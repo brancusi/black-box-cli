@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- The open clip's player is the page's own: a tall timeline of its sound's waveform with each line said marked above
+  it (click one to go to it), the in and out shaded, drag anywhere to scrub with the time and line under the mouse;
+  under it play, the time, the speed (in a fixed place: nothing shifts), captions, sound and full screen (`f`, or a
+  double click). No browser controls: no focus rings, and ← → are always one frame. The waveform is made once per
+  clip from its proxy by the review server (`/api/peaks`) and kept in this Mac's frames cache.
+- The strip of shots around a clip scrolls on and on: it loads more as either end comes near, with a loader there,
+  and what's on screen never moves; it slides to a shot only when that shot is opened. Its ends say First or Last
+  shot. `/api/around` takes `before` and `after`.
+- `s` over a shot in the strip (or in a closer look) selects that shot, and its ✓ shows at once.
+- In the gallery, the mouse on a card's words puts the picture where they're said; on the picture it scrubs as before.
+
 ## 0.1.29 (2026-11-25)
 
 - The open clip stands out in the strip: a yellow ring around it (it was drawn under the picture and lost), an OPEN

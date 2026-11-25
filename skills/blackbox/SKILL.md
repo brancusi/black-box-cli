@@ -284,12 +284,13 @@ is marked on its picture ("Italian"), and the header counts them (`in_another_la
 said in Italian shows its English ("Translated from Italian"), with the Italian word for word under it (what the cut
 follows, lit word by word as it plays); English, Both and As spoken at the top (or `t`) switch between them.
 Under an open clip, a strip shows the shots its camera took before and after it, in the order it shot them, with
-the time between them (Shift+↑ ↓ step through them); space over one gives a closer look, scrubbed with sound and
+the time between them, loading more as it's scrolled (Shift+↑ ↓ step through them; `s` over one selects it); space over one gives a closer look, scrubbed with sound and
 playing on where the mouse rests, driven by J K L and the arrows while it's open (`o` or ↵ opens the shot there); a
 shot opens like any clip, where it was scrubbed to, and `s` adds it, trimmed with `i`
 and `o`, to an "Added by you" group. What they select, trim and add is kept in the review's folder
 (`state.jsonl`, the last line is the latest) and comes back when the page is reloaded; read it to see what an
-editor picked.
+editor picked. The open clip's timeline is its sound's waveform with each line said marked above it (a click on one
+goes to it), its in and out shaded; captions show what's said in the review's language (`c`).
 
 `blackbox review list` lists them; `blackbox review open <id>` opens one again, with Import working. review.html
 opened from Finder plays and reads but can't import. Reviews are kept until someone deletes them: to free space,

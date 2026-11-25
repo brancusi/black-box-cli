@@ -144,6 +144,36 @@
           (when (and (zero? exit) (> (fs/size tmp) 44)) (fs/read-all-bytes tmp)))
         (finally (fs/delete-if-exists tmp))))))
 
+(def ^:private peaks-per-second 20)
+
+(defn peaks
+  "How loud `proxy`'s sound is, 20 values a second (the mean level of each 50 ms, 0 to 1000), for the waveform under
+  the open clip: JSON {per_second, peaks}. Made once with ffmpeg and kept in `cache` (this Mac's frames cache) beside
+  the clip's frames; nil without ffmpeg or a sound."
+  [env cache clip proxy]
+  (let [out (fs/path cache (str clip "-" (fs/size proxy)) (str "peaks-" peaks-per-second ".json"))]
+    (if (fs/exists? out)
+      (slurp (str out))
+      (when-let [ffmpeg (tools/find-tool env "ffmpeg")]
+        (let [tmp (fs/create-temp-file {:prefix "bbcli-peaks-" :suffix ".raw"})]
+          (try
+            (let [{:keys [exit]} (process/sh [ffmpeg "-nostdin" "-v" "error" "-i" (str proxy) "-vn"
+                                              "-af" (str "aeval=abs(val(0)):c=mono,aresample=" peaks-per-second)
+                                              "-f" "f32le" "-y" (str tmp)])]
+              (when (and (zero? exit) (pos? (fs/size tmp)))
+                (let [fb (.asFloatBuffer (.order (java.nio.ByteBuffer/wrap (fs/read-all-bytes tmp))
+                                                 java.nio.ByteOrder/LITTLE_ENDIAN))
+                      vals (vec (for [i (range (.remaining fb))]
+                                  (-> (.get fb (int i)) double (max 0.0) (min 1.0) (* 1000.0) Math/round)))
+                      text (json/generate-string {:per_second peaks-per-second :peaks vals})
+                      part (fs/path (fs/parent out) (str "." (fs/file-name out) ".partial-" (.pid (java.lang.ProcessHandle/current))))]
+                  (fs/create-dirs (fs/parent out))
+                  (spit (str part) text)
+                  (try (fs/move part out {:atomic-move true :replace-existing true})
+                       (finally (fs/delete-if-exists part)))
+                  text)))
+            (finally (fs/delete-if-exists tmp))))))))
+
 (defn last-state
   "What the editor last did on review `folder`'s page (the last line of its state.jsonl), or nil."
   [folder]
@@ -292,11 +322,14 @@
 
                        ;; around a select: the clips its camera shot before and after, each file's words, its proxy,
                        ;; a still; only of originals the index knows, and only their proxies (never the NAS)
+                       ;; the strip grows as it's scrolled: each side asked for on its own (n for both)
                        (and (= :get request-method) (= "/api/around" rest*))
-                       (json-ok (or (around/around {:meta (:meta ctx) :index-path (:index (index/paths ctx))
-                                                    :version (:transcripts doc)}
-                                                   (get q "rel") (min 24 (max 1 (or (parse-long (get q "n" "3")) 3))))
-                                    {:clips [] :more_before false :more_after false}))
+                       (let [n (or (some-> (get q "n") parse-long) 3)
+                             side (fn [k] (min 400 (max 0 (or (some-> (get q k) parse-long) n))))]
+                         (json-ok (or (around/around {:meta (:meta ctx) :index-path (:index (index/paths ctx))
+                                                      :version (:transcripts doc)}
+                                                     (get q "rel") (side "before") (side "after"))
+                                      {:clips [] :more_before false :more_after false})))
 
                        (and (= :get request-method) (= "/api/file" rest*))
                        (let [rel (get q "rel") path (:index (index/paths ctx))]
@@ -312,6 +345,15 @@
                                                        (or (parse-double (get q "dur" "6")) 6.0)))]
                          (if wav
                            {:status 200 :headers {"content-type" "audio/wav" "cache-control" "no-store"} :body wav}
+                           {:status 404 :body "no sound of that here"}))
+
+                       ;; how loud a clip is along its length, for the waveform under the open clip
+                       (and (= :get request-method) (= "/api/peaks" rest*))
+                       (let [rel (get q "rel")
+                             p (when (around/known? (:index (index/paths ctx)) rel) (archive/proxy-of (:meta ctx) rel))
+                             text (when p (peaks (:env ctx) (:frames (index/paths ctx)) (ids/clip rel) p))]
+                         (if text
+                           {:status 200 :headers {"content-type" "application/json" "cache-control" "no-store"} :body text}
                            {:status 404 :body "no sound of that here"}))
 
                        (and (= :get request-method) (#{"/proxy" "/thumb"} rest*))

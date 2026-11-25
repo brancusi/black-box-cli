@@ -197,26 +197,52 @@ body.in-detail header.top { padding-top: 8px; }
 .detail.on { display: grid; grid-template-columns: minmax(0, 1.55fr) clamp(340px, 30vw, 460px); }
 .d-left { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
 .d-left video { display: block; flex: none; align-self: center; aspect-ratio: var(--ar, 16 / 9); height: auto; background: var(--video);
-  width: min(100%, calc((100vh - var(--top, 0px) - var(--foot, 0px) - var(--around, 372px)) * var(--ar-n, 1.7778))); }
+  width: min(100%, calc((100vh - var(--top, 0px) - var(--foot, 0px) - var(--around, 440px)) * var(--ar-n, 1.7778))); }
 .d-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .d-head b { font: 800 20px/24px var(--font-brand); letter-spacing: -.03em; }
 .d-head span { color: var(--faint); }
 .d-head .right { display: flex; gap: 12px; align-items: center; }
-.track { position: relative; height: 22px; background: var(--sunken); border: 1px solid var(--line); cursor: pointer; }
-.track .rng { position: absolute; top: 0; bottom: 0; background: var(--range); border-left: 2px solid var(--mustard); border-right: 2px solid var(--mustard); }
-.track .head { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
+/* the player: the picture, then a flat bar under it. The timeline is the clip's sound (its waveform) with each line
+   said as a block above it; drag anywhere on it to scrub. No browser controls, no focus rings. */
+button:focus, video:focus, [tabindex]:focus { outline: none; }
+.d-left video { cursor: pointer; }
+.player { flex: none; background: var(--sunken); border: 1px solid var(--line); }
+.track { position: relative; height: 60px; cursor: ew-resize; touch-action: none; user-select: none; }
+.track canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.track .rng { position: absolute; top: 0; bottom: 0; background: var(--range); border-left: 2px solid var(--mustard); border-right: 2px solid var(--mustard); pointer-events: none; }
+.track .head { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; }
+.track .head::before { content: ""; position: absolute; top: 0; left: -4px; border: 5px solid transparent; border-top-color: var(--ink); }
+.track .hov { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line-strong); pointer-events: none; }
+.track .hov span { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap; max-width: 360px; overflow: hidden; text-overflow: ellipsis;
+  font: 12px/18px var(--font-mono); padding: 1px 7px; background: var(--ink); color: var(--ground); }
+.player .ctl { display: flex; align-items: center; gap: 4px; height: 38px; padding: 0 6px; border-top: 1px solid var(--line); }
+.pbtn { display: grid; place-items: center; min-width: 32px; height: 30px; padding: 0 6px; border: 0; background: none; color: var(--muted); cursor: pointer; font: 700 11px/1 var(--font-mono); letter-spacing: .04em; }
+.pbtn:hover { color: var(--ink); background: var(--surface); }
+.pbtn.cc { border: 1px solid currentColor; height: 20px; min-width: 28px; margin: 0 4px; padding: 0 4px; }
+.pbtn.cc:not(.on) { opacity: .45; }
+.player .ctl .time { font: 13px/1 var(--font-mono); color: var(--ink); padding: 0 8px; white-space: nowrap; }
+.player .ctl .time i { font-style: normal; color: var(--faint); }
+.player .ctl .grow { flex: 1; }
+.player .ctl .speed { display: inline-block; min-width: 54px; text-align: center; font: 600 12px/20px var(--font-mono); padding: 0 6px; background: var(--mustard); color: #141310; }
+.player .ctl .speed[hidden] { display: inline-block; visibility: hidden; }
 .d-tools { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .d-tools .keys { color: var(--faint); font-size: 12px; margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 4px 0; }
 .d-tools .keys .k { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 .d-tools .keys .k kbd { margin: 0; }
-.d-tools .speed { font: 600 12px/20px var(--font-mono); padding: 0 8px; background: var(--mustard); color: #141310; }
+
 .d-tools .keys .k kbd:last-of-type { margin-right: 2px; }
 .note#d-note { padding: 0; }
 /* the clips its camera shot before and after it: ghosts, with the time between them */
 .around { flex: none; border-top: 1px solid var(--line); padding-top: 10px; }
 .around .a-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--faint); font-size: 12px; margin-bottom: 8px; }
 .around .a-head b { color: var(--ink); font-weight: 600; }
-.around .a-head .ctl { display: flex; gap: 6px; align-items: center; flex: none; }
+/* the ends of the strip: loading more, or the camera's first or last shot */
+.a-load, .a-end { flex: none; width: 96px; height: calc(132px * 9 / 16); display: grid; place-content: center; justify-items: center; gap: 6px;
+  color: var(--faint); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; }
+.a-end { width: 72px; }
+.a-end span { padding: 2px 6px; border: 1px dashed var(--line-strong); }
+.spin { width: 18px; height: 18px; border: 2px solid var(--line-strong); border-top-color: var(--mustard); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .around .more { font-size: 12px; line-height: 16px; padding: 2px 8px; }
 .around .a-row { display: flex; align-items: flex-start; overflow-x: auto; padding: 6px 0 4px; scrollbar-width: thin;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
@@ -239,7 +265,7 @@ body.in-detail header.top { padding-top: 8px; }
 .gh .rng { position: absolute; bottom: 0; height: 4px; z-index: 2; background: var(--mustard); opacity: .55; }
 .gh .ph { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 2; background: var(--mustard); box-shadow: 0 0 3px rgba(0,0,0,.7); }
 .gh.cur .g-meta .at { color: var(--mustard-deep); font-weight: 700; }
-.gh.sel .gm::after { content: "✓"; position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; display: grid; place-items: center; background: var(--mustard); color: #141310; font-size: 11px; font-weight: 700; }
+.gh.sel .gm::after { content: "✓"; position: absolute; z-index: 3; top: 4px; right: 4px; width: 16px; height: 16px; display: grid; place-items: center; background: var(--mustard); color: #141310; font-size: 11px; font-weight: 700; }
 .gm .still, .gm .hv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; pointer-events: none; }
 .gm .hv { opacity: 0; }
 .gm .hv.on { opacity: 1; }
@@ -362,9 +388,20 @@ header.top .langs button { padding: 0 10px; }
 <div class="detail" id="detail">
   <div class="d-left">
     <div class="d-head"><b id="d-file"></b><div class="right"><span id="d-tc"></span><button class="ghost" id="d-close">Close <kbd>esc</kbd></button></div></div>
-    <video id="d-video" controls playsinline></video>
+    <video id="d-video" playsinline tabindex="-1"></video>
     <div class="cap d-cap" id="d-cap" hidden></div>
-    <div class="track" id="d-track"><div class="rng" id="d-rng"></div><div class="head" id="d-head"></div></div>
+    <div class="player">
+      <div class="track" id="d-track"><canvas id="d-wave"></canvas><div class="rng" id="d-rng"></div><div class="hov" id="d-hov" hidden><span></span></div><div class="head" id="d-head"></div></div>
+      <div class="ctl">
+        <button class="pbtn" id="d-pp" title="Play or stop (space)"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg></button>
+        <span class="time" id="d-time">0:00.0 <i>/</i> 0:00.0</span>
+        <span class="speed" id="d-speed" hidden></span>
+        <span class="grow"></span>
+        <button class="pbtn cc on" id="d-cc" title="Captions (c)">CC</button>
+        <button class="pbtn" id="d-mute" title="Sound on or off"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></button>
+        <button class="pbtn" id="d-fs" title="Full screen (f)"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+      </div>
+    </div>
     <div class="d-tools">
       <button class="ghost" id="d-play">Play the clip</button>
       <button class="ghost" id="d-in">Set in <kbd>i</kbd></button>
@@ -373,7 +410,7 @@ header.top .langs button { padding: 0 10px; }
       <button class="ghost" id="d-pick"><span class="sw"><span>Select</span><span class="off">Selected ✓</span></span> <kbd>s</kbd></button>
       <button class="ghost" id="d-prev">‹ Prev <kbd>←</kbd></button>
       <button class="ghost" id="d-next">Next › <kbd>→</kbd></button>
-      <span class="keys"><span class="k"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd>shuttle, as in Resolve</span><span class="k"><kbd>←</kbd><kbd>→</kbd>a frame</span><span class="k"><kbd>↑</kbd><kbd>↓</kbd>clip</span><span class="k"><kbd>?</kbd>keys</span></span><span class="speed" id="d-speed" hidden></span>
+      <span class="keys"><span class="k"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd>shuttle, as in Resolve</span><span class="k"><kbd>←</kbd><kbd>→</kbd>a frame</span><span class="k"><kbd>↑</kbd><kbd>↓</kbd>clip</span><span class="k"><kbd>?</kbd>keys</span></span>
     </div>
     <div class="note" id="d-note"></div>
     <div class="around" id="d-around" hidden></div>
@@ -417,6 +454,7 @@ header.top .langs button { padding: 0 10px; }
       </section>
       <section><h4>A closer look</h4>
         <div class="row"><span class="ks"><kbd>space</kbd> <em>on a shot</em></span><span class="what">Open it, or close it</span></div>
+        <div class="row"><span class="ks"><kbd>s</kbd> <em>on a shot</em></span><span class="what">Select it</span></div>
         <div class="row"><span class="ks"><em>move</em> <i>/</i> <em>rest</em></span><span class="what">Scrub with sound, then it plays</span></div>
         <div class="row"><span class="ks"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd> <kbd>←</kbd><kbd>→</kbd></span><span class="what">Drive it, as the open clip</span></div>
         <div class="row"><span class="ks"><kbd>o</kbd> <i>/</i> <kbd>↵</kbd> <i>/</i> <em>click</em></span><span class="what">Open the shot right there</span></div>
@@ -425,6 +463,7 @@ header.top .langs button { padding: 0 10px; }
         <div class="row"><span class="ks"><kbd>⌘</kbd><i>+</i><kbd>↵</kbd></span><span class="what">Import into Resolve</span></div>
         <div class="row"><span class="ks"><kbd>t</kbd></span><span class="what">English, both, spoken</span></div>
         <div class="row"><span class="ks"><kbd>c</kbd></span><span class="what">Captions on or off</span></div>
+        <div class="row"><span class="ks"><kbd>f</kbd></span><span class="what">Full screen</span></div>
         <div class="row"><span class="ks"><kbd>?</kbd></span><span class="what">This sheet</span></div>
       </section>
     </div>
@@ -609,15 +648,22 @@ header.top .langs button { padding: 0 10px; }
       fmt(r.end - r.start) + (ranges[c.n] ? " (trimmed)" : "") + "</span></div>" +
       (c.note ? '<div class="note">' + esc(c.note) + "</div>" : c.extra ? '<div class="note added">added by you, from around a select</div>' : "") +
       '<div class="lines">' + snippet(r, lines) + "</div>";
-    // In the gallery the mouse scrubs: its place across the card is the clip's time from in to out. A click opens it.
+    // In the gallery the mouse scrubs: on the picture, its place across it is the clip's time from in to out; on the
+    // words, the moment they're said. A click opens it.
     a.querySelector(".lines").addEventListener("scroll", function () { this.classList.toggle("down", this.scrollTop > 0); }, { passive: true });
     var media = a.querySelector(".media"), bar = a.querySelector(".bar"), head = a.querySelector(".scrub"), len = a.querySelector(".len"), snip = a.querySelector(".lines");
     if (!c.audio_only) {
       var scrub = function (e) {
         if (cur !== null) return; // only in the gallery
-        var rr = rangeOf(c), box = a.getBoundingClientRect();
-        var f = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
-        var tm = rr.start + f * Math.max(0, rr.end - rr.start - 0.04);
+        var rr = rangeOf(c), span = Math.max(0, rr.end - rr.start - 0.04), tm, f;
+        if (e.target.closest(".media")) {
+          var box = media.getBoundingClientRect();
+          f = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width)); tm = rr.start + f * span;
+        } else {
+          var w = e.target.closest && e.target.closest(".cw, .ln, .w");
+          if (!w || w.dataset.s === undefined) return; // between the words, or on the name: it stays where it was
+          tm = Math.min(rr.start + span, Math.max(rr.start, +w.dataset.s)); f = span ? (tm - rr.start) / span : 0;
+        }
         hover.to(c, media, tm);
         bar.style.width = (100 * f) + "%"; head.style.left = (100 * f) + "%";
         len.textContent = fmt(tm - rr.start) + " / " + fmt(rr.end - rr.start);
@@ -661,7 +707,7 @@ header.top .langs button { padding: 0 10px; }
     var el = document.querySelector('.card[data-n="' + n + '"]'); if (el) el.classList.toggle("picked", !!picked[n]);
     if (cur === n) pickLabel();
     if (clipBy[n] && clipBy[n].extra && cur === null) render();
-    if (cur !== null && lastAround) drawAround(lastAround);
+    markGhosts();
     count(); save();
   }
   // What the editor has done (selected, in order; trimmed; added from around a select), kept in the review's folder
@@ -875,7 +921,7 @@ header.top .langs button { padding: 0 10px; }
       .map(function (g) { return langName(g) + " " + by[g]; }).join(", ") + " lines" : "";
     $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">' + (c.extra && !D.files[c.rel] && SERVER ? "Reading its transcript…" : "No transcript for this file.") + "</p>";
     $("d-note").textContent = c.extra ? "Shot around a select: the whole clip until you set its in and out (i, o). s adds it to the selection." : c.note || "";
-    loadAround();
+    loadAround(); loadPeaks(c.rel); timeText();
     document.body.classList.add("in-detail"); tray();
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
     hover.pause();
@@ -886,8 +932,7 @@ header.top .langs button { padding: 0 10px; }
     first = first || document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
   }
   // ---------- around the open clip: what its camera shot before and after, as ghosts
-  var aroundN = 3, aroundOf = {}, anchor = null, ghosts = [];
-  var more = 0; // -1 or 1 while more shots load on that side
+  var aroundOf = {}, anchor = null, ghosts = [];
   function dayText(d) {
     try { return new Date(d + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }); } catch (e) { return d; }
   }
@@ -898,81 +943,153 @@ header.top .langs button { padding: 0 10px; }
     return Math.round(g / 86400) + " d";
   }
   function inReview(rel) { return D.clips.filter(function (c) { return c.rel === rel; }); }
+  // the clip a shot in the strip stands for when it's selected: the open one, the review's own, or one added from here
+  function ghostN(g, make) {
+    if (g.current && cur !== null) return cur;
+    var rv = inReview(g.rel); if (rv.length) return rv[0].n;
+    return extraN[g.rel] !== undefined ? extraN[g.rel] : make ? extra(g).n : null;
+  }
+  function ghostPicked(g) {
+    if (g.current && cur !== null) return !!picked[cur];
+    return inReview(g.rel).some(function (c) { return picked[c.n]; }) || (extraN[g.rel] !== undefined && !!picked[extraN[g.rel]]);
+  }
+  function markGhosts() {
+    if (!lastAround) return;
+    Array.prototype.forEach.call(document.querySelectorAll("#d-around .gh"), function (el) {
+      var g = ghostOf(el.dataset.k); if (g) el.classList.toggle("sel", ghostPicked(g));
+    });
+  }
+  // The strip: the camera's shots in the order it shot them. It grows as it's scrolled near either end (a loader there
+  // while it fetches), in place: nothing the editor is looking at moves. Only opening a shot recentres it, on that shot.
+  var STEP = 12, aroundB = 8, aroundA = 8, growing = {}, aroundIO = null, stripRel = null;
+  function fetchAround(rel, b, a) {
+    var key = rel + "|" + b + "|" + a;
+    if (aroundOf[key]) return Promise.resolve(aroundOf[key]);
+    return fetch("api/around?rel=" + encodeURIComponent(rel) + "&before=" + b + "&after=" + a + "&t=" + encodeURIComponent(TOKEN))
+      .then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (res) { aroundOf[key] = res; return res; });
+  }
   function loadAround() {
     var c = clipBy[cur], box = $("d-around");
     if (!SERVER || !c || c.audio_only) { box.hidden = true; return; }
-    var key = c.rel + "|" + aroundN, n = cur;
-    var show = function (res) { if (cur === n) drawAround(res); };
-    if (aroundOf[key]) { show(aroundOf[key]); return; }
-    fetch("api/around?rel=" + encodeURIComponent(c.rel) + "&n=" + aroundN + "&t=" + encodeURIComponent(TOKEN))
-      .then(function (r) { return r.json(); }).then(function (res) { aroundOf[key] = res; show(res); })
-      .catch(function () { box.hidden = true; });
+    // opened from the strip: keep what's loaded around it, so the strip only slides to it
+    var i = lastAround && !box.hidden ? lastAround.clips.findIndex(function (g) { return g.rel === c.rel; }) : -1;
+    if (i >= 0) { aroundB = Math.max(8, i); aroundA = Math.max(8, lastAround.clips.length - 1 - i); }
+    else { aroundB = 8; aroundA = 8; }
+    var n = cur;
+    fetchAround(c.rel, aroundB, aroundA).then(function (res) { if (cur === n) drawAround(res); }).catch(function () { box.hidden = true; });
+  }
+  function grow(dir) {
+    if (growing[dir] || !lastAround || !(dir < 0 ? lastAround.more_before : lastAround.more_after)) return;
+    growing[dir] = true;
+    var rel = stripRel, n = cur, b = aroundB + (dir < 0 ? STEP : 0), a = aroundA + (dir > 0 ? STEP : 0);
+    fetchAround(rel, b, a).then(function (res) {
+      growing[dir] = false;
+      if (cur !== n || stripRel !== rel) return;
+      aroundB = b; aroundA = a; growAround(res, dir);
+    }).catch(function () { growing[dir] = false; });
   }
   var lastAround = null;
+  function gapHTML(gs, i) {
+    var g = gs[i], day = gs[i - 1].day !== g.day, known = g.gap !== null && g.gap !== undefined;
+    // the time between two shots: a new day says its date, ten minutes or more is marked
+    var label = day ? dayText(g.day) : known ? gapText(g.gap) : "";
+    return '<div class="gap' + (day ? " day" : known && g.gap >= 600 ? " long" : "") + '" data-k="gap:' + esc(g.rel) + '" title="' +
+           (known ? esc(gapText(g.gap)) + " between them" : "") + (day ? " · " + esc(g.day) : "") + '">' + (label ? "<span>" + esc(label) + "</span>" : "") + "</div>";
+  }
+  function ghostHTML(g) {
+    var rv = inReview(g.rel), sel = ghostPicked(g), cues = [];
+    cues.push(g.lines ? '<span class="cue-i" title="' + g.lines + ' lines said">“ ' + g.lines + "</span>" : '<span class="cue-i mute" title="Nothing said: picture only">no words</span>');
+    if (g.slow_motion) cues.push('<span class="cue-i slow" title="Slow motion' + (g.fps ? ", shot at " + g.fps + " fps" : "") + '">slow ' + esc(g.slow_motion) + "</span>");
+    if (rv.length && !g.current) cues.push('<span class="cue-i rev" title="Already in this review">in review</span>');
+    if (!g.proxy) cues.push('<span class="cue-i mute" title="No proxy on this Mac yet">no proxy</span>');
+    return '<div class="gh' + (g.current ? " cur" : "") + (rv.length ? " inrev" : "") + (sel ? " sel" : "") + '" data-k="' + esc(g.rel) + '" title="' +
+           esc(g.name + " · " + (g.day || "") + " " + (g.at || "")) + '"><div class="gm">' +
+           (g.proxy ? '<img class="still" loading="lazy" src="thumb?rel=' + encodeURIComponent(g.rel) + "&at=" + (g.duration / 2).toFixed(2) + "&t=" + encodeURIComponent(TOKEN) + '" alt="">' : "") +
+           (g.current ? '<span class="here">Open</span><div class="rng"></div><div class="ph"></div>' : "") +
+           '<span class="len">' + fmt(g.duration) + '</span><div class="bar"></div></div>' +
+           '<div class="g-meta"><span class="at">' + esc(g.at || "") + "</span>" + cues.join("") + "</div></div>";
+  }
+  function endHTML(dir, more) {
+    return more ? '<div class="a-load" data-dir="' + dir + '"><span class="spin"></span><span>' + (dir < 0 ? "Earlier" : "Later") + "</span></div>"
+                : '<div class="a-end" data-dir="' + dir + '"><span>' + (dir < 0 ? "First shot" : "Last shot") + "</span></div>";
+  }
+  function ghostOf(rel) { return lastAround && lastAround.clips.filter(function (g) { return g.rel === rel; })[0]; }
+  // what's at the left edge of the strip and where, to put it back there after the strip changes
+  function edgeOf(row) {
+    var left = row.getBoundingClientRect().left, els = row.querySelectorAll(".gh");
+    for (var i = 0; i < els.length; i++) { var x = els[i].getBoundingClientRect(); if (x.right > left) return { k: els[i].dataset.k, x: x.left }; }
+    return null;
+  }
+  function keepEdge(row, e) {
+    if (!e) return;
+    var el = row.querySelector('.gh[data-k="' + CSS.escape(e.k) + '"]'); if (el) row.scrollLeft += el.getBoundingClientRect().left - e.x;
+  }
+  function watchEnds(row) {
+    if (aroundIO) aroundIO.disconnect();
+    if (!window.IntersectionObserver) return;
+    aroundIO = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) grow(+e.target.dataset.dir); });
+    }, { root: row, rootMargin: "0px 480px" });
+    Array.prototype.forEach.call(row.querySelectorAll(".a-load"), function (el) { aroundIO.observe(el); });
+  }
   function drawAround(res) {
     lastAround = res; peek.close(); ghostAt = null;
     var box = $("d-around"), gs = res.clips || [];
     ghosts = gs;
-    if (gs.length < 2) { box.hidden = true; return; }
+    if (gs.length < 2) { box.hidden = true; lastAround = null; return; }
     var me = gs.filter(function (g) { return g.current; })[0] || {};
+    var oldRow = box.querySelector(".a-row"), same = oldRow && !box.hidden && stripRel !== null &&
+        gs.some(function (g) { return oldRow.querySelector('.gh[data-k="' + CSS.escape(g.rel) + '"]'); });
+    var edge = same ? edgeOf(oldRow) : null;
+    stripRel = me.rel || null;
     var html = ['<div class="a-head"><span><b>Shot around it</b> · ' + esc(me.device || "the same camera") +
-                " · hover to scrub · <kbd>space</kbd> closer, with sound · click to open</span>" +
-                '<span class="ctl"><button class="ghost more" data-more="-1"' + (res.more_before ? "" : " disabled") + '>‹ Earlier</button>' +
-                '<button class="ghost more" data-more="1"' + (res.more_after ? "" : " disabled") + ">Later ›</button></span></div>" +
-                '<div class="a-row">'];
-    gs.forEach(function (g, i) {
-      if (i > 0) {
-        var day = gs[i - 1].day !== g.day, known = g.gap !== null && g.gap !== undefined;
-        // the time between two shots: a new day says its date, ten minutes or more is marked
-        var label = day ? dayText(g.day) : known ? gapText(g.gap) : "";
-        html.push('<div class="gap' + (day ? " day" : known && g.gap >= 600 ? " long" : "") + '" data-k="gap:' + esc(g.rel) + '" title="' +
-                  (known ? esc(gapText(g.gap)) + " between them" : "") + (day ? " · " + esc(g.day) : "") + '">' + (label ? "<span>" + esc(label) + "</span>" : "") + "</div>");
-      }
-      var rv = inReview(g.rel), sel = extraN[g.rel] !== undefined && picked[extraN[g.rel]];
-      var cues = [];
-      cues.push(g.lines ? '<span class="cue-i" title="' + g.lines + ' lines said">“ ' + g.lines + "</span>" : '<span class="cue-i mute" title="Nothing said: picture only">no words</span>');
-      if (g.slow_motion) cues.push('<span class="cue-i slow" title="Slow motion' + (g.fps ? ", shot at " + g.fps + " fps" : "") + '">slow ' + esc(g.slow_motion) + "</span>");
-      if (rv.length && !g.current) cues.push('<span class="cue-i rev" title="Already in this review">in review</span>');
-      if (!g.proxy) cues.push('<span class="cue-i mute" title="No proxy on this Mac yet">no proxy</span>');
-      html.push('<div class="gh' + (g.current ? " cur" : "") + (rv.length ? " inrev" : "") + (sel ? " sel" : "") + '" data-i="' + i + '" data-k="' + esc(g.rel) + '" title="' +
-                esc(g.name + " · " + (g.day || "") + " " + (g.at || "")) + '"><div class="gm">' +
-                (g.proxy ? '<img class="still" loading="lazy" src="thumb?rel=' + encodeURIComponent(g.rel) + "&at=" + (g.duration / 2).toFixed(2) + "&t=" + encodeURIComponent(TOKEN) + '" alt="">' : "") +
-                (g.current ? '<span class="here">Open</span><div class="rng"></div><div class="ph"></div>' : "") +
-                '<span class="len">' + fmt(g.duration) + '</span><div class="bar"></div></div>' +
-                '<div class="g-meta"><span class="at">' + esc(g.at || "") + "</span>" + cues.join("") + "</div></div>");
-    });
-    html.push("</div>");
-    // Where each shot and gap was on screen, so what stays can slide to its new place and what's new fades in.
-    var was = {}, oldRow = box.querySelector(".a-row"), oldCur = box.querySelector(".gh.cur");
-    if (oldRow && !box.hidden) Array.prototype.forEach.call(oldRow.querySelectorAll("[data-k]"), function (el) { was[el.dataset.k] = el.getBoundingClientRect().left; });
-    var keepAt = more && oldCur ? oldCur.getBoundingClientRect().left : null;
+                " · hover to scrub · <kbd>space</kbd> closer, with sound · click to open · scroll for more</span></div>" +
+                '<div class="a-row">' + endHTML(-1, res.more_before)];
+    gs.forEach(function (g, i) { if (i > 0) html.push(gapHTML(gs, i)); html.push(ghostHTML(g)); });
+    html.push(endHTML(1, res.more_after) + "</div>");
     box.innerHTML = html.join(""); box.hidden = false; hereMark();
     var row = box.querySelector(".a-row"), on = box.querySelector(".gh.cur");
-    if (on) {
-      if (keepAt !== null) row.scrollLeft += on.getBoundingClientRect().left - keepAt; // more: the open shot stays put
-      else row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
+    var center = on ? on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2 : 0;
+    if (same) { keepEdge(row, edge); row.scrollTo({ left: center, behavior: "smooth" }); } // the strip slides to the shot opened
+    else {
+      row.scrollLeft = center;
+      Array.prototype.forEach.call(row.querySelectorAll(".gh, .gap"), function (el) { el.classList.add("enter"); });
     }
-    var curX = on ? on.getBoundingClientRect().left : 0, moved = [];
-    Array.prototype.forEach.call(row.querySelectorAll("[data-k]"), function (el, i) {
-      var x = el.getBoundingClientRect().left, old = was[el.dataset.k];
-      if (old === undefined) {
-        el.style.setProperty("--from", x < curX ? -1 : 1);
-        el.style.animationDelay = Math.min(160, 18 * Math.abs(i - (on ? Array.prototype.indexOf.call(row.children, on) : 0))) + "ms";
-        el.classList.add("enter");
-      } else if (Math.abs(old - x) > 0.5) { el.style.transform = "translateX(" + (old - x) + "px)"; moved.push(el); }
-    });
-    if (moved.length) {
-      row.getBoundingClientRect(); // take the old places, then slide from them
-      moved.forEach(function (el) { el.classList.add("slide"); el.style.transform = ""; });
+    bindGhosts(row);
+    row.addEventListener("scroll", function () { if (ghostAt) { hover.off(ghostAt.c); ghostAt = null; } }, { passive: true });
+    setTimeout(function () { watchEnds(row); }, same ? 400 : 0);
+  }
+  // more shots at one end, put in beside what's there; what the editor sees stays where it is
+  function growAround(res, dir) {
+    var row = $("d-around").querySelector(".a-row"); if (!row) return;
+    var gs = res.clips, old = lastAround.clips, edge = edgeOf(row);
+    var first = gs.findIndex(function (g) { return g.rel === old[0].rel; }), last = gs.findIndex(function (g) { return g.rel === old[old.length - 1].rel; });
+    if (first < 0 || last < 0) { drawAround(res); return; }
+    var tmp = document.createElement("div"), html = [];
+    if (dir < 0) {
+      for (var i = 0; i < first; i++) { if (i > 0) html.push(gapHTML(gs, i)); html.push(ghostHTML(gs[i])); }
+      if (first > 0) html.push(gapHTML(gs, first));
+      var oldGap = row.querySelector('.gap[data-k="gap:' + CSS.escape(gs[first].rel) + '"]'); if (oldGap) oldGap.remove();
+      tmp.innerHTML = endHTML(-1, res.more_before) + html.join("");
+      row.querySelector('[data-dir="-1"]').replaceWith.apply(row.querySelector('[data-dir="-1"]'), Array.prototype.slice.call(tmp.childNodes));
+    } else {
+      for (var j = last + 1; j < gs.length; j++) { html.push(gapHTML(gs, j)); html.push(ghostHTML(gs[j])); }
+      tmp.innerHTML = html.join("") + endHTML(1, res.more_after);
+      row.querySelector('[data-dir="1"]').replaceWith.apply(row.querySelector('[data-dir="1"]'), Array.prototype.slice.call(tmp.childNodes));
     }
-    if (more) { // then bring the new ones into view
-      var news = row.querySelectorAll(".gh.enter"), edge = more < 0 ? news[0] : news[news.length - 1];
-      if (edge) row.scrollTo({ left: more < 0 ? edge.offsetLeft - 24 : edge.offsetLeft + edge.offsetWidth - row.clientWidth + 24, behavior: "smooth" });
-    }
-    more = 0;
-    Array.prototype.forEach.call(box.querySelectorAll(".gh"), function (el) {
-      var g = gs[+el.dataset.i], gm = el.querySelector(".gm"), bar = el.querySelector(".bar"), len = el.querySelector(".len");
-      if (!g.proxy || g.current) return;
+    lastAround = res; ghosts = gs;
+    keepEdge(row, edge);
+    var fresh = Array.prototype.filter.call(row.querySelectorAll(".gh, .gap"), function (el) { return !el.dataset.bound && !el.classList.contains("gap") || (el.classList.contains("gap") && !el.dataset.seen); });
+    fresh.forEach(function (el) { el.classList.add("enter"); });
+    bindGhosts(row);
+    watchEnds(row);
+  }
+  function bindGhosts(row) {
+    Array.prototype.forEach.call(row.querySelectorAll(".gap"), function (el) { el.dataset.seen = "1"; });
+    Array.prototype.forEach.call(row.querySelectorAll(".gh"), function (el) {
+      if (el.dataset.bound) return; el.dataset.bound = "1";
+      var g = ghostOf(el.dataset.k), gm = el.querySelector(".gm"), bar = el.querySelector(".bar"), len = el.querySelector(".len");
+      if (!g || !g.proxy || g.current) return;
       // scrubbed as itself: a clip of the review when it's one, else the whole file (no entry made until it's opened)
       var c = inReview(g.rel)[0] || { n: "g:" + g.rel, extra: true, rel: g.rel };
       el.addEventListener("mousemove", function (e) {
@@ -1048,6 +1165,7 @@ header.top .langs button { padding: 0 10px; }
       quiet: function () { clearTimeout(rest); clearTimeout(burst); }, // the keys have it now
       openHere: function () { if (g) { var gg = g, at = v.currentTime; api.close(); openGhost(gg, at); } },
       rel: function () { return g ? g.rel : null; },
+      shot: function () { return g; },
       speedEl: function () { return spd; },
       later: function () { clearTimeout(closing); closing = setTimeout(api.close, 260); },
       stay: function () { clearTimeout(closing); },
@@ -1077,18 +1195,16 @@ header.top .langs button { padding: 0 10px; }
     if (i >= 0 && ghosts[i + d]) openGhost(ghosts[i + d]);
   }
   $("d-around").addEventListener("click", function (e) {
-    var m = e.target.closest(".more");
-    if (m) { if (!m.disabled) { more = +m.dataset.more; aroundN = Math.min(24, aroundN + 4); loadAround(); } return; }
     var el = e.target.closest(".gh"); if (!el) return;
     // opened where it was scrubbed to: the moment they were hunting for, not its start
-    var g = ghosts[+el.dataset.i], b = el.getBoundingClientRect();
+    var g = ghostOf(el.dataset.k), b = el.getBoundingClientRect(); if (!g) return;
     var f = Math.min(1, Math.max(0, (e.clientX - b.left) / b.width));
     var at = peek.on(g) ? peek.time() : g.proxy ? f * Math.max(0, g.duration - 0.04) : undefined;
     peek.close(); openGhost(g, at);
   });
   function closeDetail() { peek.close(); stopAll(); $("detail").classList.remove("on"); document.body.classList.remove("in-detail"); cur = null; render(); }
   function marks() {
-    hereMark();
+    hereMark(); drawWave();
     var c = clipBy[cur], r = rangeOf(c), d = dv.duration || (D.files[c.rel] || {}).duration || c.duration || 1;
     $("d-rng").style.left = (100 * r.start / d) + "%"; $("d-rng").style.width = (100 * (r.end - r.start) / d) + "%";
     $("d-tc").textContent = (c.tc_in || "") + " · in " + fmt(r.start) + " · out " + fmt(r.end) + " · " + fmt(r.end - r.start);
@@ -1242,9 +1358,9 @@ header.top .langs button { padding: 0 10px; }
   function showCap() {
     var el = $("d-cap"), said = capsOn && cur !== null ? capAt(clipBy[cur].rel, dv.currentTime) : "";
     el.textContent = said; el.hidden = !said;
-    if (said) { el.style.left = dv.offsetLeft + "px"; el.style.width = dv.offsetWidth + "px"; el.style.top = (dv.offsetTop + dv.offsetHeight - 54) + "px"; }
+    if (said) { el.style.left = dv.offsetLeft + "px"; el.style.width = dv.offsetWidth + "px"; el.style.top = (dv.offsetTop + dv.offsetHeight - 14) + "px"; }
   }
-  dv.addEventListener("seeked", function () { showCap(); hereMark(); });
+  dv.addEventListener("seeked", function () { showCap(); hereMark(); if (cur !== null) $("d-head").style.left = (100 * dv.currentTime / durNow()) + "%"; });
   window.addEventListener("resize", showCap);
   dv.addEventListener("timeupdate", function () {
     showCap(); hereMark();
@@ -1286,9 +1402,95 @@ header.top .langs button { padding: 0 10px; }
   });
   $("d-transcript").addEventListener("wheel", function () { if (follow) { follow = false; followLabel(); } }, { passive: true });
   $("d-follow").addEventListener("click", function () { follow = true; followLabel(); });
-  $("d-track").addEventListener("click", function (e) {
-    var b = this.getBoundingClientRect(); dv.currentTime = (dv.duration || 0) * (e.clientX - b.left) / b.width;
-  });
+  // ---------- the timeline: waveform, the lines said, the in and out; drag to scrub
+  var peaksOf = {}, wavePending = {};
+  function durNow() { return dv.duration || (cur !== null && ((D.files[clipBy[cur].rel] || {}).duration || clipBy[cur].duration)) || 1; }
+  function loadPeaks(rel) {
+    if (!SERVER || peaksOf[rel] || wavePending[rel]) return;
+    wavePending[rel] = true;
+    fetch("api/peaks?rel=" + encodeURIComponent(rel) + "&t=" + encodeURIComponent(TOKEN)).then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (pk) {
+        var v = pk.peaks.slice().sort(function (a, b) { return a - b; }), top = v[Math.floor(v.length * 0.985)] || 1;
+        peaksOf[rel] = { per: pk.per_second, v: pk.peaks, top: Math.max(1, top) };
+      }).catch(function () { peaksOf[rel] = { per: 1, v: [], top: 1 }; })
+      .then(function () { delete wavePending[rel]; if (cur !== null && clipBy[cur].rel === rel) drawWave(); });
+  }
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function drawWave() {
+    if (cur === null) return;
+    var cv = $("d-wave"), c = clipBy[cur], r = rangeOf(c), d = durNow();
+    var W = Math.max(1, Math.round(cv.clientWidth * devicePixelRatio)), H = Math.max(1, Math.round(cv.clientHeight * devicePixelRatio));
+    if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
+    var g = cv.getContext("2d"), dpr = devicePixelRatio; g.clearRect(0, 0, W, H);
+    var lane = Math.round(12 * dpr), top = lane + Math.round(4 * dpr), mid = top + (H - top) / 2, half = (H - top) / 2 - 2 * dpr;
+    var ink = cssVar("--muted"), dim = cssVar("--line-strong"), gold = cssVar("--mustard");
+    // the lines said: a block each, gold within the in and out
+    var ls = (D.files[c.rel] || {}).lines || [];
+    ls.forEach(function (l) {
+      var x0 = Math.floor(W * l.start / d), x1 = Math.max(x0 + Math.round(2 * dpr), Math.ceil(W * l.end / d) - Math.round(1 * dpr));
+      g.fillStyle = l.end > r.start && l.start < r.end ? gold : dim;
+      g.fillRect(x0, Math.round(2 * dpr), x1 - x0, lane - Math.round(4 * dpr));
+    });
+    // the sound
+    var pk = peaksOf[c.rel];
+    if (pk && pk.v.length) {
+      var bw = Math.max(1, Math.round(2 * dpr)), gap = Math.max(1, Math.round(dpr));
+      for (var x = 0; x < W; x += bw + gap) {
+        var t0 = d * x / W, t1 = d * (x + bw) / W, i0 = Math.floor(t0 * pk.per), i1 = Math.max(i0 + 1, Math.ceil(t1 * pk.per)), m = 0;
+        for (var i = i0; i < i1 && i < pk.v.length; i++) if (pk.v[i] > m) m = pk.v[i];
+        var a = Math.min(1, Math.sqrt(m / pk.top)), h = Math.max(dpr, a * half);
+        g.fillStyle = t1 > r.start && t0 < r.end ? gold : ink;
+        g.fillRect(x, mid - h, bw, h * 2);
+      }
+    } else {
+      g.fillStyle = dim; g.fillRect(0, mid - dpr / 2, W, dpr);
+    }
+  }
+  window.addEventListener("resize", function () { if (cur !== null) drawWave(); });
+  (function () {
+    var tr = $("d-track"), hov = $("d-hov"), drag = null;
+    var at = function (e) { var b = tr.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - b.left) / b.width)) * durNow(); };
+    var lineAt = function (t) { var ls = (D.files[clipBy[cur].rel] || {}).lines || []; for (var i = 0; i < ls.length; i++) if (ls[i].start <= t && t <= ls[i].end) return ls[i]; return null; };
+    tr.addEventListener("pointermove", function (e) {
+      if (cur === null) return;
+      var t = at(e), b = tr.getBoundingClientRect(), l = lineAt(t);
+      hov.hidden = false; hov.style.left = (e.clientX - b.left) + "px";
+      hov.firstChild.textContent = fmt(t) + (l ? "  " + (enOf(l) || l.text) : "");
+      if (drag) { tv === dv || peek.close(); dv.currentTime = t; }
+    });
+    tr.addEventListener("pointerleave", function () { hov.hidden = true; });
+    tr.addEventListener("pointerdown", function (e) {
+      if (cur === null) return;
+      e.preventDefault(); tr.setPointerCapture(e.pointerId);
+      var b = tr.getBoundingClientRect(), t = at(e);
+      // on the lines' lane, a click lands on the start of the line
+      if (e.clientY - b.top < 14) { var l = lineAt(t); if (l) t = l.start; }
+      drag = { playing: !dv.paused || !!back }; stopAll(); playClip = false; dv.currentTime = t;
+    });
+    var end = function () { if (!drag) return; var was = drag.playing; drag = null; if (was) { shuttle = 1; forward(1); } };
+    tr.addEventListener("pointerup", end); tr.addEventListener("pointercancel", end);
+  })();
+  // ---------- the controls under it
+  var ICONS = { play: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>', pause: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z" fill="currentColor"/></svg>', vol: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>', mute: '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 9.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' };
+  function playPause() { if (tv !== dv) peek.close(); if (dv.paused && !back) { shuttle = 1; forward(1); } else stopAll(); }
+  function ppIcon() { $("d-pp").innerHTML = dv.paused && !back ? ICONS.play : ICONS.pause; }
+  function timeText() { $("d-time").innerHTML = fmt(dv.currentTime) + " <i>/</i> " + fmt(durNow()); }
+  dv.addEventListener("play", ppIcon); dv.addEventListener("pause", ppIcon);
+  dv.addEventListener("seeked", timeText); dv.addEventListener("loadedmetadata", function () { timeText(); drawWave(); });
+  (function tick() { if (cur !== null && !dv.paused) { timeText(); var d = durNow(); $("d-head").style.left = (100 * dv.currentTime / d) + "%"; } requestAnimationFrame(tick); })();
+  $("d-pp").addEventListener("click", playPause);
+  dv.addEventListener("click", playPause);
+  dv.addEventListener("dblclick", function () { fullScreen(); });
+  function fullScreen() { if (document.fullscreenElement) document.exitFullscreen(); else if (dv.requestFullscreen) dv.requestFullscreen(); }
+  $("d-fs").addEventListener("click", fullScreen);
+  $("d-mute").addEventListener("click", function () { dv.muted = !dv.muted; this.innerHTML = dv.muted ? ICONS.mute : ICONS.vol; });
+  $("d-cc").addEventListener("click", toggleCaps);
+  function toggleCaps() {
+    capsOn = !capsOn; try { localStorage.setItem("bb-caps", capsOn ? "on" : "off"); } catch (x) {}
+    $("d-cc").classList.toggle("on", capsOn); showCap();
+  }
+  // a clicked button gives its focus back, so space and the arrows stay the player's
+  document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("button"); if (b) b.blur(); });
   $("d-play").addEventListener("click", function () { dv.currentTime = rangeOf(clipBy[cur]).start; playClip = true; dv.play(); });
   $("d-in").addEventListener("click", function () { setRange("in"); });
   $("d-out").addEventListener("click", function () { setRange("out"); });
@@ -1322,10 +1524,12 @@ header.top .langs button { padding: 0 10px; }
       if (k === "Escape" && peek.on()) peek.close();
       else if (k === " " && (peek.on() || ghostAt)) { e.preventDefault(); if (peek.on()) peek.close(); else peek.open(ghostAt); }
       else if (peek.on() && (k === "o" || k === "Enter")) { e.preventDefault(); peek.openHere(); }
-      else if (peek.on() && /^[iIOsSx]$/.test(k)) { /* marks and selecting are the open clip's: not while looking closer */ }
+      else if ((lk === "s" || k === "x") && (peek.on() || ghostAt)) { var sg = peek.on() ? peek.shot() : ghostAt.g; toggle(ghostN(sg, true)); }
+      else if (peek.on() && /^[iIO]$/.test(k)) { /* marks are the open clip's: not while looking closer */ }
       else if (k === "Escape") closeDetail();
-      else if (k === " ") { e.preventDefault(); if (dv.paused && !back) { shuttle = 1; forward(1); } else stopAll(); }
-      else if (lk === "c" && !e.altKey) { capsOn = !capsOn; try { localStorage.setItem("bb-caps", capsOn ? "on" : "off"); } catch (x) {} showCap(); toast(capsOn ? "Captions on" : "Captions off", "c turns them " + (capsOn ? "off" : "on") + ".", "ok", 1600); }
+      else if (k === " ") { e.preventDefault(); playPause(); }
+      else if (lk === "c" && !e.altKey) toggleCaps();
+      else if (lk === "f") fullScreen();
       else if (lk === "k") { if (!e.repeat) { kHeld = true; if (peek.on()) peek.quiet(); stopAll(); } }
       else if (lk === "j" || lk === "l") {
         var dir = lk === "l" ? 1 : -1; if (peek.on()) peek.quiet();

@@ -1,5 +1,8 @@
 ;; Written by `bb narrate`: each narration line's audio and its length. Don't edit by hand.
-{"214b0cbbb1540673"
+{"0daa4127ff1bdca4"
+ {:text "New in version 0.1.30: a player made for review.",
+  :seconds 5.564},
+ "214b0cbbb1540673"
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
   :seconds 6.113},
@@ -23,9 +26,6 @@
  {:text
   "It all lives on your Mac already: transcripts, proxies and picture search, brought down by Dropbox. Fast, and the NAS is never touched.",
   :seconds 10.031},
- "b0203ba699873bf2"
- {:text "New in version 0.1.29: where you are in the strip.",
-  :seconds 5.486},
  "b5e367e65b254f24"
  {:text
   "Online it: back to the camera originals, with handles, and every recorder synced underneath.",

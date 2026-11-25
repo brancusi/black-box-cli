@@ -147,6 +147,9 @@
                  (mapv (juxt :name :current :proxy) (:clips res))) "the same FX3, on any day; the A7S isn't it")
           (is (= [nil 0 0] (mapv :gap (:clips res))) "the fixture's clocks overlap: no time between them")
           (is (= [false false] ((juxt :more_before :more_after) res))))
+        (let [res (json/parse-string (:body (get* (str "/" id "/api/around?rel=media/2026/09/16/src/fx3/C5280.MP4&before=0&after=1&t=" token) {})) true)]
+          (is (= ["C5280.MP4" "C5900.MP4"] (mapv :name (:clips res))) "each side asked for on its own, as the strip grows")
+          (is (= [true false] ((juxt :more_before :more_after) res))))
         (is (= [] (:clips (json/parse-string (:body (get* (str "/" id "/api/around?rel=nope.MP4&t=" token) {})) true)))))
       (testing "a file's words, a clip's proxy and still: only of originals the index knows"
         (is (= 200 (:status (get* (str "/" id "/api/file?rel=media/2026/09/16/src/fx3/C5280.MP4&t=" token) {}))))
@@ -162,6 +165,17 @@
             (is (= "audio/wav" (get-in r [:headers "content-type"])))
             (is (= "RIFF" (String. ^bytes (java.util.Arrays/copyOfRange ^bytes (:body r) 0 4)))))
           (is (= 404 (:status (get* (str "/" id "/audio?rel=%2FVolumes%2Fx.MP4&t=" token) {}))))))
+      (testing "how loud a clip is along its length, for the waveform: from its proxy, kept in this Mac's cache"
+        (let [peaks #(get* (str "/" id "/api/peaks?rel=media/2026/09/16/src/fx3/C5274.MP4&t=" token) {})
+              r (peaks)]
+          (is (#{200 404} (:status r)) "404 only on a Mac without ffmpeg")
+          (when (= 200 (:status r))
+            (let [{:keys [per_second peaks]} (json/parse-string (:body r) true)]
+              (is (= 20 per_second))
+              (is (every? #(<= 0 % 1000) peaks)))
+            (is (= (:body r) (:body (peaks))) "the second time, the same, from the cache")))
+        (is (= 404 (:status (get* (str "/" id "/api/peaks?rel=%2FVolumes%2Fx.MP4&t=" token) {}))))
+        (is (= 404 (:status (get* (str "/" id "/api/peaks?rel=media/2026/09/16/src/fx3/C5280.MP4&t=" token) {}))) "no proxy of it"))
       (testing "what the editor did is kept beside the review, appended, never in review.json"
         (let [before (slurp (str (fs/path local "reviews" id "review.json")))
               post #(http/post (str "http://127.0.0.1:" port "/" id "/api/state?t=" token)

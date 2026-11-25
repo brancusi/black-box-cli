@@ -67,38 +67,40 @@
                   {:v version :rels (json/generate-string rels)})))
 
 (defn around
-  "The `n` clips `rel`'s camera shot before it and after it, with it: {:clips [...] :more_before :more_after}, each
+  "The `before` clips `rel`'s camera shot before it and the `after` after it (`n` of each), with it: {:clips [...]
+  :more_before :more_after}, each
   clip {:rel :name :day :at :duration :gap :lines :proxy :current :device :res :fps :slow_motion}. `gap` is the
   seconds from the end of the clip before it in the order (nil for the first shown; 0 when the clocks overlap).
   Nil when the camera facts don't know `rel`."
-  [{:keys [meta index-path version]} rel n]
-  (when (probe/available? index-path)
-    (let [rows (db/query (probe/path index-path)
-                         "SELECT rel, name, kind, device, recorded_at, timecode, duration, resolution, fps, capture_fps,
+  ([ctx rel n] (around ctx rel n n))
+  ([{:keys [meta index-path version]} rel before after]
+   (when (probe/available? index-path)
+     (let [rows (db/query (probe/path index-path)
+                          "SELECT rel, name, kind, device, recorded_at, timecode, duration, resolution, fps, capture_fps,
                                  slow_motion FROM media WHERE kind = 'video';")]
-      (when-let [order (not-empty (in-order rows rel))]
-        (let [i (first (keep-indexed #(when (= rel (:rel %2)) %1) order))
-              from (max 0 (- i n))
-              shown (subvec order from (min (count order) (+ i n 1)))
-              lines (lines-by-rel index-path version (mapv :rel shown))]
-          {:more_before (pos? from)
-           :more_after (< (+ i n 1) (count order))
-           :clips (vec (map-indexed
-                        (fn [k r]
-                          (let [prev (when (pos? (+ from k)) (nth order (dec (+ from k))))
-                                gap (when (and prev (start-of prev) (start-of r))
-                                      (max 0 (tc/round-to (- (start-of r) (+ (start-of prev) (or (:duration prev) 0))) 1)))]
-                            (merge (array-map :rel (:rel r)
-                                              :name (or (:name r) (str (fs/file-name (:rel r))))
-                                              :day (day-of (:rel r))
-                                              :at (clock r)
-                                              :duration (:duration r)
-                                              :gap gap
-                                              :lines (get lines (:rel r) 0)
-                                              :proxy (some? (archive/proxy-of meta (:rel r)))
-                                              :current (= rel (:rel r)))
-                                   (select-keys (probe/fields r) [:device :res :fps :slow_motion]))))
-                        shown))})))))
+       (when-let [order (not-empty (in-order rows rel))]
+         (let [i (first (keep-indexed #(when (= rel (:rel %2)) %1) order))
+               from (max 0 (- i before))
+               shown (subvec order from (min (count order) (+ i after 1)))
+               lines (lines-by-rel index-path version (mapv :rel shown))]
+           {:more_before (pos? from)
+            :more_after (< (+ i after 1) (count order))
+            :clips (vec (map-indexed
+                         (fn [k r]
+                           (let [prev (when (pos? (+ from k)) (nth order (dec (+ from k))))
+                                 gap (when (and prev (start-of prev) (start-of r))
+                                       (max 0 (tc/round-to (- (start-of r) (+ (start-of prev) (or (:duration prev) 0))) 1)))]
+                             (merge (array-map :rel (:rel r)
+                                               :name (or (:name r) (str (fs/file-name (:rel r))))
+                                               :day (day-of (:rel r))
+                                               :at (clock r)
+                                               :duration (:duration r)
+                                               :gap gap
+                                               :lines (get lines (:rel r) 0)
+                                               :proxy (some? (archive/proxy-of meta (:rel r)))
+                                               :current (= rel (:rel r)))
+                                    (select-keys (probe/fields r) [:device :res :fps :slow_motion]))))
+                         shown))}))))))
 
 (defn known?
   "Whether `rel` is an original the index knows (camera facts or a transcript): what the review server will play."
