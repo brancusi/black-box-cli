@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.17:** Into the project you have open ([more](#whats-new))
+**What's new in 0.1.18:** Italian in English, word for word ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -194,7 +194,7 @@ Ask for selects and you get a page in your browser: every clip playing its proxy
 - Keep as many reviews open in tabs as you like: one server on your Mac serves them all, and opening another never closes one.
 - Reviews are kept in ~/Black Box/reviews until you delete them there; review.html opens from Finder to watch and read, but importing needs it opened by your agent.
 - Move the mouse across a clip to scrub through it. Keys: ? lists them all. s selects the clip you're on (they gather at the top, in timeline order), i imports them; in an open clip i and o set in and out as in Resolve, shift+I imports, and ← and → move between clips.
-- Italian lines will show their English underneath once Black Box publishes translations.
+- A line said in Italian shows its English, with the Italian word for word under it, lit as it plays: that's where you cut. English, Both and As spoken at the top (or t) switch between them.
 
 <a id="online"></a>
 
@@ -291,6 +291,10 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.18 (2026-11-25)
+
+- **Italian in English, word for word:** In a selects review, a clip said in Italian is marked on its picture, and each line shows its English with the Italian under it, lit word by word as it plays: read in English, cut on the Italian. English, Both or As spoken at the top, or t. `blackbox review open kiln`
 
 ### 0.1.17 (2026-11-24)
 

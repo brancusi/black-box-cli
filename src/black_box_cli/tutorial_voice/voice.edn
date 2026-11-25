@@ -15,9 +15,9 @@
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",
   :seconds 8.124},
- "91d9af4a6af38192"
- {:text "New in version 0.1.17: into the project you have open.",
-  :seconds 5.564},
+ "9a7c7451090277d1"
+ {:text "New in version 0.1.18: italian in English, word for word.",
+  :seconds 6.191},
  "a611f3e3e2f9abd1"
  {:text
   "Ask for a rough cut and it plays seconds later. Every edit is kept, so you can always go back.",

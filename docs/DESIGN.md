@@ -109,8 +109,9 @@ CHANGELOG.md.
     pairs whose overlap covers the clip, confidence 0.5 and up), each recorder on its own block of tracks from A2,
     as wide as its channels. `review new` turns selects (a cut list with `group:` sections) into
     ~/Black Box/reviews/<id>/ (review.html with the review's JSON in it, review.json, thumbnails); `review open`
-    serves it on 127.0.0.1 with a key, and its Import sends the ticked clips, trimmed or not, to `online`. English
-    under Italian lines waits for Black Box's translations in media_meta (ask 12).
+    serves it on 127.0.0.1 with a key, and its Import sends the ticked clips, trimmed or not, to `online`. A line
+    said in Italian shows its English (Black Box's translation, ask 12), with the Italian word for word under it
+    (owner, 2026-11-25): the English to read, the words as said to cut on, since only they are timed.
 16. **Black Box updates the CLI between its own releases (owner, 2026-11-24).** A release is live on every Mac
     minutes after it's published, with no one signing anything by hand: `bb release` builds it here and publishes it with
     a manifest, waiting on nothing (GitHub only re-runs the tests in the background); it signs the manifest as it publishes

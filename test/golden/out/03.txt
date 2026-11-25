@@ -48,6 +48,7 @@
   "audio": 1,
   "skipped": 0
  },
+ "translations": "none: media_meta has no translations folder",
  "help": [
   "Skipped files are online-only or not transcripts; make media_meta available offline in Finder",
   "Run `blackbox` for what the index holds"

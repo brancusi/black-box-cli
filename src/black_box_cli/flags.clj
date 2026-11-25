@@ -279,13 +279,15 @@
     :args [{:arg "selects" :doc "a cut list (file or - for stdin); `group: B-roll` lines make its sections"}]
     :flags (-> [{:flag "--title" :value "text" :doc "the review's title (or `title:` in the cut list)"}
                 {:flag "--open" :doc "open it in the browser now, from the review server (returns at once)"}
+                {:flag "--language" :value "code" :default "en"
+                 :doc "the review's language (en, it…): clips said in another are marked, with their English when it's en"}
                 {:flag "--dry-run" :doc "check the selects and show them; write nothing"}
                 version-flag]
                (into (output-flags false)))
     :examples ["blackbox review new selects.txt --dry-run" "blackbox review new - --open < selects.txt"]
     :about (str "The review is kept in ~/Black Box/reviews/<id>/: review.html, review.json and a thumbnail per clip.\n"
-                "Each clip plays its proxy with its words under it (an Italian line with its English under it, when\n"
-                "Black Box publishes translations); a click opens the clip with its file's whole transcript, a word\n"
+                "Each clip plays its proxy with its words under it (a line said in Italian as its English, with the\n"
+                "Italian word for word under it); a click opens the clip with its file's whole transcript, a word\n"
                 "jumps there, and i/o trim it. Selected clips (s) go to Resolve with Import (i): `online`, from the originals,\n"
                 "with pre- and post-roll and the recorders synced. Importing needs the page served (--open, or\n"
                 "`review open`), on 127.0.0.1 only; review.html from Finder plays and reads but can't import.\n"

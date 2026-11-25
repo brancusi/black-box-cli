@@ -277,7 +277,10 @@ selects the clip under the mouse or the open one; the selected gather at the top
 their order on the timeline. `i` in the gallery, Shift+I anywhere, or the Import into Resolve button sends them
 to `online` (below): a new timeline from the camera originals, with the handles, Into (open project or new
 project) and Recorders (synced or off) chosen in the bar at the bottom; a toast says how it went. `?` lists the
-keys. An Italian line will get its English under it once Black Box publishes translations.
+keys. A review has a language, English unless `--language it` (any code) says otherwise: a clip said in another
+is marked on its picture ("Italian"), and the header counts them (`in_another_language` in the output too). A line
+said in Italian shows its English ("Translated from Italian"), with the Italian word for word under it (what the cut
+follows, lit word by word as it plays); English, Both and As spoken at the top (or `t`) switch between them.
 
 `blackbox review list` lists them; `blackbox review open <id>` opens one again, with Import working. review.html
 opened from Finder plays and reads but can't import. Reviews are kept until someone deletes them: to free space,

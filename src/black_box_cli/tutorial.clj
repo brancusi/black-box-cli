@@ -131,7 +131,7 @@
     :tips ["Keep as many reviews open in tabs as you like: one server on your Mac serves them all, and opening another never closes one."
            "Reviews are kept in ~/Black Box/reviews until you delete them there; review.html opens from Finder to watch and read, but importing needs it opened by your agent."
            "Move the mouse across a clip to scrub through it. Keys: ? lists them all. s selects the clip you're on (they gather at the top, in timeline order), i imports them; in an open clip i and o set in and out as in Resolve, shift+I imports, and ← and → move between clips."
-           "Italian lines will show their English underneath once Black Box publishes translations."]}
+           "A line said in Italian shows its English, with the Italian word for word under it, lit as it plays: that's where you cut. English, Both and As spoken at the top (or t) switch between them."]}
    {:id "online"
     :punch "Back to the camera originals, recorders synced."
     :narration "Online it: back to the camera originals, with handles, and every recorder synced underneath."
@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.17" :date "2026-11-24"
+  [{:version "0.1.18" :date "2026-11-25"
+    :items [{:title "Italian in English, word for word" :lesson "review" :run "blackbox review open kiln"
+             :what "In a selects review, a clip said in Italian is marked on its picture, and each line shows its English with the Italian under it, lit word by word as it plays: read in English, cut on the Italian. English, Both or As spoken at the top, or t."}]}
+   {:version "0.1.17" :date "2026-11-24"
     :items [{:title "Into the project you have open" :lesson "review" :run "blackbox review open kiln"
              :what "Import into Resolve with Open project goes into the project open in Resolve, even an untitled one; a new project only when Resolve wasn't running."}]}
    {:version "0.1.16" :date "2026-11-24"

@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- Selects reviews show a line said in Italian in English, with the Italian word for word under it: the English to
+  read, the Italian lit word by word as it plays, to cut on. English, Both and As spoken at the top of the page (or
+  `t`) switch between them, remembered on the Mac. Reviews made before get it too, when they're served.
+- A review has a language: `review new --language <code>`, English unless said. A clip said in another is marked
+  on its picture ("Italian"), its snippet says "Translated from Italian", the header counts them, and so does
+  `in_another_language` in the output.
+- The index reads Black Box's translations (`media_meta/translations`, `media-mgmt.translation/1`) into
+  `translations.sqlite`; `index` and `status` count them. A line gets English only from a translation of the very
+  transcript the index holds.
+- Each card's words are one snippet to read, in English, with the Italian under it, quieter, instead of a list of
+  fragments. Moving across the picture lights the line being said there (and the word, in the Italian), and the
+  snippet scrolls to keep it in view.
+- The review's transcript is easier to read: each line's words hang beside its time however they wrap, the speaker
+  shows only where a turn starts, and the line being said is marked, not just the word.
+
 ## 0.1.17 (2026-11-24)
 
 - Import into Resolve, "Open project": the project open in Resolve is always the one used, an untitled one too. A new

@@ -15,6 +15,7 @@
   --video: #0e0e0d; --video-fg: #e8e3d9; --video-dim: #9a948a; --video-line: #3a3731;
   --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --font-brand: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-read: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --range: rgba(212, 161, 42, .14);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
@@ -84,10 +85,36 @@ section.group h2::after { content: ""; flex: 1; height: 1px; background: var(--l
 .meta b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .meta span { color: var(--faint); font-size: 12px; white-space: nowrap; }
 .note { padding: 0 10px; color: var(--mustard-deep); font-size: 12px; }
-.lines { padding: 4px 10px 10px; max-height: 164px; overflow: auto; color: var(--muted); font-size: 12.5px; line-height: 19px; }
-.lines p { margin: 0 0 6px; }
-.en { display: block; color: var(--faint); font-size: 12px; }
-.lang { display: inline-block; font-size: 10px; line-height: 14px; letter-spacing: .04em; color: var(--faint); border: 1px solid var(--line); padding: 0 3px; margin-right: 5px; vertical-align: 1px; }
+/* A clip's words as one snippet to read: what it says (in English), then, quieter, the words as said. Moving across
+   the clip lights the line being said there, and the snippet keeps it in view. */
+.lines { position: relative; padding: 6px 12px 14px; max-height: 214px; overflow: auto; scrollbar-width: thin; font: 400 14px/21px var(--font-read); color: var(--ink);
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent); }
+.lines p { margin: 0; }
+.lines .said { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 12.5px; line-height: 19px; color: var(--faint); }
+.lines .said .lang { margin-right: 6px; }
+.lines .from { font: 500 10.5px/16px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin-bottom: 3px; }
+body.m-spoken .lines .from { display: none; }
+/* what a clip is said in, when it isn't the review's language: on the picture, to spot at a glance */
+.media .tongue { position: absolute; left: 6px; bottom: 6px; font: 600 10.5px/18px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; padding: 0 7px; background: var(--video-fg); color: #141310; pointer-events: none; }
+.lines .said.same, body.m-en .lines .said { display: none; }
+body.m-spoken .lines .read { display: none; }
+body.m-spoken .lines .said { margin: 0; padding: 0; border: 0; font-size: 14px; line-height: 21px; color: var(--ink); }
+.lines .ln { transition: background-color .08s; }
+.lines .read .ln.now { background: var(--mustard-tint); box-shadow: 0 0 0 2px var(--mustard-tint); }
+.lines .cw.now { background: var(--mustard-tint); box-shadow: 0 0 0 1px var(--mustard-tint); color: var(--ink); }
+.lines .said .ln.now { color: var(--muted); }
+body.m-spoken .lines .said .ln.now { color: var(--ink); }
+.lines .cw.out { opacity: .45; }
+.card:not(:hover) .lines .now { background: none; box-shadow: none; }
+.lang { display: inline-block; font-size: 10px; line-height: 14px; letter-spacing: .04em; color: var(--faint); border: 1px solid var(--line); padding: 0 3px; margin-right: 6px; vertical-align: 1px; }
+/* A line said in another language: its English on top, what was said word for word under it (what the cut follows).
+   The switch in the transcript's head shows English, both, or only what was said. */
+.tr { color: var(--ink); }
+.under { display: block; color: var(--faint); font-size: 12px; line-height: 18px; margin-top: 1px; }
+.lines .under { font-size: 11.5px; line-height: 17px; }
+body.m-en .under { display: none; }
+body.m-spoken .tr { display: none; }
+body.m-spoken .under { color: inherit; font-size: inherit; line-height: inherit; margin-top: 0; }
 .none { color: var(--faint); }
 
 /* the bar: always there, in the gallery and in a clip */
@@ -147,15 +174,25 @@ body.in-detail header.top { padding-top: 8px; }
 .d-right { border-left: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
 .d-right .t-head { padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; color: var(--faint); }
 .d-right .t-head b { color: var(--ink); font-weight: 600; }
+header.top .langs { margin-right: 6px; }
+header.top .langs button { padding: 0 10px; }
 .transcript { overflow: auto; padding: 8px 0 40vh; }
-.cue { padding: 6px 16px 6px 12px; border-left: 2px solid transparent; color: var(--muted); font-size: 13.5px; line-height: 22px; }
+/* A line: its time (and, where a turn starts, who), then the words hanging beside it, however they wrap. */
+.cue { display: grid; grid-template-columns: 6ch minmax(0, 1fr); column-gap: 12px; padding: 4px 16px 4px 12px; border-left: 2px solid transparent; color: var(--muted); font-size: 13.5px; line-height: 21px; }
+.cue.turn { margin-top: 10px; }
 .cue.inrange { background: var(--range); border-left-color: var(--mustard); color: var(--ink); }
-.cue .ts { color: var(--faint); font-size: 12px; background: none; border: 0; padding: 0 8px 0 0; }
+.cue .ts { grid-column: 1; align-self: start; text-align: left; color: var(--faint); font-size: 12px; line-height: 21px; background: none; border: 0; padding: 0; }
 .cue .ts:hover { color: var(--ink); }
-.cue .spk { color: var(--faint); font-size: 12px; margin-right: 4px; }
+.cue .spk { grid-column: 1; grid-row: 2; color: var(--faint); font-size: 11px; line-height: 14px; letter-spacing: .04em; }
+.cue .body { grid-column: 2; grid-row: 1 / span 2; min-width: 0; }
+.cue .tr { cursor: pointer; }
+.cue.playing .ts { color: var(--ink); }
+.cue.playing { border-left-color: var(--ink); }
+.cue.inrange.playing { border-left-color: var(--mustard); }
 .w { cursor: pointer; }
 .w:hover { text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
 .w.now { background: var(--mustard-tint); color: var(--ink); box-shadow: 0 0 0 2px var(--mustard-tint); }
+.cue.playing .tr { text-decoration: underline; text-decoration-color: var(--mustard); text-decoration-thickness: 2px; text-underline-offset: 4px; }
 
 /* keys */
 .help { position: fixed; inset: 0; z-index: 30; background: rgba(14,14,13,.55); display: none; place-items: center; }
@@ -174,7 +211,7 @@ body.in-detail header.top { padding-top: 8px; }
 </head>
 <body>
 <header class="top" id="top">
-  <div class="tools"><button class="ghost" id="keys" title="Keyboard shortcuts">Keys <kbd>?</kbd></button><button class="ghost" id="theme" title="Light, dark, or as the Mac is set"></button></div>
+  <div class="tools"><div class="segc langs" data-for="lang" id="d-lang" title="Lines said in another language: their English, both, or only what was said (t)" hidden><button data-v="en">English</button><button data-v="both">Both</button><button data-v="spoken">As spoken</button></div><button class="ghost" id="keys" title="Keyboard shortcuts">Keys <kbd>?</kbd></button><button class="ghost" id="theme" title="Light, dark, or as the Mac is set"></button></div>
   <div class="titles">
     <h1 id="title"></h1>
     <div class="sub" id="sub"></div>
@@ -226,7 +263,7 @@ body.in-detail header.top { padding-top: 8px; }
     <div class="note" id="d-note"></div>
   </div>
   <div class="d-right">
-    <div class="t-head"><b>Transcript</b><button class="ghost" id="d-follow"><span class="sw"><span class="off">Follow</span><span>Following</span></span></button></div>
+    <div class="t-head"><span><b>Transcript</b> <span id="d-said"></span></span><button class="ghost" id="d-follow"><span class="sw"><span class="off">Follow</span><span>Following</span></span></button></div>
     <div class="transcript" id="d-transcript"></div>
   </div>
 </div>
@@ -240,6 +277,7 @@ body.in-detail header.top { padding-top: 8px; }
       <dt><kbd>s</kbd></dt><dd>select or deselect the clip under the mouse</dd>
       <dt><kbd>space</kbd> <kbd>enter</kbd></dt><dd>open the clip under the mouse</dd>
       <dt><kbd>i</kbd></dt><dd>import the selected clips into Resolve</dd>
+      <dt><kbd>t</kbd></dt><dd>translated lines: English, both, or as spoken</dd>
       <dt><kbd>?</kbd></dt><dd>these keys</dd>
     </dl></div>
     <div><h4>An open clip</h4><dl>
@@ -248,6 +286,7 @@ body.in-detail header.top { padding-top: 8px; }
       <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>previous or next clip</dd>
       <dt><kbd>i</kbd> <kbd>o</kbd></dt><dd>set its in or out at the playhead</dd>
       <dt><kbd>j</kbd> <kbd>l</kbd></dt><dd>back or forward 5 s</dd>
+      <dt><kbd>t</kbd></dt><dd>translated lines: English, both, or as spoken</dd>
       <dt>a word</dt><dd>jump there</dd>
       <dt><kbd>shift</kbd> <kbd>I</kbd></dt><dd>import the selected clips</dd>
       <dt><kbd>esc</kbd></dt><dd>back to the gallery</dd>
@@ -282,15 +321,42 @@ body.in-detail header.top { padding-top: 8px; }
     var f = D.files[c.rel]; if (!f) return [];
     return f.lines.filter(function (l) { return l.end > r.start && l.start < r.end; });
   };
-  var lineHTML = function (l) {
-    var lang = l.lang && l.lang !== "en" ? '<span class="lang">' + esc(l.lang.toUpperCase()) + "</span>" : "";
-    return lang + esc(l.text) + (l.en ? '<span class="en">' + esc(l.en) + "</span>" : "");
+  // The review's language (`review new --language`, en unless said): a line said in another is marked, and shows its
+  // English first, what was said under it (Black Box translates into English).
+  var HOME = D.language || "en";
+  var names = (function () { try { return new Intl.DisplayNames(["en"], { type: "language" }); } catch (e) { return null; } })();
+  var langName = function (code) { var n = null; try { n = names && names.of(code); } catch (e) {} return n && n !== code ? n : code.toUpperCase(); };
+  var foreign = function (l) { return !!(l.lang && l.lang !== HOME); };
+  var enOf = function (l) { return HOME === "en" && foreign(l) && l.en ? l.en : null; };
+  // What a clip is said in, when most of its lines whose language is known are in another than the review's: the
+  // commonest of those; else null.
+  var clipLang = function (lines) {
+    var known = lines.filter(function (l) { return l.lang; }), other = known.filter(foreign), n = {};
+    if (!known.length || other.length * 2 <= known.length) return null;
+    other.forEach(function (l) { n[l.lang] = (n[l.lang] || 0) + 1; });
+    return Object.keys(n).sort(function (a, b) { return n[b] - n[a]; })[0];
   };
+  var spoken = function (l, inner) {
+    if (!foreign(l)) return inner;
+    return '<span class="' + (enOf(l) ? "under" : "") + '" lang="' + esc(l.lang) + '" translate="no"><span class="lang">' +
+           esc(l.lang.toUpperCase()) + "</span>" + inner + "</span>";
+  };
+  var english = function (l) { return enOf(l) ? '<span class="tr">' + esc(enOf(l)) + "</span>" : ""; };
+  var LANGS = ["en", "both", "spoken"], langMode = "both";
+  try { var lm = localStorage.getItem("bb-lang"); if (LANGS.indexOf(lm) >= 0) langMode = lm; } catch (e) {}
+  function setLang(m) {
+    langMode = m; document.body.classList.remove("m-en", "m-both", "m-spoken"); document.body.classList.add("m-" + m);
+    Array.prototype.forEach.call($("d-lang").children, function (x) { x.classList.toggle("on", x.dataset.v === m); });
+    try { localStorage.setItem("bb-lang", m); } catch (e) {}
+  }
 
   // ---------- header and groups
   $("title").textContent = D.title; document.title = D.title + " · selects";
   var groups = D.groups.length ? D.groups : ["Clips"];
+  var elsewhere = {};
+  D.clips.forEach(function (c) { var g = clipLang(linesIn(c, c)); if (g) elsewhere[g] = (elsewhere[g] || 0) + 1; });
   $("sub").textContent = D.clips.length + " clips · " + fmt(D.clips.reduce(function (a, c) { return a + c.end - c.start; }, 0)) +
+    Object.keys(elsewhere).map(function (g) { return " · " + elsewhere[g] + " in " + langName(g); }).join("") +
     " · made " + D.made_at.slice(0, 16).replace("T", " ") + " · move across a clip to scrub it, click it to open it" + (SERVER ? "" : " · open with `blackbox review open " + D.id + "` to import");
   var nav = $("groups");
   if (groups.length > 1) {
@@ -302,22 +368,53 @@ body.in-detail header.top { padding-top: 8px; }
   }
 
   // ---------- the grid
+  // A clip's words as one snippet: what it says, each line in English where it has it, then the words as said (each
+  // timed; outside the in and out, faint). Each line and word carries its time, for the highlight as the mouse moves.
+  function snippet(r, lines) {
+    if (!lines.length) return '<p class="none">No words in this clip.</p>';
+    var tr = lines.some(enOf), said = lines.filter(foreign)[0];
+    var span = function (l, inner) { return '<span class="ln" data-s="' + l.start + '" data-e="' + l.end + '">' + inner + "</span>"; };
+    var read = lines.map(function (l) { return span(l, esc(enOf(l) || l.text)); }).join(" ");
+    var words = lines.map(function (l) {
+      return span(l, (l.words && l.words.length ? l.words : [[l.text, l.start, l.end]]).map(function (w) {
+        return '<span class="cw' + (w[2] <= r.start || w[1] >= r.end ? " out" : "") + '" data-s="' + w[1] + '">' + esc(w[0]) + "</span>";
+      }).join(" "));
+    }).join(" ");
+    return (tr ? '<div class="from">Translated from ' + esc(langName(said.lang)) + "</div>" : "") + '<p class="read">' + read + "</p>" +
+           '<p class="said' + (tr ? "" : " same") + '"' + (said ? ' lang="' + esc(said.lang) + '" translate="no"' : "") + ">" +
+           (said ? '<span class="lang">' + esc(said.lang.toUpperCase()) + "</span>" : "") + words + "</p>";
+  }
+  // The line (and word) being said at `t`, lit in a card's snippet, and scrolled into view in it when `follow` (the
+  // mouse is on the picture, not reading the words); t null clears them.
+  function markSnippet(box, t, follow) {
+    var last = function (sel) {
+      var best = null;
+      Array.prototype.forEach.call(box.querySelectorAll(sel), function (x) { x.classList.remove("now"); if (t !== null && +x.dataset.s <= t) best = x; });
+      return best;
+    };
+    var lit = [last(".read .ln"), last(".said .ln"), last(".cw")];
+    lit.forEach(function (x, i) { if (x && (i === 2 || t <= +x.dataset.e + 0.8)) x.classList.add("now"); });
+    if (t === null) { box.scrollTop = 0; return; }
+    if (!follow) return;
+    var shown = lit.filter(function (x) { return x && x.classList.contains("now") && x.offsetParent; })[0];
+    if (shown) box.scrollTop = Math.max(0, shown.offsetTop - box.clientHeight / 3);
+  }
   function card(c) {
-    var r = rangeOf(c), lines = linesIn(c, r);
+    var r = rangeOf(c), lines = linesIn(c, r), said = clipLang(lines);
     var a = document.createElement("article");
     a.className = "card" + (picked[c.n] ? " picked" : ""); a.dataset.n = c.n;
     a.innerHTML =
       '<div class="media"><video preload="none" muted playsinline poster="' + esc(thumbURL(c)) + '"></video>' +
       (c.audio_only ? '<div class="audio">audio only</div>' : "") +
+      (said ? '<span class="tongue" title="Said in ' + esc(langName(said)) + '">' + esc(langName(said)) + "</span>" : "") +
       '<button class="pick" title="Tick to import">✓</button><span class="open">Open ↗</span>' +
       '<span class="len">' + fmt(r.end - r.start) + '</span><div class="bar"></div><div class="scrub"></div></div>' +
       '<div class="meta"><b title="' + esc(c.rel) + '">' + esc(c.file) + "</b><span>" + esc(c.tc_in || "") + " · " +
       fmt(r.end - r.start) + (ranges[c.n] ? " (trimmed)" : "") + "</span></div>" +
       (c.note ? '<div class="note">' + esc(c.note) + "</div>" : "") +
-      '<div class="lines">' + (lines.length ? lines.map(function (l) { return "<p>" + lineHTML(l) + "</p>"; }).join("")
-                                            : '<p class="none">No words in this clip.</p>') + "</div>";
+      '<div class="lines">' + snippet(r, lines) + "</div>";
     // In the gallery the mouse scrubs: its place across the card is the clip's time from in to out. A click opens it.
-    var v = a.querySelector("video"), bar = a.querySelector(".bar"), head = a.querySelector(".scrub"), len = a.querySelector(".len");
+    var v = a.querySelector("video"), bar = a.querySelector(".bar"), head = a.querySelector(".scrub"), len = a.querySelector(".len"), snip = a.querySelector(".lines");
     v.src = mediaURL(c.media) + "#t=" + r.start + "," + r.end; // preload none: nothing loads until it's scrubbed
     if (!c.audio_only) {
       var want = null, seeking = false;
@@ -339,12 +436,13 @@ body.in-detail header.top { padding-top: 8px; }
         go();
         bar.style.width = (100 * f) + "%"; head.style.left = (100 * f) + "%";
         len.textContent = fmt(tm - rr.start) + " / " + fmt(rr.end - rr.start);
+        markSnippet(snip, tm, !!e.target.closest(".media"));
       };
       a.addEventListener("mouseenter", scrub);
       a.addEventListener("mousemove", scrub);
       a.addEventListener("mouseleave", function () {
         var rr = rangeOf(c); want = rr.start; go(); // back to its first frame
-        bar.style.width = "0"; len.textContent = fmt(rr.end - rr.start);
+        bar.style.width = "0"; len.textContent = fmt(rr.end - rr.start); markSnippet(snip, null);
       });
     }
     a.addEventListener("mouseenter", function () { hoverN = c.n; });
@@ -433,7 +531,8 @@ body.in-detail header.top { padding-top: 8px; }
     g.addEventListener("click", function (e) {
       var b = e.target.closest("button"); if (!b) return;
       Array.prototype.forEach.call(g.children, function (x) { x.classList.toggle("on", x === b); });
-      if (g.dataset.for === "into") $("into").value = b.dataset.v; else $("audio").checked = b.dataset.v === "on";
+      if (g.dataset.for === "lang") setLang(b.dataset.v);
+      else if (g.dataset.for === "into") $("into").value = b.dataset.v; else $("audio").checked = b.dataset.v === "on";
     });
   });
   var themes = ["auto", "light", "dark"];
@@ -455,17 +554,24 @@ body.in-detail header.top { padding-top: 8px; }
     var src = mediaURL(c.media);
     if (dv.dataset.k !== String(c.media)) { dv.dataset.k = c.media; dv.src = src; }
     dv.currentTime = rangeOf(c).start;
-    words = []; var html = [];
+    words = []; var html = [], spk = null;
     f.lines.forEach(function (l, i) {
       var ws = (l.words && l.words.length ? l.words : [[l.text, l.start, l.end]]).map(function (w) {
-        var k = words.length; words.push({ s: w[1], e: w[2], k: k });
+        var k = words.length; words.push({ s: w[1], e: w[2], k: k, cue: i });
         return '<span class="w" data-k="' + k + '">' + esc(w[0]) + "</span>";
       });
-      var lang = l.lang && l.lang !== "en" ? '<span class="lang">' + esc(l.lang.toUpperCase()) + "</span>" : "";
-      html.push('<div class="cue" data-s="' + l.start + '" data-e="' + l.end + '"><button class="ts" data-s="' + l.start + '">' +
-                fmt(l.start) + "</button>" + (l.speaker ? '<span class="spk">' + esc(l.speaker) + "</span>" : "") + lang +
-                ws.join(" ") + (l.en ? '<span class="en">' + esc(l.en) + "</span>" : "") + "</div>");
+      var turn = l.speaker !== spk; spk = l.speaker;
+      // the speaker only where a turn starts; the words hang beside the time however they wrap
+      html.push('<div class="cue' + (turn && i ? " turn" : "") + '" data-i="' + i + '" data-s="' + l.start + '" data-e="' + l.end + '">' +
+                '<button class="ts" data-s="' + l.start + '">' + fmt(l.start) + "</button>" +
+                (turn && l.speaker ? '<span class="spk">' + esc(l.speaker) + "</span>" : "") +
+                '<div class="body">' + english(l) + spoken(l, ws.join(" ")) + "</div></div>");
     });
+
+    // what the file is said in, when any of it isn't the review's language
+    var by = {}; f.lines.forEach(function (l) { if (l.lang) by[l.lang] = (by[l.lang] || 0) + 1; });
+    $("d-said").textContent = f.lines.some(foreign) ? "· " + Object.keys(by).sort(function (a, b) { return by[b] - by[a]; })
+      .map(function (g) { return langName(g) + " " + by[g]; }).join(", ") + " lines" : "";
     $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">No transcript for this file.</p>';
     document.body.classList.add("in-detail"); tray();
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
@@ -502,10 +608,15 @@ body.in-detail header.top { padding-top: 8px; }
     if (playClip && dv.currentTime >= r.end) { dv.pause(); playClip = false; }
     var k = wordAt(dv.currentTime);
     if (k !== lastWord) {
-      if (lastWord !== null) { var o = document.querySelector('.w[data-k="' + lastWord + '"]'); if (o) o.classList.remove("now"); }
+      if (lastWord !== null) {
+        var o = document.querySelector('.w[data-k="' + lastWord + '"]'); if (o) o.classList.remove("now");
+        var oc = document.querySelector(".cue.playing"); if (oc) oc.classList.remove("playing");
+      }
       if (k !== null && dv.currentTime <= words[k].e + 0.6) {
-        var w = document.querySelector('.w[data-k="' + k + '"]');
-        if (w) { w.classList.add("now"); if (follow && !dv.paused) w.scrollIntoView({ block: "center", behavior: "smooth" }); }
+        // the word, and its line: with the English shown, the line is what follows the voice
+        var w = document.querySelector('.w[data-k="' + k + '"]'), q = document.querySelector('.cue[data-i="' + words[k].cue + '"]');
+        if (w) w.classList.add("now");
+        if (q) { q.classList.add("playing"); if (follow && !dv.paused) q.scrollIntoView({ block: "center", behavior: "smooth" }); }
         lastWord = k;
       } else lastWord = null;
     }
@@ -524,6 +635,7 @@ body.in-detail header.top { padding-top: 8px; }
   })();
   $("d-transcript").addEventListener("click", function (e) {
     var ts = e.target.closest(".ts"); if (ts) { dv.currentTime = +ts.dataset.s; dv.play(); return; }
+    var tr = e.target.closest(".tr"); if (tr) { dv.currentTime = +tr.closest(".cue").dataset.s; dv.play(); return; }
     var w = e.target.closest(".w"); if (w) { dv.currentTime = words[+w.dataset.k].s; dv.play(); }
   });
   $("d-transcript").addEventListener("wheel", function () { if (follow) { follow = false; followLabel(); } }, { passive: true });
@@ -557,11 +669,13 @@ body.in-detail header.top { padding-top: 8px; }
       else if (k === "o") setRange("out");
       else if (k === "j") dv.currentTime = Math.max(0, dv.currentTime - 5);
       else if (k === "l") dv.currentTime = dv.currentTime + 5;
+      else if (k === "t") setLang(LANGS[(LANGS.indexOf(langMode) + 1) % 3]);
       else if (k === "ArrowLeft" || k === "[") { e.preventDefault(); step(-1); }
       else if (k === "ArrowRight" || k === "]") { e.preventDefault(); step(1); }
       return;
     }
     if (k === "s" || k === "S") toggle(hoverN);
+    else if (k === "t") setLang(LANGS[(LANGS.indexOf(langMode) + 1) % 3]);
     else if (k === "i") importKey();
     else if ((k === " " || k === "Enter") && hoverN !== null) { e.preventDefault(); openDetail(hoverN); }
   });
@@ -620,6 +734,9 @@ body.in-detail header.top { padding-top: 8px; }
   } else {
     $("pre").disabled = $("post").disabled = $("into").disabled = $("audio").disabled = true;
   }
+  // The switch is there when a line of the review's files was said in another language and has its English.
+  $("d-lang").hidden = !Object.keys(D.files).some(function (r) { return D.files[r].lines.some(enOf); });
+  setLang(langMode);
   render();
 })();
 </script>

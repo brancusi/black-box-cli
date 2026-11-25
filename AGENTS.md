@@ -65,7 +65,7 @@ The footage is irreplaceable. When a rule and a request conflict, stop and ask t
 - `src/black_box_cli/`: `main` (dispatch, the home view), `flags` (each command's flags), `archive` (the transcript
   commands), `edl` (the `edl` commands), `cutlist` (reading cut lists), `cuts` (writing and reading cut folders),
   `look` (`frame`, `look`, `like`), `frames` (the picture index and scoring), `probe` (each
-  original's camera, rates and resolution; the filters), `people` (the names), `prints` (voice
+  original's camera, rates and resolution; the filters), `translations` (the English of lines said in Italian), `people` (the names), `prints` (voice
   and face prints, scored as Black Box's People page does), `who` (`people`, `whose`, `like` for voices and faces),
   `picture` (JPEGs from proxies), `preview` (a cut rendered to one mp4 for `--play`), `sync` (the sync map:
   recorders heard with each camera), `app` (running the Black Box app for what only it can do), `project` (asking

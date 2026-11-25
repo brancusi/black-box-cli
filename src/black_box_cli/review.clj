@@ -18,6 +18,7 @@
    [black-box-cli.resolve :as resolve]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
+   [black-box-cli.translations :as translations]
    [black-box-cli.version :as version]
    [cheshire.core :as json]
    [clojure.java.io :as io]
@@ -29,17 +30,41 @@
 ;; ------------------------------------------------------------------------------------------------ the data
 
 (defn- file-lines
-  "Every line of the file `rel` in transcript `version`: {:id :start :end :text :speaker :lang :words [[w s e]]}."
+  "Every line of the file `rel` in transcript `version`: {:id :start :end :text :speaker :lang :en :words [[w s e]]},
+  `en` the English of a line said in another language when Black Box has translated it (else nil), and `lang` what
+  it was said in when known (a translated transcript's other lines in English)."
   [path version rel]
-  (when-let [t (db/one path "SELECT id FROM transcripts WHERE version = :v AND rel = :rel;" {:v version :rel rel})]
-    (mapv (fn [q]
-            (let [words (mapv (fn [[w s e]]
-                                [w (tc/round-to (or s (:start q)) 2) (tc/round-to (or e s (:end q)) 2)])
-                              (json/parse-string (:words q)))]
-              (array-map :id (:id q) :start (:start q) :end (:end q) :text (:text q)
-                         :speaker (:speaker q) :lang (:language q) :words words)))
-          (db/query path "SELECT id, start, end, text, speaker, language, words FROM cues WHERE transcript_id = :t ORDER BY n;"
-                    {:t (:id t)}))))
+  (when-let [t (db/one path "SELECT id, json_sha256 FROM transcripts WHERE version = :v AND rel = :rel;"
+                       {:v version :rel rel})]
+    (let [english (translations/for-transcript path (:json_sha256 t))]
+      (mapv (fn [q]
+              (let [words (mapv (fn [[w s e]]
+                                  [w (tc/round-to (or s (:start q)) 2) (tc/round-to (or e s (:end q)) 2)])
+                                (json/parse-string (:words q)))]
+                (array-map :id (:id q) :start (:start q) :end (:end q) :text (:text q)
+                           :speaker (:speaker q)
+                           :lang (or (:language q) (get-in english [(:n q) :lang]) (when english "en"))
+                           :en (get-in english [(:n q) :en]) :words words)))
+            (db/query path "SELECT id, n, start, end, text, speaker, language, words FROM cues WHERE transcript_id = :t
+                            ORDER BY n;"
+                      {:t (:id t)})))))
+
+(defn- with-english
+  "The review `doc` with the English Black Box has published since it was made, for a page served now."
+  [ctx doc]
+  (let [path (:index (index/paths ctx))]
+    (if-not (fs/exists? (translations/path path))
+      doc
+      (update doc :files
+              (fn [files]
+                (into (array-map)
+                      (for [[rel f] files
+                            :let [rel (if (keyword? rel) (subs (str rel) 1) (str rel))
+                                  fresh (into {} (map (juxt :id identity)) (file-lines path (:transcripts doc) rel))]]
+                        [rel (update f :lines
+                                     (fn [ls] (mapv #(let [g (fresh (:id %))]
+                                                       (assoc % :en (or (:en %) (:en g)) :lang (or (:lang %) (:lang g))))
+                                                    ls)))])))))))
 
 (defn- thumb!
   "A picture of the middle of segment `s` in the review's thumbs/ folder: thumbs/<n>.jpg, or nil."
@@ -212,7 +237,7 @@
                      (cond
                        (and (= :get request-method) (= "/" rest*))
                        {:status 200 :headers {"content-type" "text/html; charset=utf-8" "cache-control" "no-store"}
-                        :body (page doc)} ; this CLI's page, so a review made earlier gets its fixes
+                        :body (page (with-english ctx doc))} ; this CLI's page, so a review made earlier gets its fixes
 
                        (and (= :get request-method) (re-matches #"/media/\d+" rest*))
                        (if-let [p (get media (parse-long (subs rest* 7)))]
@@ -337,6 +362,10 @@
   [{:keys [home opts args] :as ctx}]
   (let [{:keys [text title segments warnings version]} (edl/read-cut (assoc-in ctx [:args :cutlist] (:selects args))
                                                                      "review new")
+        language (or (:language opts) "en")
+        _ (when-not (re-matches #"[a-z]{2,3}" language)
+            (out/fail! "usage" (str "--language takes a language's code, like en or it, not " language)
+                       {:help ["Run `blackbox review new --help`"]}))
         path (index/require-index! ctx)
         no-proxy (keep-indexed (fn [i s] (when-not (:play_path s)
                                            (str "clip " (inc i) " (" (:source_name s) "): no proxy, left out of the review")))
@@ -349,10 +378,15 @@
                          [rel (array-map :name (str (fs/file-name rel))
                                          :duration (:duration (first (filter #(= rel (:rel %)) segments)))
                                          :lines (or (file-lines path version rel) []))]))
-        lines-in (fn [s] (count (filter #(and (> (:end %) (:start s)) (< (:start %) (:end s))) (:lines (files (:rel s))))))
+        in-range (fn [s] (filter #(and (> (:end %) (:start s)) (< (:start %) (:end s))) (:lines (files (:rel s)))))
+        lines-in (comp count in-range)
+        ;; a clip is in another language when most of its lines whose language is known are
+        elsewhere (fn [s] (let [known (keep :lang (in-range s))]
+                            (and (seq known) (> (* 2 (count (remove #{language} known))) (count known)))))
         rows (vec (map-indexed (fn [i s] (row (inc i) s (lines-in s))) segments))
         groups (vec (distinct (keep :group segments)))
         head [:title title :clips (count segments) :groups (if (seq groups) groups "none")
+              :language language :in_another_language (count (filter elsewhere segments))
               :warnings (if (seq warnings) warnings "none")]]
     (if (:dry-run opts)
       [(apply array-map (concat head [:written "nothing (--dry-run)" :review rows]))
@@ -363,6 +397,7 @@
             thumbs (vec (pmap (fn [[i s]] (thumb! ctx folder (inc i) s)) (map-indexed vector segments)))
             doc (array-map
                  :schema schema :id id :title title :made_at (str (java.time.Instant/now)) :transcripts version
+                 :language language
                  :groups groups :warnings warnings :media media
                  :clips (vec (map-indexed
                               (fn [i s]

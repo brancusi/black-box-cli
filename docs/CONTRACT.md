@@ -19,6 +19,7 @@ Files Dropbox keeps online-only are skipped unread and counted (`skipped`), neve
 | `people/` | names per clip: voices by speaker label, faces by face track (`media-mgmt.people/1`) | `registry/<stamp>.json` names `assignments/<stamp>.jsonl`; only the newest registry is read, and its assignments must match its `assignments_sha256` |
 | `prints/` | voice and face prints, float32 (`media-mgmt.prints/1`) | `<model>/<rel>.<stamp>.prints.json`; only the newest stamp of each (model, rel) is read |
 | `shots/` | what happens in each shot of a clip (`blackbox.shots/1`), by a model from the proxy with its sound | `<model label>/<prompt version>/<rel>.shots.json`; the CLI reads `gemini-3.1-pro/v1`; marker `.blackbox-shots-root`; never redone in place |
+| `translations/` | the English of each line said in another language, per transcript (`media-mgmt.translation/1`) | `<label>/v<N>/<rel>.<transcript file sha256[:12]>.en.json`; marker `.media-mgmt-translations-root`; a line gets English only from a translation of the transcript file the index holds (its sha256); of several, the highest N, then the newest |
 | `probe/` | each original's camera or recorder, rates, slow motion, resolution, codec and bitrate, from its own metadata (`media-mgmt.probe/1`) | `v<N>/<rel>.<sha256[:12]>.json`; each original from the newest N that has it (a new version republishes everything over minutes, the old stays as it was); marker `.media-mgmt-probe-root`; written once, a changed original gets a new file beside the old one (the CLI keeps the newest per rel) |
 | `sync/` | which recorder files were heard with each camera file, and the offset (`media-mgmt.sync/1`) | `<YYYY>/<MM>/<DD>.<stamp>.sync.jsonl`; only the newest stamp of each day is read; a pair joins on (rel, sha256) |
 
@@ -92,6 +93,23 @@ date folders give `day` and `month`.
 - No location is ever written. A file whose `source.rel` isn't its own path, whose name's sha isn't its
   `source.sha256`'s start, or that isn't this schema, is skipped and counted.
 
+### Translations JSON (`media-mgmt.translation/1`)
+
+```json
+{"schema": "media-mgmt.translation/1", "to": "en",
+ "source": {"rel": "media/…/C5274.MP4", "sha256": "…"},
+ "transcript": {"version": "deepgram-nova-3-multi", "sha256": "<the transcript file's>", "made_at": "…", "cues": 4},
+ "languages": {"en": 3, "it": 1},
+ "producer": {"tool": "media-mgmt", "model": "…", "label": "…", "made_at": "…"},
+ "cues": [{"i": 2, "start": 22.2, "end": 24.55, "lang": "it", "text": "We use this for a sculpture."}]}
+```
+
+- One cue for each line not said in English: `i` is its 0-based place in the transcript (line `n` is `i + 1`),
+  `text` its English. Lines said in English have none. Only the line is translated, not each word: the words as
+  said keep the timing.
+- A file whose `source.rel` isn't its own path, whose name's sha isn't its `transcript.sha256`'s start, or that
+  isn't this schema into English, is skipped and counted.
+
 ### Frames JSON (`media-mgmt.embeddings/1`)
 
 One per clip: the proxy's SHA-256, the original's, the frame rule (a frame every 5 s), and per frame its time
@@ -109,6 +127,7 @@ Black Box); image vectors are float32-exact before storage.
 | Stills (`still new`) | `<local>/stills/<UTC stamp>-<look>/`: `request.json`, then the stills Black Box brings back (`<name>.jpg`, `<name>.tif`); copies in the `--out` folder when one is named | a new folder each request, files created new; Black Box writes the stills; copies never over a file |
 | Selects reviews | `~/Black Box/reviews/<UTC stamp>-<slug>/`: `review.json`, `review.html`, `thumbs/<n>.jpg` | a new folder each time, files created new; never deleted by the CLI (people delete them in Finder) |
 | The review server's state | `~/Library/Application Support/black-box-cli/review-server.json`: `{token, port, cli, pid}`, and `review-server.log` | the key is made once and kept, so open pages work across restarts; replaced by rename |
+| The translations (cache) | `<local>/search/translations.sqlite` | rebuilt from `media_meta/translations` when its files change; replaced by rename |
 | Rendered cuts (`--play`) | `<local>/previews/<cut id>-<hash of cut.mpv.edl>.mp4` (cache) | made once from the proxies; renamed into place |
 | The skill and hook (`setup agent`) | `~/.claude/skills/blackbox/`, `~/.claude/settings.json`; Codex's `~/.agents/skills/blackbox/`, `~/.codex/hooks.json` (settings copied aside first) | never over a hand-edited file |
 
