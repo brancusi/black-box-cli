@@ -31,6 +31,14 @@ class Fail(Exception):
 STEP = {"now": "starting", "log": None}
 
 
+def import_subtitle(media_pool, folder, ours, srt):
+    """The .srt imported into our Subtitles folder: its media pool item, or None."""
+    media_pool.SetCurrentFolder(subfolder(media_pool, ours, "Subtitles"))
+    found = media_pool.ImportMedia([srt]) or media_pool.ImportMedia([{"FilePath": srt}]) or []
+    media_pool.SetCurrentFolder(folder)
+    return next((i for i in found if i.GetClipProperty("Type") == "Subtitle"), None)
+
+
 def step(what):
     """Notes what the script is about to ask Resolve, in the steps log beside the plan (a new file each run): if
     Resolve crashes, the last line says on what."""
@@ -83,10 +91,18 @@ def unique(name, taken):
 
 
 def subfolder(media_pool, parent, name):
+    """The bin `name` in `parent`, made when it isn't there. In a project on a shared database (a network project,
+    collaboration on), Resolve can refuse to make one, as while another editor has the bin it goes in open: said
+    plainly, never left to fail on later."""
     for f in parent.GetSubFolderList() or []:
         if f.GetName() == name:
             return f
-    return media_pool.AddSubFolder(parent, name)
+    made = media_pool.AddSubFolder(parent, name)
+    if made is None:
+        raise Fail("resolve-bin", f"Resolve wouldn't make the bin {name} in {parent.GetName()}. In a shared project "
+                                  f"another editor may have {parent.GetName()} open: ask them to close it, or make "
+                                  f"the bin {name} there yourself, then import again")
+    return made
 
 
 def walk(folder):
@@ -107,33 +123,59 @@ def media_key(path):
     return p[i:].lower() if i >= 0 else None
 
 
-def find_existing(root, ours, paths):
-    """The originals already in this project, in any folder: {path: (item, folder, mine)}. A clip the editor brought
-    in is preferred to one in a Black Box folder, and an exact path to one matched by its media/ path."""
-    ours_ids = {f.GetUniqueId() for f in walk(ours)}
-    by_key = {}
+def by_media_key(paths):
+    """The originals by their media/ path: {key: [paths]}."""
+    keys = {}
     for p in paths:
         k = media_key(p)
         if k:
-            by_key.setdefault(k, []).append(p)
-    found = {}
-    for f in walk(root):
-        theirs = f.GetUniqueId() not in ours_ids
+            keys.setdefault(k, []).append(p)
+    return keys
+
+
+def original_of(fp, paths, keys):
+    """Which original a clip's file path `fp` is: itself, or the one original with its media/ path (the NAS mounted
+    another way); never by a file name alone (camera names repeat across cards). None when it's none of them."""
+    if fp in paths:
+        return fp
+    same = keys.get(media_key(fp)) or []
+    return same[0] if len(same) == 1 else None
+
+
+def in_our_bin(ours, paths):
+    """The originals an earlier cut brought into the Black Box bin: {path: item}. That bin only, never the whole
+    project; a clip's path is asked only when its name is an original's."""
+    names, keys, found = {os.path.basename(p).lower() for p in paths}, by_media_key(paths), {}
+    for f in walk(ours):
         for item in f.GetClipList() or []:
-            fp = file_path(item)
-            if not fp:
-                continue
-            if fp in paths:
-                p, exact = fp, True
-            else:
-                same = by_key.get(media_key(fp)) or []
-                if len(same) != 1:
-                    continue
-                p, exact = same[0], False
-            rank = (theirs, exact)
-            if p not in found or rank > found[p][3]:
-                found[p] = (item, f, theirs, rank)
-    return {p: (item, f, theirs) for p, (item, f, theirs, _) in found.items()}
+            if (item.GetName() or "").lower() in names:
+                p = original_of(file_path(item), paths, keys)
+                if p and p not in found:
+                    found[p] = item
+    return found
+
+
+def found_by_resolve(media_pool, ours, edl, paths, name):
+    """The originals Resolve finds for the cut's EDL anywhere in the project: {path: item}. A project can hold tens of
+    thousands of clips, on a network database where each question about one is a trip to the server, so the project is
+    never walked from here: Resolve matches each of the EDL's events to a clip, by its name and timecode in every bin,
+    in one call. Each clip it chose is then checked by its path, so a camera's name repeated on another card is never
+    taken. The timeline it makes for this is this run's own, seconds old, and deleted."""
+    media_pool.SetCurrentFolder(ours)
+    timeline = media_pool.ImportTimelineFromFile(edl, {"timelineName": name, "importSourceClips": False,
+                                                       "sourceClipsFolders": [media_pool.GetRootFolder()]})
+    if timeline is None:
+        return {}
+    keys, found = by_media_key(paths), {}
+    try:
+        for t in timeline.GetItemListInTrack("video", 1) or []:
+            item = t.GetMediaPoolItem()
+            p = original_of(file_path(item), paths, keys) if item else None
+            if p and p not in found:
+                found[p] = item
+    finally:
+        media_pool.DeleteTimelines([timeline])
+    return found
 
 
 def blank(project):
@@ -252,6 +294,8 @@ def main(plan_path):
     step(f"opening the project's Media Pool ({project.GetName()})")
     media_pool = project.GetMediaPool()
     root = media_pool.GetRootFolder()
+    # One Black Box bin at the top of the project, local or network: the timelines in it, each cut's originals in a
+    # bin of their own inside it.
     ours = subfolder(media_pool, root, "Black Box")
     folder = subfolder(media_pool, ours, plan["bin"])
     media_pool.SetCurrentFolder(folder)
@@ -259,15 +303,21 @@ def main(plan_path):
     # Originals already in this project, in any folder (the editor's own first, then an earlier cut's under "Black
     # Box"), are used where they are, never imported twice; only the rest come into this cut's Black Box folder. The
     # EDL links to them in their folders.
-    step("looking for the originals already in the project")
-    existing = find_existing(root, ours, paths)
-    have = {p: item for p, (item, _, _) in existing.items()}
-    theirs = {p for p, (_, _, mine) in existing.items() if mine}
-    homes, seen = [folder], {folder.GetUniqueId()}
-    for _, f, _ in existing.values():
-        if f.GetUniqueId() not in seen:
-            seen.add(f.GetUniqueId())
-            homes.append(f)
+    # Originals already in this project are used where they are, never imported twice: the camera clips wherever
+    # Resolve finds them (the editor's own bins too), the recorders from an earlier cut's Black Box bin; only the rest
+    # come into this cut's bin.
+    step("looking in the Black Box bin for originals an earlier cut brought in")
+    have = in_our_bin(ours, paths)
+    mine = {item.GetMediaId() for item in have.values()}
+    theirs = set()
+    if plan.get("edl") and os.path.isfile(plan["edl"]) and any(c["video"] for c in plan["clips"]):
+        step("asking Resolve to find the cut's clips in the project")
+        for p, item in found_by_resolve(media_pool, ours, plan["edl"], paths,
+                                        unique(plan["timeline"] + " (finding clips)", timeline_names(project))).items():
+            have[p] = item
+            if item.GetMediaId() not in mine:
+                theirs.add(p)
+    step(f"found {len(have)} of {len(paths)} originals in the project ({len(theirs)} in the editor's bins)")
     new = [p for p in paths if p not in have]
     # Resolve 21.1 answers None to the documented [{"FilePath": …}] form; a list of paths works.
     step(f"importing {len(new)} originals")
@@ -292,6 +342,8 @@ def main(plan_path):
         raise Fail("no-originals", "none of the originals could be imported (is the NAS mounted on this Mac?)")
     name = unique(plan["timeline"], timeline_names(project))
     subtitles_placed, subtitles_note = 0, None
+    spoken_note, spoken_bin = None, None
+    spoken = plan.get("subtitles_spoken")
     srt = plan.get("subtitles")
     subtitle_item = None
     major = (resolve.GetVersion() or [0])[0]
@@ -302,10 +354,7 @@ def main(plan_path):
         # Into a folder of their own, never the cut's: an editor drags the cut's folder into a timeline, and Resolve
         # crashes placing a subtitle clip that way. Kept there, not deleted (a placed clip's item is never deleted).
         step("importing the subtitles")
-        media_pool.SetCurrentFolder(subfolder(media_pool, ours, "Subtitles"))
-        found = media_pool.ImportMedia([srt]) or media_pool.ImportMedia([{"FilePath": srt}]) or []
-        media_pool.SetCurrentFolder(folder)
-        subtitle_item = next((i for i in found if i.GetClipProperty("Type") == "Subtitle"), None)
+        subtitle_item = import_subtitle(media_pool, folder, ours, srt)
         if subtitle_item is None:
             subtitles_note = "Resolve didn't import the subtitles"
     edl_note = None
@@ -316,7 +365,9 @@ def main(plan_path):
         # A cut with a clip that has no timecode (nothing said in it) is placed this way too, with or without lines.
         method = "subtitles" if subtitle_item is not None else "frames"
         step(f"creating the timeline {name}")
+        media_pool.SetCurrentFolder(ours)  # the timeline in the Black Box bin itself
         timeline = media_pool.CreateEmptyTimeline(name)
+        media_pool.SetCurrentFolder(folder)
         if timeline is None:
             raise Fail("resolve-failed", f"Resolve couldn't create the timeline {name}")
         project.SetCurrentTimeline(timeline)
@@ -326,6 +377,27 @@ def main(plan_path):
             step("placing the subtitles")
             media_pool.AppendToTimeline([{"mediaPoolItem": subtitle_item, "trackIndex": 1}])
             subtitles_placed = len(timeline.GetItemListInTrack("subtitle", 1) or [])
+            # The words as they were said, for a track above, hidden: an editor turns it on to cut a line said in
+            # another language where it's said. Resolve's scripting can fill only one subtitle track: every subtitle
+            # clip is appended to the track that took the first, at the timeline's end, whatever track is asked for
+            # (tried on 21.1: trackIndex, a locked or disabled track 1, a track inserted below, a duplicated timeline,
+            # ImportIntoTimeline, an FCPXML with captions; again on 21.2.0.6, where a recordFrame for a subtitle clip
+            # still crashes Resolve). So the track is made, named and hidden, and the words wait
+            # in the Subtitles bin for the editor to drag onto it at the timeline's start, where they snap into place.
+            if spoken and os.path.isfile(spoken) and subtitles_placed:
+                step("importing the words as spoken")
+                spoken_item = import_subtitle(media_pool, folder, ours, spoken)
+                if spoken_item is None:
+                    spoken_note = "Resolve didn't import the words as spoken"
+                else:
+                    while timeline.GetTrackCount("subtitle") < 2:
+                        timeline.AddTrack("subtitle")
+                    timeline.SetTrackName("subtitle", 1, "Subtitles")
+                    timeline.SetTrackName("subtitle", 2, "As spoken")
+                    timeline.SetTrackEnable("subtitle", 2, False)
+                    spoken_bin = spoken_item.GetName()
+                    spoken_note = ("the words as spoken are in the Subtitles bin as " + spoken_item.GetName() +
+                                   ": drag them onto ST2 (As spoken, hidden) at the timeline's start")
         start = timeline.GetStartFrame()
         step("placing the clips")
         for c in plan["clips"]:
@@ -335,8 +407,10 @@ def main(plan_path):
     else:
         method = "edl"
         step(f"importing the EDL as the timeline {name}")
+        media_pool.SetCurrentFolder(ours)  # the timeline in the Black Box bin itself
         timeline = media_pool.ImportTimelineFromFile(plan["edl"], {"timelineName": name, "importSourceClips": False,
-                                                                   "sourceClipsFolders": homes})
+                                                                   "sourceClipsFolders": [root]})
+        media_pool.SetCurrentFolder(folder)
     placed = timeline.GetItemListInTrack("video", 1) if timeline else []
     placed = placed or []
     ok = (timeline is not None and len(placed) == len([c for c in clips if c["video"]])
@@ -356,7 +430,9 @@ def main(plan_path):
         edl_note = f"the EDL linked {len(placed)} of {len(clips)} clips"
         if timeline is not None:
             media_pool.DeleteTimelines([timeline])
+        media_pool.SetCurrentFolder(ours)  # the timeline in the Black Box bin itself
         timeline = media_pool.CreateEmptyTimeline(name)
+        media_pool.SetCurrentFolder(folder)
         if timeline is None:
             raise Fail("resolve-failed", f"Resolve couldn't create the timeline {name}")
         project.SetCurrentTimeline(timeline)
@@ -382,7 +458,8 @@ def main(plan_path):
             "missing": missing,
             "proxies_linked": linked, "launched": launched, "resolve": resolve.GetVersionString(),
             "audio": len(audio), "audio_placed": audio_placed,
-            "subtitles_placed": subtitles_placed, "subtitles_note": subtitles_note}
+            "subtitles_placed": subtitles_placed, "subtitles_note": subtitles_note,
+            "spoken_note": spoken_note, "spoken_bin": spoken_bin}
 
 
 if __name__ == "__main__":

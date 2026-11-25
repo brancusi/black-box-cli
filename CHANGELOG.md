@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+- Into Resolve, local or network projects alike: the timeline goes in the Black Box bin at the top of the project
+  (each cut's originals still in a bin of their own inside it). A bin Resolve won't make (in a shared project, while
+  another editor has the bin it goes in open) is said plainly (`resolve-bin`), not as a Python error.
+- Into a large project, a network one above all: the originals already in the project are found by Resolve itself,
+  which matches the cut's EDL to clips in every bin in one call, and each clip it picks is checked by its path. The
+  build no longer asks about every clip in the project, which on a network database meant a trip to the server for
+  each one. Recorders are looked for only in the Black Box bin.
+- Into Resolve with the words as spoken too: when the subtitles are in English and something in the cut was said in
+  another language, the timeline gets a second subtitle track above them, "As spoken", hidden, and the words as they
+  were said, each at its own time, wait in the Subtitles bin: drag them onto it at the timeline's start (Resolve's
+  scripting fills only one subtitle track). Turn it on to cut a line where it's said. On by default, from `online`
+  and a review's Import; `--no-spoken-subtitles` leaves it out.
+- The index is rebuilt by the next command when it lacks a part media_meta publishes (built by an older CLI, as
+  Black Box's own copy is): a Mac indexed that way had no English for Italian lines until someone ran `blackbox index`.
+
 ## 0.1.43 (2026-11-25)
 
 - An open clip says whether it's in the selection, beside its name and around its picture: "✓ Selected" and a mustard

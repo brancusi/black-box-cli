@@ -371,6 +371,8 @@
     "no-database" ["Pass --db with a database Resolve lists in its Project Manager, or leave it out for the current one"]
     "no-project" ["Open a project in Resolve, or pass --into new-project"]
     "no-resolve" ["Install DaVinci Resolve on this Mac"]
+    "resolve-bin" ["In a shared project, ask whoever has the Black Box bin open to close it (or make the bin named in the message yourself), then import again"
+                   (str "Meanwhile, import " edl " in Resolve by hand (File → Import → Timeline)")]
     "resolve-crashed" [(str "Open Resolve again, and send the owner " (str/replace (str edl) #"\.edl$" "-steps.log")
                             " (where it crashed) and Resolve's crash report (Console → Crash Reports)")
                        (str "Meanwhile, import " edl " in Resolve by hand (File → Import → Timeline)")]
@@ -420,6 +422,11 @@
         rate (cuts/timeline-rate segments)
         said (when-not (:no-subtitles opts)
                (resolve/subtitles (index/require-index! ctx) (archive/version-of opts) segments rate subs-in))
+        ;; the words as they were said, on a second track above (hidden), timed word by word: an editor turns it on to
+        ;; cut a line said in another language where it's said. Only when it differs from the first.
+        spoken (when (and (seq said) (not= "spoken" subs-in) (not (:no-spoken-subtitles opts)))
+                 (let [s (resolve/subtitles (index/require-index! ctx) (archive/version-of opts) segments rate "spoken")]
+                   (when (not= (map last s) (map last said)) s)))
         heard (group-by :clip audio)
         rows (vec (map-indexed (fn [i s] (cond-> (online-row (inc i) s (:full opts))
                                            true (assoc :recorders (count (heard (inc i))))))
@@ -439,7 +446,10 @@
               :subtitles (cond
                            (:no-subtitles opts) "none (--no-subtitles)"
                            (seq said) (str (count said) " lines on the subtitle track, "
-                                           (if (= "en" subs-in) "in English (lines said in another language as their English)" "as spoken"))
+                                           (if (= "en" subs-in) "in English (lines said in another language as their English)" "as spoken")
+                                           (when (seq spoken)
+                                             (str "; " (count spoken) " as spoken for a second track above it, hidden"
+                                                  " (in the Subtitles bin: drag them onto it)")))
                            :else "none: nothing is said in these clips")
               :warnings (if (seq warnings) warnings "none")]]
     (if (:dry-run opts)
@@ -453,9 +463,11 @@
             _ (cuts/write-new! edl edl-text)
             srt (when (seq said) (fs/path folder (str "online-" stamp ".srt")))
             _ (when srt (cuts/write-new! srt (cuts/srt-text said)))
+            spoken-srt (when (and srt (seq spoken)) (fs/path folder (str "online-" stamp "-spoken.srt")))
+            _ (when spoken-srt (cuts/write-new! spoken-srt (cuts/srt-text spoken)))
             the-plan (resolve/plan segments {:edl edl :title title :id id :into place :db (:db opts)
                                              :proxies (not (:no-proxies opts)) :originals originals :audio audio
-                                             :rate rate :subtitles srt})
+                                             :rate rate :subtitles srt :spoken spoken-srt})
             plan-path (fs/path folder (str "online-" stamp "-plan.json"))
             _ (cuts/write-new! plan-path (json/generate-string the-plan {:pretty true}))
             [res err] (resolve/build! (:env ctx) plan-path)
@@ -483,6 +495,12 @@
                                              :proxies_linked (:proxies_linked res)
                                              :audio_placed (str (:audio_placed res) " of " (:audio res))
                                              :subtitles_placed (or (:subtitles_placed res) 0)
+                                             :as_spoken (cond
+                                                          (:spoken_bin res) (str "in the Subtitles bin as " (:spoken_bin res)
+                                                                                 ": drag it onto ST2 (As spoken, hidden)"
+                                                                                 " at the timeline's start")
+                                                          (seq spoken) (or (:spoken_note res) "not imported")
+                                                          :else "none")
                                              :started_resolve (:launched res))
                          :id id
                          :folder (out/home-path folder home)
@@ -494,6 +512,8 @@
            (:subtitles_note res)
            (conj (str (:subtitles_note res) ": the timeline was built without them; " (some-> srt fs/file-name)
                       " in the edit's folder has them (File → Import → Subtitle)"))
+           (:spoken_note res)
+           (conj (str "Tell the editor " (:spoken_note res) " (Resolve's scripting fills one subtitle track)"))
            (seq (:missing res))
            (conj (str (count (:missing res)) " original" (when (next (:missing res)) "s")
                       " weren't found: mount the NAS, or pass --originals <the folder that holds media/>"))

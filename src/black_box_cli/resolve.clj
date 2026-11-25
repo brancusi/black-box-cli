@@ -132,7 +132,7 @@
   "What resolve_build.py does, as data: the timeline's place and name, and each clip's original, proxy and frames
   (end exclusive, as AppendToTimeline counts). Placed by frame, a clip starts at `record_frame`, where the frames
   before it end, and its recorders at their clip's (`clip_frame`); the subtitles are timed the same way."
-  [segments {:keys [edl title id into db proxies originals rate audio subtitles]}]
+  [segments {:keys [edl title id into db proxies originals rate audio subtitles spoken]}]
   (let [frames (clip-frames segments rate)
         records (vec (reductions + 0 (map (fn [[a b]] (- b a)) frames)))]
     (array-map :into into
@@ -144,6 +144,7 @@
                :fps (fps-setting rate)
                :proxies (boolean proxies)
                :subtitles (some-> subtitles str)
+               :subtitles_spoken (some-> spoken str) ; the words as said, a second track above, hidden
                ;; a clip without timecode (no transcript) can't be found by the EDL's: place them all by frame
                :by_frames (boolean (some #(nil? (:clock_kind %)) segments))
                :clips (mapv (fn [s [in out] record]

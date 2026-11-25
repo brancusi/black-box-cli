@@ -1934,8 +1934,11 @@ header.top .langs button { padding: 0 10px; }
       var r = res.resolve || {};
       // short: what happened, and how many; the timeline's and project's names are in Resolve, the warnings on hover
       var warns = Array.isArray(res.warnings) && res.warnings.length ? res.warnings : [];
-      toast("✓ Imported into Resolve", r.clips + " clip" + (r.clips == 1 ? "" : "s") + (warns.length ? " · " + warns.length + " warning" + (warns.length > 1 ? "s" : "") + " (hover to read)" : ""),
-            "ok", warns.length ? 16000 : 6000);
+      // the words as said, for the track above the subtitles: Resolve's scripting can't put them there, the editor drags them
+      var spoken = r.as_spoken && r.as_spoken.indexOf("in the Subtitles bin as ") === 0 ? r.as_spoken.slice(24).split(":")[0] : null;
+      toast("✓ Imported into Resolve", r.clips + " clip" + (r.clips == 1 ? "" : "s") + (warns.length ? " · " + warns.length + " warning" + (warns.length > 1 ? "s" : "") + " (hover to read)" : "") +
+            (spoken ? " · words as spoken: drag " + spoken + " from the Subtitles bin onto ST2 at the start" : ""),
+            "ok", warns.length || spoken ? 20000 : 6000);
       if (warns.length) $("toast").title = warns.join("\n");
     }).catch(function (e) { busy = false; count(); toast("Not imported", "The review's server didn't answer (" + e + "): run `blackbox review open " + D.id + "` again.", "err", 20000); });
   }

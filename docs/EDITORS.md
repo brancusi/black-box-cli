@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.43:** The recorders' words; Search the transcript; Selected or not, at a glance ([more](#whats-new))
+**What's new in 0.1.44:** The words as spoken, for Resolve; Big and network projects; An index that heals ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -291,6 +291,12 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.44 (2026-11-25)
+
+- **The words as spoken, for Resolve:** An import with English subtitles over another language makes a hidden "As spoken" track above them; drag the words from the Subtitles bin onto it at the start to cut a line where it's said. `blackbox online quarry`
+- **Big and network projects:** Resolve finds the clips already in the project itself, and the timeline goes in the Black Box bin at the top, local or network. `blackbox online quarry`
+- **An index that heals:** If the index is missing something media_meta has, such as translations, the next command rebuilds it. `blackbox status`
 
 ### 0.1.43 (2026-11-25)
 

@@ -159,11 +159,15 @@
       (is (= 2 (:exit (run "/nowhere/python" stdin "online" "-" "--into" "elsewhere")))))))
 
 (deftest originals-already-in-the-project-are-used-where-they-are
-  (testing "the editor's own copy first, an exact path before the same media/ path, never a file name alone"
+  (testing "Resolve finds the camera clips in any bin, each checked by its path: an exact path or the same media/ path,
+            never a file name alone; the recorders come from the Black Box bin, the project is never walked"
     (let [{:keys [exit out err]} (process/sh "python3" "test/black_box_cli/resolve_build_check.py"
                                              "src/black_box_cli/resolve_build.py")]
       (is (zero? exit) err)
-      (is (= {"2026/09/16/fx3/C0001.MP4" ["Editor media" true "/Volumes/Video/media/2026/09/16/fx3/C0001.MP4"]
-              "2026/09/17/fx3/C0002.MP4" ["Editor media" true "/Volumes/Video-1/media/2026/09/17/fx3/C0002.MP4"]}
+      (is (= {"in_our_bin" {"2026/09/16/audio/REC01.WAV" "an earlier cut"}
+              "asked_in_our_bin" 1
+              "by_resolve" {"2026/09/16/fx3/C0001.MP4" ["Editor media" "/Volumes/Video/media/2026/09/16/fx3/C0001.MP4"]
+                            "2026/09/17/fx3/C0002.MP4" ["Editor media" "/Volumes/Video-1/media/2026/09/17/fx3/C0002.MP4"]}
+              "probe_deleted" 1}
              (json/parse-string out))
-          "C0001 of the 18th is nowhere in the project: it's imported, not matched by its name"))))
+          "C0003 Resolve matched by its name to another card's file: not taken, it's imported"))))

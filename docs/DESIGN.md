@@ -152,7 +152,13 @@ CHANGELOG.md.
       captions, a line's English beside the Italian). `--language` is its old name and still works.
     - **subtitles in** (`--subtitles-in`, `online` and `review new`, and the review's Import): the language of the
       subtitles laid on the Resolve timeline, the audience's; an editor reading German can cut for an English
-      audience. `spoken` lays every line as it was said.
+      audience. `spoken` lays every line as it was said. Beside a track in another language than what was said, the
+      words as spoken go on a second track above it, hidden (the owner, 2026-11-25): a translation is spread over its
+      line, so only the spoken words, each at its own time, show where to cut. `--no-spoken-subtitles` leaves it out.
+      Resolve's scripting (21.1, and 21.2.0.6) fills only one subtitle track: every subtitle clip goes to the track
+      that took the first, at the timeline's end, whatever track is asked for, and a `recordFrame` for one crashes
+      Resolve. So the build makes the second track, names and hides
+      it, and leaves the words in the Subtitles bin for the editor to drag onto it.
     Today there are translations into English only, so `--read-in` marks a clip said in another language (with its
     English when reading in `en`) and `--subtitles-in` takes `en` or `spoken`; another language fails as a usage
     error, saying it waits for translations. Later: Black Box translating into each editor's language (a request to

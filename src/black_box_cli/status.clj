@@ -190,9 +190,20 @@
 (defn- age-s [record]
   (some-> (:at record) Instant/parse (Duration/between (Instant/now)) .getSeconds))
 
+(defn- unread
+  "The parts of media_meta Black Box publishes that the index's `record` doesn't hold at all: an index built by an
+  older CLI, before it read them (Black Box's own copy of the CLI keeps building it on some Macs), or one whose build
+  stopped short. Nothing new in media_meta would bring them in, so they're named here."
+  [meta opts record]
+  (->> (sources meta opts)
+       (filter (fn [{:keys [source published]}]
+                 (and published (not= "transcripts" source) (nil? (get (:result record) (keyword source))))))
+       (mapv :source)))
+
 (defn refresh!
-  "Brings the index up to date before a command reads it: built when it's missing, or when it's over a minute old
-  and media_meta has changed since. Quiet; a refresh another process is already doing isn't waited for. Never
+  "Brings the index up to date before a command reads it: built when it's missing, when it doesn't hold a part of
+  media_meta Black Box publishes (an older CLI built it), or when it's over a minute old and media_meta has changed
+  since. Quiet; a refresh another process is already doing isn't waited for. Never
   with BLACKBOX_REFRESH=never (Black Box, when it keeps the index itself; the tests)."
   [{:keys [env meta opts] :as ctx}]
   (when (and meta (not= "never" (get env "BLACKBOX_REFRESH")))
@@ -204,6 +215,10 @@
         missing (build! ctx true)
 
         (nil? record) (build! ctx false)
+
+        (seq (unread meta opts record))
+        (try (build! ctx false)
+             (catch clojure.lang.ExceptionInfo _ nil))
 
         (< (or (age-s record) 0) refresh-after-s) nil
 
@@ -260,6 +275,8 @@
                                 :state (cond (not published) "none"
                                              (nil? record) "unknown"
                                              (pos? (or pending 0)) "stale"
+                                             (and (not= "transcripts" source)
+                                                  (nil? (get (:result record) (keyword source)))) "stale"
                                              (pos? offline) "incomplete"
                                              :else "ok")
                                 :holds (if record (holds (:result record) source) "unknown")

@@ -250,7 +250,14 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.43" :date "2026-11-25"
+  [{:version "0.1.44" :date "2026-11-25"
+    :items [{:title "The words as spoken, for Resolve" :lesson "online" :run "blackbox online quarry"
+             :what "An import with English subtitles over another language makes a hidden \"As spoken\" track above them; drag the words from the Subtitles bin onto it at the start to cut a line where it's said."}
+            {:title "Big and network projects" :lesson "online" :run "blackbox online quarry"
+             :what "Resolve finds the clips already in the project itself, and the timeline goes in the Black Box bin at the top, local or network."}
+            {:title "An index that heals" :lesson "start" :run "blackbox status"
+             :what "If the index is missing something media_meta has, such as translations, the next command rebuilds it."}]}
+   {:version "0.1.43" :date "2026-11-25"
     :items [{:title "The recorders' words" :lesson "review" :run "blackbox review open kiln"
              :what "When people wore recorders, their cleaner transcript is the clip's; the camera's own lines stay only where no recorder heard them, marked CAM."}
             {:title "Search the transcript" :lesson "review" :run "blackbox review open kiln"

@@ -161,6 +161,7 @@
                 {:flag "--subtitles-in" :value "en|spoken" :default "en"
                  :doc "the subtitles' language: en (default; a line said in another language as its English) or spoken (as said)"}
                 {:flag "--no-subtitles" :doc "don't put what's said on the timeline's subtitle track"}
+                {:flag "--no-spoken-subtitles" :doc "no second subtitle track with the words as they were said (it's laid above, hidden, when the first is in another language)"}
                 {:flag "--title" :value "text" :doc "for a cut list: the edit's title (or `title:` in the cut list)"}
                 {:flag "--no-render" :doc "for a cut list: don't render the new edit's edit.mp4"}
                 {:flag "--dry-run" :doc "check and show the clips with their pre- and post-roll; write nothing, don't open Resolve"}

@@ -137,6 +137,22 @@
     (is (not (str/includes? (said "spoken") "sculpture")) "as spoken: the Italian")
     (is (str/includes? (said "spoken") "scultura"))))
 
+(deftest resolve-gets-the-words-as-spoken-on-a-second-track
+  (let [meta (italian-meta)
+        _ (publish! meta (sha256 (transcript-path meta)) "v1" "We use this for a sculpture.")
+        {:keys [run]} (runner meta)
+        _ (run nil "index")
+        italian "title: Marmo\nC5274.MP4 0:20-0:25\n"
+        english "title: Marmo\nC5274.MP4 0:00-0:05\n"
+        subs (fn [cut & flags] (:subtitles (apply run cut "online" "-" "--dry-run" flags)))]
+    (testing "a clip said in Italian: English on the track, the Italian above it, hidden"
+      (is (re-find #"in English .*; \d+ as spoken for a second track above it, hidden" (subs italian))))
+    (testing "--no-spoken-subtitles: only the English"
+      (is (not (re-find #"second track" (subs italian "--no-spoken-subtitles")))))
+    (testing "nothing said in another language, or subtitles already as spoken: one track"
+      (is (not (re-find #"second track" (subs english))))
+      (is (not (re-find #"second track" (subs italian "--subtitles-in" "spoken")))))))
+
 (deftest a-review-made-before-gets-the-english-when-served
   (let [meta (italian-meta)
         {:keys [run local home]} (runner meta)

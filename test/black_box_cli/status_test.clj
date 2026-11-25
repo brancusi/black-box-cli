@@ -5,6 +5,7 @@
    [babashka.fs :as fs]
    [black-box-cli.status :as status]
    [black-box-cli.support :as s]
+   [cheshire.core :as json]
    [clojure.string :as str]
    [clojure.test :refer [deftest is testing]])
   (:import
@@ -92,6 +93,26 @@
       (let [local2 (str (fs/create-temp-dir {:prefix "bbcli-local-"}))
             out (read-string (:out (s/cli* {} ["--meta" meta "--local" local2 "--format" "edn" "search" "marble"])))]
         (is (= "no-index" (-> out :error :code)))))))
+
+(deftest an-index-an-older-cli-built-is-brought-up-to-date
+  ;; Black Box's own copy of the CLI can be older than this one: it builds the index without the parts it doesn't
+  ;; know, and nothing new in media_meta would bring them in.
+  (let [meta (copy-meta)
+        {:keys [run local]} (runner meta)
+        record (fs/path local "search" "indexed.json")]
+    (run "index")
+    (spit (str record) (json/generate-string (-> (json/parse-string (slurp (str record)) true)
+                                                 (assoc :cli "0.1.10")
+                                                 (update :result dissoc :probe :shots))))
+    (testing "status says it's stale, naming what it doesn't hold"
+      (let [st (run "status")]
+        (is (= "stale" (:health st)))
+        (is (= ["stale" "not indexed yet"] ((juxt :state :holds) (first (filter #(= "probe" (:source %)) (:sources st))))))))
+    (testing "the next command builds it again, though it's under a minute old and nothing in media_meta changed"
+      (run "search" "marble")
+      (let [st (run "status")]
+        (is (= "ok" (:health st)))
+        (is (not= "0.1.10" (:by st)))))))
 
 (deftest index-reports-progress-on-stderr
   (let [err (StringWriter.)
