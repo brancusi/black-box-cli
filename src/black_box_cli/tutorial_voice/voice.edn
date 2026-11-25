@@ -7,9 +7,10 @@
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
- "43b9a23f13328005"
- {:text "New in version 0.1.45: the review server keeps up.",
-  :seconds 5.486},
+ "56899db79bdcb4d3"
+ {:text
+  "New in version 0.1.45: subclips, and the review server keeps up.",
+  :seconds 6.766},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
@@ -38,10 +39,10 @@
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
   :seconds 5.721},
- "ee646e730511565f"
+ "cccf86031df2fbc8"
  {:text
-  "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",
-  :seconds 8.594},
+  "Selects on a page. Hover to preview, click to read along. A adds a subclip; command return imports them into Resolve.",
+  :seconds 9.561},
  "f62fc0406604cf31"
  {:text
   "Stills for print and the web, rendered full size from the originals, in the house look or yours.",

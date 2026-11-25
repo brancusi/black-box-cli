@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Subclips in a review: `a` adds a clip's in and out to the import as a subclip, and again for every other part,
+  from the same clip as often as wanted, overlapping too (never the very same in and out twice). Marks changed later
+  never change one already added; only a subclip's × in the queue at the top takes it out, and Clear asks for a second
+  click. `s` no longer selects or deselects: it says what changed. The open clip's timeline numbers its subclips; the
+  chip by its name says whether these marks are added. A review's earlier selection comes back as one subclip each.
 - The review server moves to the blackbox installed after it started. Run by Black Box's launcher, it looks at the
   launcher every minute and before every import: when that runs another version, it waits for any import to finish,
   stops, and starts the installed version's server on the same port. An open page goes on with the new server and

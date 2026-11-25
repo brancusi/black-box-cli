@@ -284,8 +284,11 @@ into Resolve puts the same text in the subtitles, without the CAM lines that sit
 An open clip takes Resolve's keys, so editors don't change habits:
 J K L shuttle (each press faster, backward with its sound; K held with J or L steps a frame or plays slowly),
 ← → a frame (Shift: a second), ↑ ↓ the previous or next clip, `i` `o` mark in and out, Shift+I/O go to them, ⌥I ⌥O
-⌥X clear them. `s` selects the clip under the mouse or the open one; the selected gather at the top, as many as fit, in
-the order picked, which is their order on the timeline; View all shows every one (drag one to move it). ⌘↵ or the Import into Resolve button sends them to `online` (below):
+⌥X clear them. `a` adds the clip under the mouse, or the open one with its in and out, as a subclip to import: again
+for each other part, from the same clip as often as wanted, overlapping too (never the very same in and out twice);
+marks changed later never change a subclip already added. `s` no longer selects (it says so). The subclips gather at
+the top, as many as fit, in the order added, which is their order on the timeline; only a subclip's × there takes it
+out (Clear asks for a second click); View all shows every one (drag one to move it). ⌘↵ or the Import into Resolve button sends them to `online` (below):
 a new timeline from the camera originals, with the handles, Into (open project or new project) and Recorders
 (synced or off) and Subtitles (English, a line said in Italian as its English, or as spoken; `--subtitles-in` sets
 the review's start) chosen in the bar at the bottom; a toast says how it went. When the subtitles are in English and
@@ -298,12 +301,12 @@ is marked on its picture ("Italian"), and the header counts them (`in_another_la
 said in Italian shows its English ("Translated from Italian"), with the Italian word for word under it (what the cut
 follows, lit word by word as it plays); English, Both and As spoken at the top (or `t`) switch between them.
 Under an open clip, a strip shows the shots its camera took before and after it, in the order it shot them, with
-the time between them, loading more as it's scrolled (Shift+↑ ↓ step through them; `s` over one selects it); space over one gives a closer look, scrubbed with sound and
+the time between them, loading more as it's scrolled (Shift+↑ ↓ step through them; `a` over one adds it); space over one gives a closer look, scrubbed with sound and
 playing on where the mouse rests, driven by J K L and the arrows while it's open (`o` or ↵ opens the shot there); a
-shot opens like any clip, where it was scrubbed to, and `s` adds it, trimmed with `i`
-and `o`, to an "Added by you" group. What they select, trim and add is kept in the review's folder
-(`state.jsonl`, the last line is the latest) and comes back when the page is reloaded; read it to see what an
-editor picked. The open clip's timeline is its sound's waveform with each line said marked above it (a click on one
+shot opens like any clip, where it was scrubbed to, and `a` adds it, trimmed with `i`
+and `o`, to an "Added by you" group. The subclips, marks and added shots are kept in the review's folder
+(`state.jsonl`, the last line is the latest: `queue` is the subclips in order, each `{n, start, end}`) and come back
+when the page is reloaded; read it to see what an editor picked. The open clip's timeline is its sound's waveform with each line said marked above it (a click on one
 goes to it), its in and out shaded; a span dragged on it becomes the in and out with ↵; captions show what's said in the review's language (`c`).
 
 `blackbox review list` lists them; `blackbox review open <id>` opens one again, with Import working. review.html

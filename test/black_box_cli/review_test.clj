@@ -197,6 +197,15 @@
               plan (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)]
           (is (= 200 (:status r)))
           (is (= 2 (count (:clips plan))))))
+      (testing "Import takes several subclips of one clip, overlapping too, each its own clip in the cut, in their order"
+        (let [r (http/post (str "http://127.0.0.1:" port "/" id "/api/import?t=" token)
+                           {:throw false :headers {"content-type" "application/json"}
+                            :body (json/generate-string {:clips [{:n 1 :start 23 :end 25} {:n 1 :start 20 :end 22}
+                                                                 {:n 1 :start 21 :end 24}]
+                                                         :pre 0 :post 0 :into "current" :audio false})})
+              plan (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)]
+          (is (= 200 (:status r)))
+          (is (= [[551 599] [480 527] [503 575]] (mapv (juxt :in_frame :out_frame) (:clips plan))))))
       (testing "an Import with nothing chosen says so"
         (let [r (http/post (str "http://127.0.0.1:" port "/" id "/api/import?t=" token)
                            {:throw false :body (json/generate-string {:clips []})})]

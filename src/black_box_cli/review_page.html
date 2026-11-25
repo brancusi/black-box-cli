@@ -35,6 +35,7 @@ button { cursor: pointer; }
 kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border: 1px solid var(--line-strong); font: 11px/1 var(--font-mono); color: var(--muted); vertical-align: 1px; margin: 0 2px; }
 .ghost { display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; border: 1px solid var(--line); background: transparent; color: var(--muted); white-space: nowrap; }
 .ghost:hover { color: var(--ink); border-color: var(--line-strong); }
+.ghost.armed { color: var(--danger); border-color: var(--danger); }
 
 /* header: title, groups, the selected */
 header.top { position: sticky; top: 0; z-index: 12; background: var(--ground); border-bottom: 1px solid var(--line); padding: 12px 20px 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; }
@@ -234,6 +235,7 @@ button:focus, video:focus, [tabindex]:focus { outline: none; }
 .player { flex: none; background: var(--sunken); border: 1px solid var(--line); }
 .track { position: relative; height: 60px; cursor: ew-resize; touch-action: none; user-select: none; }
 .track canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.track .qs span { position: absolute; top: 0; height: 13px; min-width: 14px; background: var(--green); color: var(--ground); border-left: 1px solid var(--ground); font: 600 9.5px/13px var(--font-mono); padding: 0 3px; overflow: hidden; white-space: nowrap; pointer-events: none; z-index: 2; }
 .track .rng { position: absolute; top: 0; bottom: 0; background: var(--range); border-left: 2px solid var(--mustard); border-right: 2px solid var(--mustard); pointer-events: none; }
 .track .head { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); pointer-events: none; }
 .track .head::before { content: ""; position: absolute; top: 0; left: -4px; border: 5px solid transparent; border-top-color: var(--ink); }
@@ -426,8 +428,8 @@ header.top .langs button { padding: 0 10px; }
 <main id="main"></main>
 <footer class="bar">
   <div class="fgroup sel">
-    <span class="flabel">Selection</span>
-    <div class="frow"><span class="count" id="count">Nothing selected</span><button class="ghost" id="all">Select all shown</button><button class="ghost" id="clear">Clear</button></div>
+    <span class="flabel">To import</span>
+    <div class="frow"><span class="count" id="count">Nothing to import</span><button class="ghost" id="all" title="Each clip shown, with its in and out, as a subclip (none twice)">Add all shown</button><button class="ghost" id="clear">Clear</button></div>
   </div>
   <div class="fgroup">
     <span class="flabel">Handles</span>
@@ -461,7 +463,7 @@ header.top .langs button { padding: 0 10px; }
     <video id="d-video" playsinline tabindex="-1"></video>
     <div class="cap d-cap" id="d-cap" hidden></div>
     <div class="player">
-      <div class="track" id="d-track"><canvas id="d-wave"></canvas><div class="rng" id="d-rng"></div><div class="span" id="d-span" hidden><span><kbd>↵</kbd> in and out</span></div><div class="hov" id="d-hov" hidden><span></span></div><div class="head" id="d-head"></div></div>
+      <div class="track" id="d-track"><canvas id="d-wave"></canvas><div class="rng" id="d-rng"></div><div class="qs" id="d-qs"></div><div class="span" id="d-span" hidden><span><kbd>↵</kbd> in and out</span></div><div class="hov" id="d-hov" hidden><span></span></div><div class="head" id="d-head"></div></div>
       <div class="ctl">
         <button class="pbtn" id="d-pp" title="Play or stop (space)"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg></button>
         <span class="time" id="d-time">0:00.0 <i>/</i> 0:00.0</span>
@@ -477,7 +479,7 @@ header.top .langs button { padding: 0 10px; }
       <button class="ghost" id="d-in">Set in <kbd>i</kbd></button>
       <button class="ghost" id="d-out">Set out <kbd>o</kbd></button>
       <button class="ghost" id="d-reset">Reset in/out</button>
-      <button class="ghost" id="d-pick"><span class="sw"><span>Select</span><span class="off">Selected ✓</span></span> <kbd>s</kbd></button>
+      <button class="ghost" id="d-pick">Add subclip <kbd>a</kbd></button>
       <button class="ghost" id="d-prev">‹ Prev <kbd>←</kbd></button>
       <button class="ghost" id="d-next">Next › <kbd>→</kbd></button>
       <span class="keys"><span class="k"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd>shuttle, as in Resolve</span><span class="k"><kbd>←</kbd><kbd>→</kbd>a frame</span><span class="k"><kbd>↑</kbd><kbd>↓</kbd>clip</span><span class="k"><kbd>?</kbd>keys</span></span>
@@ -500,7 +502,7 @@ header.top .langs button { padding: 0 10px; }
       <section><h4>Gallery</h4>
         <div class="row"><span class="ks"><em>hover</em></span><span class="what">Scrub a clip</span></div>
         <div class="row"><span class="ks"><em>click</em> <i>/</i> <kbd>space</kbd></span><span class="what">Open it</span></div>
-        <div class="row"><span class="ks"><kbd>s</kbd></span><span class="what">Select or deselect it</span></div>
+        <div class="row"><span class="ks"><kbd>a</kbd></span><span class="what">Add it to the import</span></div>
       </section>
       <section><h4>Playback</h4>
         <div class="row"><span class="ks"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd></span><span class="what">Back · stop · forward</span></div>
@@ -517,7 +519,7 @@ header.top .langs button { padding: 0 10px; }
         <div class="row"><span class="ks"><em>drag</em> <i>then</i> <kbd>↵</kbd></span><span class="what">A span of the timeline as in and out</span></div>
         <div class="row"><span class="ks"><kbd>shift</kbd><i>+</i><kbd>I</kbd><kbd>O</kbd></span><span class="what">Go to the in or the out</span></div>
         <div class="row"><span class="ks"><kbd>⌥</kbd><i>+</i><kbd>I</kbd><kbd>O</kbd><kbd>X</kbd></span><span class="what">Clear in, out, or both</span></div>
-        <div class="row"><span class="ks"><kbd>s</kbd></span><span class="what">Select or deselect</span></div>
+        <div class="row"><span class="ks"><kbd>a</kbd></span><span class="what">Add the in and out as a subclip (again for another part)</span></div>
       </section>
       <section><h4>Moving around</h4>
         <div class="row"><span class="ks"><kbd>↑</kbd><kbd>↓</kbd></span><span class="what">Previous or next clip</span></div>
@@ -527,7 +529,7 @@ header.top .langs button { padding: 0 10px; }
       </section>
       <section><h4>A closer look</h4>
         <div class="row"><span class="ks"><kbd>space</kbd> <em>on a shot</em></span><span class="what">Open it, or close it</span></div>
-        <div class="row"><span class="ks"><kbd>s</kbd> <em>on a shot</em></span><span class="what">Select it</span></div>
+        <div class="row"><span class="ks"><kbd>a</kbd> <em>on a shot</em></span><span class="what">Add it to the import</span></div>
         <div class="row"><span class="ks"><em>move</em> <i>/</i> <em>rest</em></span><span class="what">Scrub with sound, then it plays</span></div>
         <div class="row"><span class="ks"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd> <kbd>←</kbd><kbd>→</kbd></span><span class="what">Drive it, as the open clip</span></div>
         <div class="row"><span class="ks"><kbd>o</kbd> <i>/</i> <kbd>↵</kbd> <i>/</i> <em>click</em></span><span class="what">Open the shot right there</span></div>
@@ -542,7 +544,7 @@ header.top .langs button { padding: 0 10px; }
         <div class="row"><span class="ks"><kbd>?</kbd></span><span class="what">This sheet</span></div>
       </section>
     </div>
-    <div class="foot">Selected clips gather at the top in the order picked: their order on the timeline. View all shows them all; drag one to move it.</div>
+    <div class="foot">Subclips gather at the top in the order added: their order on the timeline. A clip can give several, overlapping too; marks changed later never change one already added. Only its × at the top takes one out. View all shows them all; drag one to move it.</div>
   </div>
 </div>
 <script>
@@ -571,7 +573,10 @@ header.top .langs button { padding: 0 10px; }
   // A clip's proxy: a review clip's by its place in the review, one from around a select by its original's path.
   var srcOf = function (c) { return c.extra ? "proxy?rel=" + encodeURIComponent(c.rel) + "&t=" + encodeURIComponent(TOKEN) : mediaURL(c.media); };
 
-  var picked = {}, order = [], ranges = {}, filter = null, hoverN = null;
+  // queue: the subclips to import, in timeline order, each a clip's in and out as it was when added ({q, n, start, end}).
+  // Added one way only (a, a card's tick, Add subclip): marks changed afterwards never change one already added, and
+  // one leaves only by its × in the queue at the top. ranges: each clip's marks now (its select's, until changed).
+  var queue = [], nextQ = 1, ranges = {}, filter = null, hoverN = null;
   var clipBy = {}; D.clips.forEach(function (c) { clipBy[c.n] = c; });
   // Clips from around a select (the ones its camera shot before and after): opened from the strip under a clip, added
   // with s like any other, the whole clip until i and o trim it. Numbered from 100001, one number per original.
@@ -597,6 +602,11 @@ header.top .langs button { padding: 0 10px; }
       .then(function () { var cbs = asked[rel]; delete asked[rel]; cbs.forEach(function (f) { f(); }); });
   }
   var rangeOf = function (c) { return ranges[c.n] || { start: c.start, end: c.end }; };
+  var same = function (a, b) { return Math.abs(a - b) < 0.001; };
+  var queuedOf = function (n) { return queue.filter(function (s) { return s.n === n; }); };
+  var queuedAt = function (n, r) { for (var i = 0; i < queue.length; i++) { var s = queue[i]; if (s.n === n && same(s.start, r.start) && same(s.end, r.end)) return i; } return -1; };
+  var subOf = function (q) { return queue.filter(function (s) { return s.q === q; })[0]; };
+  var qLen = function () { return queue.reduce(function (a, s) { return a + s.end - s.start; }, 0); };
   var linesIn = function (c, r) {
     var f = D.files[c.rel]; if (!f) return [];
     return f.lines.filter(function (l) { return l.end > r.start && l.start < r.end; });
@@ -766,14 +776,14 @@ header.top .langs button { padding: 0 10px; }
   }
   function card(c) {
     if (c.extra && !D.files[c.rel]) fetchWords(c.rel, function () { if (cur === null) render(); });
-    var r = rangeOf(c), lines = linesIn(c, r), said = clipLang(lines);
+    var r = rangeOf(c), lines = linesIn(c, r), said = clipLang(lines), k = queuedOf(c.n).length;
     var a = document.createElement("article");
-    a.className = "card" + (picked[c.n] ? " picked" : ""); a.dataset.n = c.n;
+    a.className = "card" + (k ? " picked" : ""); a.dataset.n = c.n;
     a.innerHTML =
       '<div class="media">' + (thumbURL(c) ? '<img class="still" src="' + esc(thumbURL(c)) + '" alt="">' : "") +
       (c.audio_only ? '<div class="audio">audio only</div>' : "") +
       (said ? '<span class="tongue" title="Said in ' + esc(langName(said)) + '">' + esc(langName(said)) + "</span>" : "") +
-      '<button class="pick" title="Tick to import">✓</button><span class="open">Open ↗</span>' +
+      '<button class="pick" title="Add its in and out to the import (a)">' + (k > 1 ? k : "✓") + '</button><span class="open">Open ↗</span>' +
       '<span class="len">' + fmt(r.end - r.start) + '</span><div class="bar"></div><div class="scrub"></div></div>' +
       '<div class="meta"><b title="' + esc(c.rel) + '">' + esc(c.file) + "</b><span>" + esc(c.tc_in || "") + " · " +
       fmt(r.end - r.start) + (ranges[c.n] ? " (trimmed)" : "") + "</span></div>" +
@@ -808,12 +818,15 @@ header.top .langs button { padding: 0 10px; }
     }
     a.addEventListener("mouseenter", function () { hoverN = c.n; });
     a.addEventListener("mouseleave", function () { if (hoverN === c.n) hoverN = null; });
-    a.querySelector(".pick").addEventListener("click", function (e) { e.stopPropagation(); toggle(c.n); });
+    a.querySelector(".pick").addEventListener("click", function (e) { e.stopPropagation(); add(c.n); });
     // opened where the mouse was (the scrub point on the picture, the word on the text), playing on to its out
     a.addEventListener("click", function () { openDetail(c.n, a.dataset.tm ? +a.dataset.tm : undefined, true); });
     return a;
   }
-  function addedClips() { return order.map(function (n) { return clipBy[n]; }).filter(function (c) { return c.extra; }); }
+  function addedClips() {
+    var seen = {};
+    return queue.map(function (s) { return clipBy[s.n]; }).filter(function (c) { if (!c.extra || seen[c.n]) return false; seen[c.n] = true; return true; });
+  }
   // the header over an open clip: the review it belongs to, and where the clip sits among the ones shown
   function where(c) {
     $("w-title").textContent = D.title;
@@ -839,23 +852,45 @@ header.top .langs button { padding: 0 10px; }
     Array.prototype.forEach.call(nav.children, function (b) { b.classList.toggle("on", (b.dataset.g || null) === filter); });
     count();
   }
-  function toggle(n) {
-    if (n === null || n === undefined) return;
-    if (picked[n]) { delete picked[n]; order = order.filter(function (m) { return m !== n; }); }
-    else { picked[n] = true; order.push(n); }
-    var el = document.querySelector('.card[data-n="' + n + '"]'); if (el) el.classList.toggle("picked", !!picked[n]);
-    if (cur === n) pickLabel();
+  // Adds clip n's in and out as a subclip to import, at the end: never a second of the very same in and out.
+  function add(n) {
+    if (n === null || n === undefined || !clipBy[n]) return;
+    var c = clipBy[n], r = rangeOf(c), i = queuedAt(n, r);
+    if (i >= 0) { toast("Already in the import", "This in and out is #" + (i + 1) + ". Mark another in and out, then a, for another subclip.", "", 3000); return; }
+    queue.push({ q: nextQ++, n: n, start: r.start, end: r.end });
+    toast("Added #" + queue.length, c.file + " · " + fmt(r.start) + " to " + fmt(r.end) + " · " + fmt(r.end - r.start), "ok", 1600);
+    picks(n);
+  }
+  // Takes subclip q out of the import: only from the queue at the top.
+  function drop(q) {
+    var s = subOf(q); if (!s) return;
+    queue = queue.filter(function (x) { return x.q !== q; });
+    picks(s.n);
+  }
+  function picks(n) {
+    var el = document.querySelector('.card[data-n="' + n + '"]'), k = queuedOf(n).length;
+    if (el) { el.classList.toggle("picked", k > 0); el.querySelector(".pick").textContent = k > 1 ? k : "✓"; }
+    if (cur === n) { pickLabel(); marks(); }
     if (clipBy[n] && clipBy[n].extra && cur === null) render();
-    markGhosts();
-    count(); save();
+    markGhosts(); count(); save();
+  }
+  // s once selected and deselected: now it only says what changed, so a habit never takes anything out
+  function sHint() { toast("s doesn't select any more", "a adds the in and out as a subclip to import (mark another part and press a again for another); × in the queue at the top takes one out.", "", 6000); }
+  // A subclip from the queue, opened with its in and out marked (marks changed there leave the subclip as it is)
+  function openSub(q) {
+    var s = subOf(q); if (!s) return;
+    ranges[s.n] = { start: s.start, end: s.end }; save();
+    openDetail(s.n, s.start);
   }
   // What the editor has done (selected, in order; trimmed; added from around a select), kept in the review's folder
   // through the server (state.jsonl, appended) and in this browser; on opening, the newer of the two is used.
   var KEY = "bb-review-" + D.id, saveTimer = null, unsaved = false;
   function snapshot() {
     var rs = {}; Object.keys(ranges).forEach(function (n) { rs[n] = ranges[n]; });
-    return { at: Date.now(), order: order.slice(), ranges: rs,
-             extras: Object.keys(extraN).filter(function (rel) { var n = extraN[rel]; return picked[n] || ranges[n]; }).map(function (rel) { var c = clipBy[extraN[rel]];
+    var ns = []; queue.forEach(function (x) { if (ns.indexOf(x.n) < 0) ns.push(x.n); });
+    return { at: Date.now(), queue: queue.map(function (x) { return { n: x.n, start: x.start, end: x.end }; }),
+             order: ns, ranges: rs, // order: what a page from before subclips reads
+             extras: Object.keys(extraN).filter(function (rel) { var n = extraN[rel]; return queuedOf(n).length || ranges[n]; }).map(function (rel) { var c = clipBy[extraN[rel]];
                return { n: c.n, rel: c.rel, name: c.file, duration: c.duration, day: c.day, at: c.at }; }) };
   }
   function save() {
@@ -869,33 +904,33 @@ header.top .langs button { padding: 0 10px; }
     }, 400);
   }
   function restore(st) {
-    if (!st || !Array.isArray(st.order)) return;
+    if (!st || !(Array.isArray(st.queue) || Array.isArray(st.order))) return;
     (st.extras || []).forEach(function (g) {
       if (extraN[g.rel] !== undefined) return;
       extraN[g.rel] = g.n; nextExtra = Math.max(nextExtra, g.n + 1);
       clipBy[g.n] = { n: g.n, extra: true, rel: g.rel, file: g.name, group: "Added by you", note: null, start: 0, end: g.duration,
                       duration: g.duration, tc_in: g.at || g.day, audio_only: false, day: g.day, at: g.at };
     });
-    order = st.order.filter(function (n) { return clipBy[n]; }); picked = {};
-    order.forEach(function (n) { picked[n] = true; });
     ranges = {}; Object.keys(st.ranges || {}).forEach(function (n) { if (clipBy[n]) ranges[n] = st.ranges[n]; });
+    queue = []; nextQ = 1;
+    if (Array.isArray(st.queue)) st.queue.forEach(function (x) { if (clipBy[x.n] && x.end > x.start) queue.push({ q: nextQ++, n: x.n, start: x.start, end: x.end }); });
+    else st.order.forEach(function (n) { if (clipBy[n]) { var r = rangeOf(clipBy[n]); queue.push({ q: nextQ++, n: n, start: r.start, end: r.end }); } }); // from before subclips: each selected clip, its marks
   }
-  function chipHTML(n, i) {
-    var c = clipBy[n], r = rangeOf(c), th = thumbURL(c);
-    return '<span class="chip' + (n === cur ? " cur" : "") + (c.extra ? " added" : "") + '" data-sel="' + n + '" draggable="true" title="' + esc(c.file + (c.note ? " · " + c.note : "")) + '">' +
+  function chipHTML(x, i) {
+    var c = clipBy[x.n], th = thumbURL(c);
+    return '<span class="chip' + (x.n === cur ? " cur" : "") + (c.extra ? " added" : "") + '" data-sel="' + x.q + '" draggable="true" title="' + esc(c.file + " · " + fmt(x.start) + " to " + fmt(x.end) + (c.note ? " · " + c.note : "")) + '">' +
       (th ? '<img src="' + esc(th) + '" alt="" draggable="false">' : '<span class="ph"></span>') +
-      '<span><span class="k">' + (i + 1) + "</span> " + fmt(r.end - r.start) + '</span><span class="x" title="Drop it">×</span></span>';
+      '<span><span class="k">' + (i + 1) + "</span> " + fmt(x.end - x.start) + '</span><span class="x" title="Take it out of the import">×</span></span>';
   }
   var shownChips = 0;
   function tray() {
     var t = $("tray");
-    if (!order.length) {
-      t.innerHTML = '<span class="hint">Nothing selected yet: press <kbd>s</kbd> on a clip (hover it, or open it), or tick its box. <kbd>?</kbd> shows every key.</span>';
+    if (!queue.length) {
+      t.innerHTML = '<span class="hint">Nothing to import yet: press <kbd>a</kbd> on a clip (hover it, or open it and mark an in and out) to add it as a subclip, or tick its box. <kbd>?</kbd> shows every key.</span>';
       shownChips = 0; sheet(false);
     } else {
-      var len = order.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
-      t.innerHTML = '<span class="label"><b class="n">' + order.length + ' selected</b> · <span class="d">' + fmt(len) + "</span>" + (SERVER ? " · <kbd>⌘</kbd><kbd>↵</kbd> imports them" : "") + "</span>" +
-        '<div class="chips">' + order.map(chipHTML).join("") + '</div><button class="ghost allsel" id="allsel">+' + order.length + " more · View all</button>";
+      t.innerHTML = '<span class="label"><b class="n">' + queue.length + " subclip" + (queue.length > 1 ? "s" : "") + '</b> · <span class="d">' + fmt(qLen()) + "</span>" + (SERVER ? " · <kbd>⌘</kbd><kbd>↵</kbd> imports them" : "") + "</span>" +
+        '<div class="chips">' + queue.map(chipHTML).join("") + '</div><button class="ghost allsel" id="allsel">+' + queue.length + " more · View all</button>";
       // As many as fit, in order; the open clip's always among them; the rest behind View all.
       var box = t.querySelector(".chips"), chips = Array.prototype.slice.call(box.children), right = box.getBoundingClientRect().right, hidden = [];
       chips.forEach(function (ch) { if (ch.getBoundingClientRect().right > right + 0.5) hidden.push(ch); });
@@ -907,26 +942,25 @@ header.top .langs button { padding: 0 10px; }
       hidden.forEach(function (h) { if (h.parentNode) h.parentNode.removeChild(h); });
       var more = $("allsel");
       more.textContent = hidden.length ? "+" + hidden.length + " more · View all" : "View all";
-      if (hidden.length && order.length > lastCount) { more.classList.remove("pulse"); more.offsetWidth; more.classList.add("pulse"); }
-      shownChips = order.length - hidden.length;
+      if (hidden.length && queue.length > lastCount) { more.classList.remove("pulse"); more.offsetWidth; more.classList.add("pulse"); }
+      shownChips = queue.length - hidden.length;
       if ($("sheet").classList.contains("on")) drawSheet();
     }
-    lastCount = order.length;
+    lastCount = queue.length;
     layoutTop();
   }
   var lastCount = 0;
   // the chips are measured to fit: again once the fonts that size them have loaded
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (order.length) tray(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (queue.length) tray(); });
   // ---------- every selected clip, in timeline order: View all
   function drawSheet() {
-    var len = order.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
-    $("sheet").innerHTML = '<div class="s-head"><span><b>' + order.length + " selected</b> · " + fmt(len) +
-      " · in timeline order: drag one to move it, × to drop it, click to open it</span><button class=\"ghost\" id=\"sheet-close\">Close <kbd>esc</kbd></button></div>" +
-      '<div class="tiles">' + order.map(function (n, i) {
-        var c = clipBy[n], r = rangeOf(c), th = thumbURL(c);
-        return '<div class="tile' + (n === cur ? " cur" : "") + (c.extra ? " added" : "") + '" data-sel="' + n + '" draggable="true">' +
-          '<div class="tm"' + (th ? ' style="background-image:url(&quot;' + esc(th) + '&quot;)"' : "") + '><span class="num">' + (i + 1) + '</span><span class="len">' + fmt(r.end - r.start) + '</span><span class="x" title="Drop it">×</span></div>' +
-          '<div class="tx"><b title="' + esc(c.file) + '">' + esc(c.file) + "</b><span>" + esc(c.note || (c.extra ? "added by you" : c.group || "")) + "</span></div></div>";
+    $("sheet").innerHTML = '<div class="s-head"><span><b>' + queue.length + " subclip" + (queue.length > 1 ? "s" : "") + "</b> · " + fmt(qLen()) +
+      " · in timeline order: drag one to move it, × to take it out, click to open it with its in and out</span><button class=\"ghost\" id=\"sheet-close\">Close <kbd>esc</kbd></button></div>" +
+      '<div class="tiles">' + queue.map(function (x, i) {
+        var c = clipBy[x.n], th = thumbURL(c);
+        return '<div class="tile' + (x.n === cur ? " cur" : "") + (c.extra ? " added" : "") + '" data-sel="' + x.q + '" draggable="true">' +
+          '<div class="tm"' + (th ? ' style="background-image:url(&quot;' + esc(th) + '&quot;)"' : "") + '><span class="num">' + (i + 1) + '</span><span class="len">' + fmt(x.end - x.start) + '</span><span class="x" title="Take it out of the import">×</span></div>' +
+          '<div class="tx"><b title="' + esc(c.file) + '">' + esc(c.file) + "</b><span>" + fmt(x.start) + " to " + fmt(x.end) + (c.note ? " · " + esc(c.note) : c.extra ? " · added by you" : "") + "</span></div></div>";
       }).join("") + "</div>";
   }
   function sheet(on) {
@@ -936,9 +970,9 @@ header.top .langs button { padding: 0 10px; }
   $("sheet").addEventListener("click", function (e) {
     if (e.target.closest("#sheet-close")) { sheet(false); return; }
     var tile = e.target.closest(".tile"); if (!tile) return;
-    var n = +tile.dataset.sel;
-    if (e.target.closest(".x") || e.altKey) { toggle(n); return; }
-    sheet(false); openDetail(n);
+    var q = +tile.dataset.sel;
+    if (e.target.closest(".x") || e.altKey) { drop(q); return; }
+    sheet(false); openSub(q);
   });
   document.addEventListener("click", function (e) { // outside it, it closes
     var el = $("sheet");
@@ -963,8 +997,9 @@ header.top .langs button { padding: 0 10px; }
     e.preventDefault();
     var to = +el.dataset.sel, after = el.classList.contains("after");
     if (to !== dragN) {
-      order = order.filter(function (m) { return m !== dragN; });
-      var i = order.indexOf(to); order.splice(after ? i + 1 : i, 0, dragN);
+      var moved = subOf(dragN);
+      queue = queue.filter(function (x) { return x.q !== dragN; });
+      var i = queue.findIndex(function (x) { return x.q === to; }); queue.splice(after ? i + 1 : i, 0, moved);
       save();
     }
     dragN = null; count();
@@ -977,7 +1012,7 @@ header.top .langs button { padding: 0 10px; }
     document.documentElement.style.setProperty("--top", $("top").offsetHeight + "px");
     document.documentElement.style.setProperty("--foot", document.querySelector("footer.bar").offsetHeight + "px");
   }
-  window.addEventListener("resize", function () { if (order.length) tray(); else layoutTop(); });
+  window.addEventListener("resize", function () { if (queue.length) tray(); else layoutTop(); });
   $("tray").addEventListener("wheel", function (e) {
     var t = $("tray"); if (t.scrollWidth <= t.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
     t.scrollLeft += e.deltaY; e.preventDefault();
@@ -985,22 +1020,32 @@ header.top .langs button { padding: 0 10px; }
   $("tray").addEventListener("click", function (e) {
     if (e.target.closest("#allsel")) { sheet(!$("sheet").classList.contains("on")); return; }
     var chip = e.target.closest(".chip"); if (!chip) return;
-    var n = +chip.dataset.sel;
-    if (e.target.closest(".x") || e.altKey) { toggle(n); return; }
-    openDetail(n);
+    var q = +chip.dataset.sel;
+    if (e.target.closest(".x") || e.altKey) { drop(q); return; }
+    openSub(q);
   });
   function count() {
     tray();
-    var ns = order.slice();
-    var len = ns.reduce(function (a, n) { var r = rangeOf(clipBy[n]); return a + r.end - r.start; }, 0);
-    $("count").textContent = ns.length ? ns.length + " selected · " + fmt(len) : "Nothing selected";
-    $("go").disabled = !ns.length || !SERVER || busy;
+    $("count").textContent = queue.length ? queue.length + " subclip" + (queue.length > 1 ? "s" : "") + " · " + fmt(qLen()) : "Nothing to import";
+    $("go").disabled = !queue.length || !SERVER || busy;
     if (!SERVER) $("go").title = "Open this review with `blackbox review open " + D.id + "` to import";
   }
   $("all").addEventListener("click", function () {
-    shown().forEach(function (c) { if (!picked[c.n]) { picked[c.n] = true; order.push(c.n); } }); render(); save();
+    shown().forEach(function (c) { var r = rangeOf(c); if (queuedAt(c.n, r) < 0) queue.push({ q: nextQ++, n: c.n, start: r.start, end: r.end }); }); render(); save();
   });
-  $("clear").addEventListener("click", function () { picked = {}; order = []; render(); save(); });
+  // Clearing takes everything out: a second click within a few seconds, so a stray one never does
+  var clearArmed = null;
+  $("clear").addEventListener("click", function () {
+    var b = $("clear");
+    if (!queue.length) return;
+    if (!clearArmed) {
+      b.textContent = "Take out all " + queue.length + "? Click again"; b.classList.add("armed");
+      clearArmed = setTimeout(function () { clearArmed = null; b.textContent = "Clear"; b.classList.remove("armed"); }, 3500);
+      return;
+    }
+    clearTimeout(clearArmed); clearArmed = null; b.textContent = "Clear"; b.classList.remove("armed");
+    queue = []; render(); save();
+  });
   $("keys").addEventListener("click", function () { $("help").classList.add("on"); });
   $("help-close").addEventListener("click", function () { $("help").classList.remove("on"); });
   $("help").addEventListener("click", function (e) { if (e.target === this) this.classList.remove("on"); });
@@ -1114,8 +1159,8 @@ header.top .langs button { padding: 0 10px; }
     return extraN[g.rel] !== undefined ? extraN[g.rel] : make ? extra(g).n : null;
   }
   function ghostPicked(g) {
-    if (g.current && cur !== null) return !!picked[cur];
-    return inReview(g.rel).some(function (c) { return picked[c.n]; }) || (extraN[g.rel] !== undefined && !!picked[extraN[g.rel]]);
+    if (g.current && cur !== null) return queuedOf(cur).length > 0;
+    return inReview(g.rel).some(function (c) { return queuedOf(c.n).length > 0; }) || (extraN[g.rel] !== undefined && queuedOf(extraN[g.rel]).length > 0);
   }
   function markGhosts() {
     if (!lastAround) return;
@@ -1368,22 +1413,28 @@ header.top .langs button { padding: 0 10px; }
     hereMark(); drawWave();
     var c = clipBy[cur], r = rangeOf(c), d = dv.duration || (D.files[c.rel] || {}).duration || c.duration || 1;
     $("d-rng").style.left = (100 * r.start / d) + "%"; $("d-rng").style.width = (100 * (r.end - r.start) / d) + "%";
+    $("d-qs").innerHTML = queue.map(function (x, i) {
+      return x.n !== cur ? "" : '<span style="left:' + (100 * x.start / d) + "%;width:" + (100 * (x.end - x.start) / d) + '%" title="#' + (i + 1) + " in the import: " + fmt(x.start) + " to " + fmt(x.end) + '">' + (i + 1) + "</span>";
+    }).join("");
     $("d-tc").textContent = (c.tc_in || "") + " · in " + fmt(r.start) + " · out " + fmt(r.end) + " · " + fmt(r.end - r.start);
     Array.prototype.forEach.call(document.querySelectorAll(".cue"), function (q) {
       q.classList.toggle("inrange", +q.dataset.e > r.start && +q.dataset.s < r.end);
     });
   }
   function swap(on, a, b) { return '<span class="sw"><span' + (on ? ' class="off"' : "") + ">" + a + "</span><span" + (on ? "" : ' class="off"') + ">" + b + "</span></span>"; }
-  // whether the open clip is in the selection, said where the eye is (beside its name, and around the picture), so
-  // marking an in and out never leaves it out unnoticed. Nothing is added by itself: s, or a click here, adds it.
+  // whether the open clip's marks are a subclip in the import, said where the eye is (beside its name, and around the
+  // picture), so marking an in and out never leaves it out unnoticed. Nothing is added by itself: a, or a click here.
   function pickLabel() {
-    var on = !!picked[cur], edited = !on && cur !== null && !!ranges[cur];
-    $("d-pick").innerHTML = swap(on, "Select", "Selected ✓") + " <kbd>s</kbd>";
+    if (cur === null) return;
+    var i = queuedAt(cur, rangeOf(clipBy[cur])), k = queuedOf(cur).length, edited = i < 0 && !!ranges[cur];
+    $("d-pick").innerHTML = i >= 0 ? "Added as #" + (i + 1) + " ✓" : "Add subclip <kbd>a</kbd>";
     var st = $("d-state");
-    st.className = "selstate" + (on ? " on" : edited ? " edited" : "");
-    st.innerHTML = on ? "✓ Selected" : edited ? "In/out set · not selected <kbd>s</kbd>" : "Not selected <kbd>s</kbd>";
-    st.title = on ? "In the selection: it goes into Resolve. s takes it out." : "Not in the selection: it won't go into Resolve. s adds it.";
-    $("detail").classList.toggle("is-sel", on); $("detail").classList.toggle("is-edit", edited);
+    st.className = "selstate" + (i >= 0 ? " on" : edited || k ? " edited" : "");
+    st.innerHTML = i >= 0 ? "✓ Added #" + (i + 1) : (k ? k + " added · not this in/out " : edited ? "In/out not added " : "Not added ") + "<kbd>a</kbd>";
+    st.title = (i >= 0 ? "This in and out goes into Resolve as subclip #" + (i + 1) + ". Its × in the queue at the top takes it out."
+      : "This in and out won't go into Resolve: a adds it as a subclip.") +
+      (k ? " " + k + " subclip" + (k > 1 ? "s" : "") + " of this clip in the import, numbered on its timeline." : "");
+    $("detail").classList.toggle("is-sel", i >= 0); $("detail").classList.toggle("is-edit", i < 0 && (edited || k > 0));
   }
   function followLabel() { $("d-follow").innerHTML = swap(follow, "Follow", "Following"); }
   // ---------- the transport: Resolve's keys. L forward and J backward, each press faster (1×, 2×, 4×, 8×, 16×), K
@@ -1631,7 +1682,7 @@ header.top .langs button { padding: 0 10px; }
     return { open: open, close: close, go: go, mark: mark, on: function () { return $("d-findbar").classList.contains("on"); }, active: function () { return !!q; } };
   })();
   $("d-follow").addEventListener("click", function () { follow = true; followLabel(); });
-  $("d-state").addEventListener("click", function () { if (cur !== null) toggle(cur); });
+  $("d-state").addEventListener("click", function () { if (cur !== null) add(cur); });
   // ---------- the timeline: waveform, the lines said, the in and out; drag to scrub
   var peaksOf = {}, wavePending = {};
   function durNow() { return dv.duration || (cur !== null && ((D.files[clipBy[cur].rel] || {}).duration || clipBy[cur].duration)) || 1; }
@@ -1826,7 +1877,7 @@ header.top .langs button { padding: 0 10px; }
   $("d-in").addEventListener("click", function () { setRange("in"); });
   $("d-out").addEventListener("click", function () { setRange("out"); });
   $("d-reset").addEventListener("click", function () { delete ranges[cur]; marks(); count(); save(); });
-  $("d-pick").addEventListener("click", function () { toggle(cur); });
+  $("d-pick").addEventListener("click", function () { add(cur); });
   var step = function (d) {
     var list = shown(), i = list.findIndex(function (c) { return c.n === cur; });
     if (i < 0 && anchor !== null) i = list.findIndex(function (c) { return c.n === anchor; });
@@ -1856,7 +1907,7 @@ header.top .langs button { padding: 0 10px; }
       if (k === "Escape" && peek.on()) peek.close();
       else if (k === " " && (peek.on() || ghostAt)) { e.preventDefault(); if (peek.on()) peek.close(); else peek.open(ghostAt); }
       else if (peek.on() && (k === "o" || k === "Enter")) { e.preventDefault(); peek.openHere(); }
-      else if ((lk === "s" || k === "x") && (peek.on() || ghostAt)) { var sg = peek.on() ? peek.shot() : ghostAt.g; toggle(ghostN(sg, true)); }
+      else if (lk === "a" && (peek.on() || ghostAt)) { var sg = peek.on() ? peek.shot() : ghostAt.g; add(ghostN(sg, true)); }
       else if (peek.on() && /^[iIO]$/.test(k)) { /* marks are the open clip's: not while looking closer */ }
       else if (k === "/") { e.preventDefault(); tfind.open(); }
       else if (lk === "n" && tfind.active()) { e.preventDefault(); tfind.go(1); }
@@ -1878,7 +1929,8 @@ header.top .langs button { padding: 0 10px; }
       else if (k === "O" && e.shiftKey) { stopAll(); dv.currentTime = rangeOf(clipBy[cur]).end; }
       else if (k === "i") setRange("in");
       else if (k === "o") setRange("out");
-      else if (lk === "s" || k === "x") toggle(cur);
+      else if (lk === "a") add(cur);
+      else if (lk === "s" || k === "x") sHint();
       else if (lk === "t") setLang(LANGS[(LANGS.indexOf(langMode) + 1) % 3]);
       else if (k === "ArrowLeft" || k === "ArrowRight") {
         e.preventDefault(); var n = k === "ArrowLeft" ? -1 : 1;
@@ -1892,7 +1944,8 @@ header.top .langs button { padding: 0 10px; }
       return;
     }
     if (e.altKey) return;
-    if (k === "s" || k === "S") toggle(hoverN);
+    if (k === "a" || k === "A") { if (hoverN !== null) add(hoverN); }
+    else if (k === "s" || k === "S") sHint();
     else if (k === "t") setLang(LANGS[(LANGS.indexOf(langMode) + 1) % 3]);
     else if ((k === " " || k === "Enter") && hoverN !== null) { e.preventDefault(); openDetail(hoverN); }
   });
@@ -1915,14 +1968,14 @@ header.top .langs button { padding: 0 10px; }
   $("toast").addEventListener("click", function () { this.classList.remove("show"); });
   $("go").addEventListener("click", function () { doImport(); });
   function importKey() {
-    if (!order.length) toast("Nothing selected", "Press s on a clip first.", "err", 3000);
+    if (!queue.length) toast("Nothing to import", "Press a on a clip first.", "err", 3000);
     else if (!SERVER) toast("Can't import from a file", "Ask your agent to open the review (blackbox review open " + D.id + ").", "err", 6000);
     else if (!busy) doImport();
   }
   function doImport() {
-    var clips = order.map(function (n) { var c = clipBy[n], r = rangeOf(c); var o = { n: n, start: r.start, end: r.end }; if (c.extra) o.rel = c.rel; return o; });
+    var clips = queue.map(function (x) { var c = clipBy[x.n], o = { n: x.n, start: x.start, end: x.end }; if (c.extra) o.rel = c.rel; return o; });
     busy = true; count(); // the toast says how it's going: nothing in the bar changes size, so the player stays put
-    toast("Importing " + clips.length + " clip" + (clips.length > 1 ? "s" : "") + " into Resolve…", "From the camera originals" + ($("audio").checked ? ", with the synced recorders" : "") + ". Resolve may start first.");
+    toast("Importing " + clips.length + " subclip" + (clips.length > 1 ? "s" : "") + " into Resolve…", "From the camera originals" + ($("audio").checked ? ", with the synced recorders" : "") + ". Resolve may start first.");
     fetch("api/import?t=" + encodeURIComponent(TOKEN), {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ clips: clips, pre: +$("pre").value, post: +$("post").value, into: $("into").value, audio: $("audio").checked, subtitles: $("subs").value })
@@ -1968,7 +2021,7 @@ header.top .langs button { padding: 0 10px; }
   if (SERVER) {
     fetch("api/state?t=" + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).catch(function () { return null; })
       .then(function (srv) {
-        var st = srv && srv.order ? (local && local.at > (srv.at || 0) ? local : srv) : local;
+        var st = srv && (srv.queue || srv.order) ? (local && local.at > (srv.at || 0) ? local : srv) : local;
         restore(st); render();
         if (st === local && local) save(); // what only this browser had goes to the folder
       });

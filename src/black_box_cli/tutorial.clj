@@ -114,12 +114,13 @@
            "It plays proxies (960×540) with what's said as subtitles, in your Mac's default video app (Finder: Get Info → Open with → Change All)."]}
    {:id "review"
     :punch "Selects on a page: watch, read, pick, import."
-    :narration "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve."
+    :narration "Selects on a page. Hover to preview, click to read along. A adds a subclip; command return imports them into Resolve."
     :title "A selects review: choose, then import"
     :what (str "Ask for selects and you get a page in your browser: every clip playing its proxy with its words under "
                "it, in sections such as B-roll and Sound bites. Click a clip to see its whole transcript (a word jumps "
-               "there) and trim its in and out. Tick the ones you want and press Import into Resolve: they arrive as "
-               "a new timeline from the camera originals, with the recorders synced.")
+               "there). Mark an in and out and press a to add it as a subclip, and again for every other part you want, "
+               "from the same clip as often as you like. Press Import into Resolve: they arrive as a new timeline "
+               "from the camera originals, with the recorders synced.")
     :ask ["Build me a selects review for b-roll and sound bites of the kiln firing"
           "Pull selects of Mara talking about the marble, with some quarry b-roll"
           "Open yesterday's selects review again"]
@@ -130,7 +131,7 @@
            ["blackbox review serve" "the review server itself, in the foreground: only to see why it won't start"]]
     :tips ["Keep as many reviews open in tabs as you like: one server on your Mac serves them all, and opening another never closes one."
            "Reviews are kept in ~/Black Box/reviews until you delete them there; review.html opens from Finder to watch and read, but importing needs it opened by your agent."
-           "Move the mouse across a clip to scrub through it. Keys: ? lists them all. s selects the clip you're on (they gather at the top, in timeline order), i imports them; in an open clip i and o set in and out as in Resolve, shift+I imports, and ← and → move between clips."
+           "Move the mouse across a clip to scrub through it. Keys: ? lists them all. a adds the clip you're on as a subclip with its in and out (in an open clip, i and o set them as in Resolve); the subclips gather at the top in timeline order, and only a subclip's × there takes it out. ⌘↵ imports them; ↑ and ↓ move between clips."
            "A line said in Italian shows its English, with the Italian word for word under it, lit as it plays: that's where you cut. English, Both and As spoken at the top (or t) switch between them."]}
    {:id "online"
     :punch "Back to the camera originals, recorders synced."
@@ -251,7 +252,9 @@
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
   [{:version "0.1.45" :date "2026-11-25"
-    :items [{:title "The review server keeps up" :lesson "review" :run "blackbox review open kiln"
+    :items [{:title "Subclips" :lesson "review" :run "blackbox review open kiln"
+             :what "Mark an in and out and press a to add it to the import, and again for every other part, from the same clip as often as you like. Only a subclip's × at the top takes it out; s no longer selects."}
+            {:title "The review server keeps up" :lesson "review" :run "blackbox review open kiln"
              :what "When Black Box installs a newer blackbox, the review server restarts on it by itself, never during an import; an open page says to reload."}]}
    {:version "0.1.44" :date "2026-11-25"
     :items [{:title "The words as spoken, for Resolve" :lesson "online" :run "blackbox online quarry"
