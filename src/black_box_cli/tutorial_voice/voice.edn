@@ -1,9 +1,5 @@
 ;; Written by `bb narrate`: each narration line's audio and its length. Don't edit by hand.
-{"1f570e03caa2205f"
- {:text
-  "New in version 0.1.20: the shots around a select, and reviews remember.",
-  :seconds 7.079},
- "214b0cbbb1540673"
+{"214b0cbbb1540673"
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
   :seconds 6.113},
@@ -39,6 +35,8 @@
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
   :seconds 5.721},
+ "e9a46e8502ecd538"
+ {:text "New in version 0.1.21: a calmer strip.", :seconds 4.833},
  "ee646e730511565f"
  {:text
   "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",
