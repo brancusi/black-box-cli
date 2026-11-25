@@ -275,7 +275,10 @@ server stopped says so and reconnects once any review is opened again. `blackbox
 the foreground, only to see why it won't start (`error.code review-server`).
 
 What they can do on the page, if they ask: move the mouse across a clip to scrub through it, in to out; click it to open it with sound and
-its file's whole transcript (a word jumps there). An open clip takes Resolve's keys, so editors don't change habits:
+its file's whole transcript (a word jumps there; each turn says who's talking by name when Black Box has named the
+voice; where a camera's own transcript has gaps, the lines its synced lav recorders heard fill them, marked REC, and
+the header says how many recorders were heard with it). Importing into Resolve puts those lines in the subtitles too.
+An open clip takes Resolve's keys, so editors don't change habits:
 J K L shuttle (each press faster, backward with its sound; K held with J or L steps a frame or plays slowly),
 ← → a frame (Shift: a second), ↑ ↓ the previous or next clip, `i` `o` mark in and out, Shift+I/O go to them, ⌥I ⌥O
 ⌥X clear them. `s` selects the clip under the mouse or the open one; the selected gather at the top, as many as fit, in

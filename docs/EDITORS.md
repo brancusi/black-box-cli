@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.41:** A shorter import message ([more](#whats-new))
+**What's new in 0.1.42:** Gaps filled from the recorders; Who's talking, by name; Where you are ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -291,6 +291,12 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.42 (2026-11-25)
+
+- **Gaps filled from the recorders:** Where a camera's transcript is missing words, the lav recorders' lines fill in, marked REC, in the page and in Resolve's subtitles. `blackbox review open kiln`
+- **Who's talking, by name:** The transcript beside an open clip names each speaker Black Box knows by voice. `blackbox review open kiln`
+- **Where you are:** Over an open clip, the top says which review and which clip of how many; click the title to go back. `blackbox review open kiln`
 
 ### 0.1.41 (2026-11-25)
 

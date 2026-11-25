@@ -12,8 +12,8 @@
    [black-box-cli.archive :as archive]
    [black-box-cli.around :as around]
    [black-box-cli.cuts :as cuts]
-   [black-box-cli.db :as db]
    [black-box-cli.edl :as edl]
+   [black-box-cli.heard :as heard]
    [black-box-cli.ids :as ids]
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
@@ -21,7 +21,6 @@
    [black-box-cli.resolve :as resolve]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
-   [black-box-cli.translations :as translations]
    [black-box-cli.version :as version]
    [cheshire.core :as json]
    [clojure.java.io :as io]
@@ -33,41 +32,25 @@
 ;; ------------------------------------------------------------------------------------------------ the data
 
 (defn- file-lines
-  "Every line of the file `rel` in transcript `version`: {:id :start :end :text :speaker :lang :en :words [[w s e]]},
-  `en` the English of a line said in another language when Black Box has translated it (else nil), and `lang` what
-  it was said in when known (a translated transcript's other lines in English)."
+  "Every line said in the file `rel` (transcript `version`), as fully as the archive knows (black-box-cli.heard): its
+  own and, where it has none, its synced recorders', each with who said it when named. Nil without a transcript."
   [path version rel]
-  (when-let [t (db/one path "SELECT id, json_sha256 FROM transcripts WHERE version = :v AND rel = :rel;"
-                       {:v version :rel rel})]
-    (let [english (translations/for-transcript path (:json_sha256 t))]
-      (mapv (fn [q]
-              (let [words (mapv (fn [[w s e]]
-                                  [w (tc/round-to (or s (:start q)) 2) (tc/round-to (or e s (:end q)) 2)])
-                                (json/parse-string (:words q)))]
-                (array-map :id (:id q) :start (:start q) :end (:end q) :text (:text q)
-                           :speaker (:speaker q)
-                           :lang (or (:language q) (get-in english [(:n q) :lang]) (when english "en"))
-                           :en (get-in english [(:n q) :en]) :words words)))
-            (db/query path "SELECT id, n, start, end, text, speaker, language, words FROM cues WHERE transcript_id = :t
-                            ORDER BY n;"
-                      {:t (:id t)})))))
+  (:lines (heard/lines path version rel)))
 
-(defn- with-english
-  "The review `doc` with the English Black Box has published since it was made, for a page served now."
+(defn- fresh
+  "The review `doc` as the index knows its files now, for a page served now: each file's lines again (the English
+  Black Box has published since, a camera's gaps filled from its recorders, the names), and its recorders."
   [ctx doc]
   (let [path (:index (index/paths ctx))]
-    (if-not (fs/exists? (translations/path path))
-      doc
-      (update doc :files
-              (fn [files]
-                (into (array-map)
-                      (for [[rel f] files
-                            :let [rel (if (keyword? rel) (subs (str rel) 1) (str rel))
-                                  fresh (into {} (map (juxt :id identity)) (file-lines path (:transcripts doc) rel))]]
-                        [rel (update f :lines
-                                     (fn [ls] (mapv #(let [g (fresh (:id %))]
-                                                       (assoc % :en (or (:en %) (:en g)) :lang (or (:lang %) (:lang g))))
-                                                    ls)))])))))))
+    (update doc :files
+            (fn [files]
+              (into (array-map)
+                    (for [[rel f] files
+                          :let [rel (if (keyword? rel) (subs (str rel) 1) (str rel))
+                                now (heard/lines path (:transcripts doc) rel)]]
+                      [rel (cond-> f
+                             (seq (:lines now)) (assoc :lines (:lines now))
+                             now (assoc :recorders (:recorders now)))]))))))
 
 (defn- thumb!
   "A picture of the middle of segment `s` in the review's thumbs/ folder: thumbs/<n>.jpg, or nil."
@@ -308,7 +291,7 @@
                      (cond
                        (and (= :get request-method) (= "/" rest*))
                        {:status 200 :headers {"content-type" "text/html; charset=utf-8" "cache-control" "no-store"}
-                        :body (page (with-english ctx doc))} ; this CLI's page, so a review made earlier gets its fixes
+                        :body (page (fresh ctx doc))} ; this CLI's page, so a review made earlier gets its fixes
 
                        (and (= :get request-method) (re-matches #"/media/\d+" rest*))
                        (if-let [p (get media (parse-long (subs rest* 7)))]
@@ -336,7 +319,8 @@
                        (and (= :get request-method) (= "/api/file" rest*))
                        (let [rel (get q "rel") path (:index (index/paths ctx))]
                          (if (around/known? path rel)
-                           (json-ok {:rel rel :lines (or (file-lines path (:transcripts doc) rel) [])})
+                           (let [now (heard/lines path (:transcripts doc) rel)]
+                             (json-ok {:rel rel :lines (or (:lines now) []) :recorders (or (:recorders now) [])}))
                            {:status 404}))
 
                        ;; a few seconds of a clip's sound, for playing it backwards (J): from its proxy only

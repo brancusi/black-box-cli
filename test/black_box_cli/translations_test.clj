@@ -144,7 +144,7 @@
     (is (nil? (:en (nth (-> doc :files vals first :lines) 2))) "nothing published yet")
     (publish! meta (sha256 (transcript-path meta)) "v1" "We use this for a sculpture.")
     (run nil "index")
-    (let [served (#'review/with-english {:local local :home home} doc)
+    (let [served (#'review/fresh {:local local :home home} doc)
           line (nth (-> served :files vals first :lines) 2)]
       (is (= ["it" "We use this for a sculpture."] ((juxt :lang :en) line))))))
 

@@ -10,8 +10,8 @@
    [black-box-cli.cuts :as cuts]
    [black-box-cli.db :as db]
    [black-box-cli.sync :as sync]
+   [black-box-cli.heard :as heard]
    [black-box-cli.tc :as tc]
-   [black-box-cli.translations :as translations]
    [cheshire.core :as json]
    [clojure.java.io :as io]
    [clojure.string :as str]))
@@ -54,8 +54,9 @@
     [(mapv first done) (vec (keep second done))]))
 
 (def min-confidence
-  "The sync map's confidence a recorder needs to be laid under a clip (Black Box's advice: below it, list it)."
-  0.5)
+  "The sync map's confidence a recorder needs to be laid under a clip (Black Box's advice: below it, list it); the
+  same a recorder's lines need to fill a camera's gaps."
+  heard/min-confidence)
 
 (defn- device
   "Which recorder a file is, for its track: its folder and the start of its name (LAV3_0007.wav in lavs/ is
@@ -183,23 +184,18 @@
     (vec (map-indexed (fn [i w] [w (+ start (* i step)) (+ start (* (inc i) step))]) ws))))
 
 (defn- words-in
-  "Every word the file of segment `s` has between its in and out, handles included, from the index: [[w start end]].
-  In `target` en, a line said in another language is its English, spread over the line."
+  "Every word said in the file of segment `s` between its in and out, handles included, as fully as the archive
+  knows (black-box-cli.heard: a camera's gaps filled from its synced recorders): [[w start end]]. In `target` en, a
+  line said in another language is its English, spread over the line."
   [idx version s target]
-  (when-let [t (db/one idx "SELECT id, json_sha256 FROM transcripts WHERE version = :v AND rel = :rel;"
-                       {:v version :rel (:rel s)})]
-    (->> (db/query idx (str "SELECT n, start, end, words FROM cues WHERE transcript_id = :t AND end > :a AND start < :b "
-                            "ORDER BY n;")
-                   {:t (:id t) :a (:start s) :b (:end s)})
-         (mapcat (let [english (when (= "en" target) (translations/for-transcript idx (:json_sha256 t)))]
-                   (fn [q]
-                     (let [{:keys [en lang]} (get english (:n q))]
-                       (if (and (seq en) lang (not= "en" lang))
-                         (spread en (:start q) (:end q))
-                         (map (fn [[w ws we]] [w (or ws (:start q)) (or we ws (:end q))])
-                              (json/parse-string (:words q))))))))
-         (filter (fn [[_ ws]] (and (>= ws (:start s)) (< ws (:end s)))))
-         vec)))
+  (->> (:lines (heard/lines idx version (:rel s)))
+       (filter #(and (> (:end %) (:start s)) (< (:start %) (:end s))))
+       (mapcat (fn [{:keys [en lang words] :as l}]
+                 (if (and (= "en" target) (seq en) lang (not= "en" lang))
+                   (spread en (:start l) (:end l))
+                   words)))
+       (filter (fn [[_ ws]] (and (>= ws (:start s)) (< ws (:end s)))))
+       vec))
 
 (defn subtitles
   "What's said in `segments`, as [start end text] in seconds on the timeline Resolve builds: every word of each

@@ -199,7 +199,14 @@ footer.bar .count { font-weight: 600; min-width: 22ch; white-space: nowrap; }
 /* an open clip */
 .detail { position: fixed; top: var(--top, 0px); left: 0; right: 0; bottom: var(--foot, 0px); z-index: 10; background: var(--ground); display: none; }
 body.in-detail .titles { display: none; }
-body.in-detail header.top { padding-top: 8px; }
+/* where an open clip is: the review it's from (back to it), and which clip of how many */
+header.top .where { grid-column: 1; grid-row: 1; display: none; align-items: center; gap: 10px; min-width: 0; font-size: 13px; line-height: 28px; color: var(--faint); }
+body.in-detail header.top .where { display: flex; }
+header.top .where .back { display: inline-flex; align-items: center; gap: 8px; min-width: 0; padding: 0 10px 0 6px; border: 1px solid transparent; background: none; color: var(--ink); font: 700 15px/26px var(--font-brand); letter-spacing: -.02em; cursor: pointer; }
+header.top .where .back:hover { border-color: var(--line-strong); background: var(--surface); }
+header.top .where .back span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+header.top .where .pos { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header.top .where .pos b { color: var(--muted); font-weight: 600; }
 .detail.on { display: grid; grid-template-columns: minmax(0, 1.55fr) clamp(340px, 30vw, 460px); }
 .d-left { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
 .d-left video { display: block; flex: none; align-self: center; aspect-ratio: var(--ar, 16 / 9); height: auto; background: var(--video);
@@ -283,7 +290,9 @@ button:focus, video:focus, [tabindex]:focus { outline: none; }
 .ctx button code { color: var(--muted); font: inherit; }
 .ctx .c-foot { padding: 6px 10px; border-top: 1px solid var(--line); margin-top: 4px; font-size: 11px; color: var(--faint); }
 /* the gallery behind an open clip doesn't scroll (its scrollbar showed through, scrolling nothing) */
-html:has(body.in-detail), body.in-detail { overflow: hidden; }
+/* the gallery behind an open clip doesn't scroll. Only the root: hidden on body would make body its own scroll box,
+   and the sticky header would stick to that instead, leaving the page scrolled off under it */
+html:has(body.in-detail) { overflow: hidden; }
 /* what's under a shot wraps within it, never cut off */
 .gh .g-meta { flex-wrap: wrap; row-gap: 4px; }
 .gh .here { position: absolute; left: 4px; top: 4px; z-index: 3; font: 700 9.5px/15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; padding: 0 5px; background: var(--mustard); color: #141310; }
@@ -337,14 +346,20 @@ html:has(body.in-detail), body.in-detail { overflow: hidden; }
 header.top .langs { margin-right: 6px; }
 header.top .langs button { padding: 0 10px; }
 .transcript { overflow: auto; padding: 8px 0 40vh; }
-/* A line: its time (and, where a turn starts, who), then the words hanging beside it, however they wrap. */
+/* A line: where a turn starts, who (a row of its own); then its time, and the words hanging beside it however they wrap. */
 .cue { display: grid; grid-template-columns: 6ch minmax(0, 1fr); column-gap: 12px; padding: 4px 16px 4px 12px; border-left: 2px solid transparent; color: var(--muted); font-size: 13.5px; line-height: 21px; }
-.cue.turn { margin-top: 10px; }
+/* a new speaker: room above, inside the line (a margin would break the in-to-out shading into strips) */
+.cue.turn { padding-top: 14px; }
 .cue.inrange { background: var(--range); border-left-color: var(--mustard); color: var(--ink); }
-.cue .ts { grid-column: 1; align-self: start; text-align: left; color: var(--faint); font-size: 12px; line-height: 21px; background: none; border: 0; padding: 0; }
+.cue .ts { grid-column: 1; grid-row: 2; align-self: start; text-align: left; color: var(--faint); font-size: 12px; line-height: 21px; background: none; border: 0; padding: 0; }
 .cue .ts:hover { color: var(--ink); }
-.cue .spk { grid-column: 1; grid-row: 2; color: var(--faint); font-size: 11px; line-height: 14px; letter-spacing: .04em; }
-.cue .body { grid-column: 2; grid-row: 1 / span 2; min-width: 0; }
+/* who's talking, where a turn starts: the voice's name (Black Box's), else the transcript's label */
+.cue .who { grid-column: 2; grid-row: 1; font-size: 11px; line-height: 16px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
+.cue .who.named { color: var(--muted); font-weight: 600; }
+/* a line only a recorder heard (the camera's transcript has a gap there) */
+.cue.rec { border-left-style: dashed; }
+.cue .lang.rec { float: left; margin: 4px 8px 0 0; color: var(--muted); border-color: var(--line-strong); }
+.cue .body { grid-column: 2; grid-row: 2; min-width: 0; }
 .cue .tr { cursor: pointer; }
 .cue.playing .ts { color: var(--ink); }
 .cue.playing { border-left-color: var(--ink); }
@@ -379,6 +394,7 @@ header.top .langs button { padding: 0 10px; }
 <body>
 <header class="top" id="top">
   <div class="tools"><div class="segc langs" data-for="lang" id="d-lang" title="Lines said in another language: their English, both, or only what was said (t)" hidden><button data-v="en">English</button><button data-v="both">Both</button><button data-v="spoken">As spoken</button></div><button class="ghost" id="keys" title="Keyboard shortcuts">Keys <kbd>?</kbd></button><button class="ghost" id="theme" title="Light, dark, or as the Mac is set"></button></div>
+  <nav class="where" id="where"><button class="back" id="w-back" title="Back to every clip (esc)">‹ <span id="w-title"></span></button><span class="pos" id="w-pos"></span></nav>
   <div class="titles">
     <h1 id="title"></h1>
     <div class="sub" id="sub"></div>
@@ -551,7 +567,7 @@ header.top .langs button { padding: 0 10px; }
     if (asked[rel]) { asked[rel].push(then); return; }
     asked[rel] = [then];
     fetch("api/file?rel=" + encodeURIComponent(rel) + "&t=" + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); })
-      .then(function (f) { D.files[rel] = { lines: f.lines || [] }; })
+      .then(function (f) { D.files[rel] = { lines: f.lines || [], recorders: f.recorders || [] }; })
       .catch(function () { D.files[rel] = { lines: [] }; })
       .then(function () { var cbs = asked[rel]; delete asked[rel]; cbs.forEach(function (f) { f(); }); });
   }
@@ -770,6 +786,14 @@ header.top .langs button { padding: 0 10px; }
     return a;
   }
   function addedClips() { return order.map(function (n) { return clipBy[n]; }).filter(function (c) { return c.extra; }); }
+  // the header over an open clip: the review it belongs to, and where the clip sits among the ones shown
+  function where(c) {
+    $("w-title").textContent = D.title;
+    var list = shown(), i = list.findIndex(function (x) { return x.n === c.n; });
+    $("w-pos").innerHTML = i >= 0
+      ? "Clip <b>" + (i + 1) + "</b> of " + list.length + (c.group && !c.extra ? " · " + esc(c.group) : "")
+      : "A shot around a select";
+  }
   function shown() {
     return D.clips.filter(function (c) { return !filter || (c.group || "Clips") === filter; }).concat(filter ? [] : addedClips());
   }
@@ -1000,21 +1024,34 @@ header.top .langs button { padding: 0 10px; }
         var k = words.length; words.push({ s: w[1], e: w[2], k: k, cue: i });
         return '<span class="w" data-k="' + k + '">' + esc(w[0]) + "</span>";
       });
-      var turn = l.speaker !== spk; spk = l.speaker;
-      // the speaker only where a turn starts; the words hang beside the time however they wrap
-      html.push('<div class="cue' + (turn && i ? " turn" : "") + '" data-i="' + i + '" data-s="' + l.start + '" data-e="' + l.end + '">' +
+      // who: the name Black Box gave the voice, else the transcript's label (a recorder's labels are its own)
+      var who = l.person || (/^S\d+$/.test(l.speaker || "") ? "Speaker " + l.speaker.slice(1) : l.speaker || ""),
+          key = l.person || (l.from || "") + (l.speaker || "");
+      var turn = key !== spk; spk = key;
+      // who only where a turn starts, on its own line above the words; a line heard only on a recorder is tagged
+      // REC before its words (the time column holds only the time)
+      html.push('<div class="cue' + (turn && i ? " turn" : "") + (l.from ? " rec" : "") + '" data-i="' + i + '" data-s="' + l.start + '" data-e="' + l.end + '">' +
                 '<button class="ts" data-s="' + l.start + '">' + fmt(l.start) + "</button>" +
-                (turn && l.speaker ? '<span class="spk">' + esc(l.speaker) + "</span>" : "") +
-                '<div class="body">' + english(l) + spoken(l, ws.join(" ")) + "</div></div>");
+                (turn && who ? '<div class="who' + (l.person ? " named" : "") + '">' + esc(who) + "</div>" : "") +
+                '<div class="body">' +
+                (l.from ? '<span class="lang rec" title="Not in the camera\'s transcript: heard on the recorder ' + esc(l.from) + '">REC</span>' : "") +
+                english(l) + spoken(l, ws.join(" ")) + "</div></div>");
     });
 
     // what the file is said in, when any of it isn't the review's language
     var by = {}; f.lines.forEach(function (l) { if (l.lang) by[l.lang] = (by[l.lang] || 0) + 1; });
     $("d-said").textContent = f.lines.some(foreign) ? "· " + Object.keys(by).sort(function (a, b) { return by[b] - by[a]; })
       .map(function (g) { return langName(g) + " " + by[g]; }).join(", ") + " lines" : "";
+    // where the camera's transcript has gaps its recorders filled
+    // the recorders heard with it (Black Box's sync map), and the lines they filled where the camera's has gaps
+    var filled = f.lines.filter(function (l) { return l.from; }).length, recs = f.recorders || [];
+    if (recs.length) $("d-said").textContent += " · " + recs.length + " recorder" + (recs.length > 1 ? "s" : "") +
+      (filled ? ", " + filled + " line" + (filled > 1 ? "s" : "") + " from them" : "");
+    $("d-said").title = recs.length ? "Heard on " + recs.join(", ") + (filled ? ". Lines marked REC are only on a recorder: the camera's transcript has nothing there." : "") : "";
     $("d-transcript").innerHTML = html.length ? html.join("") : '<p class="none">' + (c.extra && !D.files[c.rel] && SERVER ? "Reading its transcript…" : "No transcript for this file.") + "</p>";
     $("d-note").textContent = c.extra ? "Shot around a select: the whole clip until you set its in and out (i, o). s adds it to the selection." : c.note || "";
     loadAround(); loadPeaks(c.rel); timeText();
+    where(c);
     document.body.classList.add("in-detail"); tray();
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
     hover.pause();
@@ -1694,6 +1731,7 @@ header.top .langs button { padding: 0 10px; }
     var next = list[i + d]; if (next) openDetail(next.n);
   };
   $("d-prev").addEventListener("click", function () { step(-1); });
+  $("w-back").addEventListener("click", function () { closeDetail(); });
   $("d-next").addEventListener("click", function () { step(1); });
   $("d-close").addEventListener("click", closeDetail);
   document.addEventListener("keydown", function (e) {

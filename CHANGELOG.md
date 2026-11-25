@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- A camera's transcript is filled from its recorders: where its own transcript has nothing (a far mic loses
+  voices), the lines the lav recorders synced with it heard (Black Box's sync map, confidence 0.5 and up) are put on
+  the camera's time, on the review page (marked REC) and in the subtitles imported into Resolve.
+- The review's transcript says who's talking: the name Black Box gave the voice, else its label, at each turn; its
+  header says how many recorders were heard with the clip.
+- An open clip keeps the header: it no longer scrolls away (the gallery showing through above the clip), and its top
+  row says where you are: the review's title (click it to go back) and which clip of how many, in which group.
+
 ## 0.1.41 (2026-11-25)
 
 - The import's toast is short ("Imported into Resolve", how many clips, warnings counted and read on hover) and every

@@ -250,7 +250,14 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.41" :date "2026-11-25"
+  [{:version "0.1.42" :date "2026-11-25"
+    :items [{:title "Gaps filled from the recorders" :lesson "review" :run "blackbox review open kiln"
+             :what "Where a camera's transcript is missing words, the lav recorders' lines fill in, marked REC, in the page and in Resolve's subtitles."}
+            {:title "Who's talking, by name" :lesson "review" :run "blackbox review open kiln"
+             :what "The transcript beside an open clip names each speaker Black Box knows by voice."}
+            {:title "Where you are" :lesson "review" :run "blackbox review open kiln"
+             :what "Over an open clip, the top says which review and which clip of how many; click the title to go back."}]}
+   {:version "0.1.41" :date "2026-11-25"
     :items [{:title "A shorter import message" :lesson "review" :run "blackbox review open kiln"
              :what "After importing, the message says only what happened, and × closes it."}]}
    {:version "0.1.40" :date "2026-11-25"
