@@ -284,7 +284,8 @@ is marked on its picture ("Italian"), and the header counts them (`in_another_la
 said in Italian shows its English ("Translated from Italian"), with the Italian word for word under it (what the cut
 follows, lit word by word as it plays); English, Both and As spoken at the top (or `t`) switch between them.
 Under an open clip, a strip shows the shots its camera took before and after it, in the order it shot them, with
-the time between them (Shift+↑ ↓ step through them); a shot opens like any clip, and `s` adds it, trimmed with `i`
+the time between them (Shift+↑ ↓ step through them); space over one gives a closer look, scrubbed with sound; a
+shot opens like any clip, where it was scrubbed to, and `s` adds it, trimmed with `i`
 and `o`, to an "Added by you" group. What they select, trim and add is kept in the review's folder
 (`state.jsonl`, the last line is the latest) and comes back when the page is reloaded; read it to see what an
 editor picked.

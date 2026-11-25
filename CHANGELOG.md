@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- A closer look at a shot in the strip: space over it opens it a few times larger just above, scrubbed with sound
+  (a moment of it wherever the mouse lands, finer across the larger view); a click opens it there, space or esc
+  closes it. Find it small, look closer with sound, then open it.
+
 ## 0.1.24 (2026-11-25)
 
 - The selection at the top is a reel: one strip the width of the page, each clip as wide as it is long, in order,

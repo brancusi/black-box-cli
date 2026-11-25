@@ -224,6 +224,16 @@ body.in-detail header.top { padding-top: 8px; }
 .cue-i.slow { border-color: var(--mustard); color: var(--mustard-deep); }
 .cue-i.rev { border-color: var(--green); color: var(--green); }
 /* the time between two shots: one width for all, its length written on the line */
+/* a closer look at a shot, over it */
+.peek { position: fixed; z-index: 20; width: min(400px, 90vw); background: var(--video); border: 1px solid var(--line-strong); box-shadow: 0 14px 36px rgba(0,0,0,.5); cursor: ew-resize; }
+.peek.in { animation: peek-in .14s ease-out; }
+@keyframes peek-in { from { opacity: 0; transform: translateY(6px) scale(.97); } }
+.peek video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--video); pointer-events: none; }
+.peek .p-bar { height: 3px; background: rgba(255,255,255,.1); }
+.peek .p-bar div { height: 100%; width: 0; background: var(--mustard); }
+.peek .p-meta { display: flex; justify-content: space-between; gap: 10px; padding: 5px 8px; font-size: 11px; line-height: 15px; color: var(--video-fg); }
+.peek .p-meta b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.peek .p-meta span { color: var(--video-dim); white-space: nowrap; }
 .gap { flex: none; width: 64px; height: calc(132px * 9 / 16); position: relative; display: grid; place-items: center; color: var(--faint); font-size: 10.5px; line-height: 14px; text-align: center; white-space: nowrap; }
 .gap::before { content: ""; position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; background: var(--line-strong); }
 .gap span { position: relative; padding: 0 4px; background: var(--ground); }
@@ -349,6 +359,7 @@ header.top .langs button { padding: 0 10px; }
       <dt><kbd>space</kbd></dt><dd>play or stop</dd>
       <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>a frame back or forward; with <kbd>shift</kbd>, a second</dd>
       <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>previous or next clip; with <kbd>shift</kbd>, the shot its camera took before or after (the strip)</dd>
+      <dt><kbd>space</kbd> on a shot</dt><dd>in the strip: a closer look, scrubbed with sound; a click opens it there</dd>
       <dt><kbd>i</kbd> <kbd>o</kbd></dt><dd>mark in or out at the playhead</dd>
       <dt><kbd>shift</kbd> <kbd>I</kbd> <kbd>O</kbd></dt><dd>go to the in or the out</dd>
       <dt><kbd>⌥</kbd> <kbd>I</kbd> <kbd>O</kbd> <kbd>X</kbd></dt><dd>clear the in, the out, or both</dd>
@@ -784,13 +795,13 @@ header.top .langs button { padding: 0 10px; }
   }
   var lastAround = null;
   function drawAround(res) {
-    lastAround = res;
+    lastAround = res; peek.close(); ghostAt = null;
     var box = $("d-around"), gs = res.clips || [];
     ghosts = gs;
     if (gs.length < 2) { box.hidden = true; return; }
     var me = gs.filter(function (g) { return g.current; })[0] || {};
     var html = ['<div class="a-head"><span><b>Shot around it</b> · ' + esc(me.device || "the same camera") +
-                ", in the order it shot them · hover to scrub, click to open</span>" +
+                " · hover to scrub · <kbd>space</kbd> closer, with sound · click to open</span>" +
                 '<span class="ctl"><button class="ghost more" data-more="-1"' + (res.more_before ? "" : " disabled") + '>‹ Earlier</button>' +
                 '<button class="ghost more" data-more="1"' + (res.more_after ? "" : " disabled") + ">Later ›</button></span></div>" +
                 '<div class="a-row">'];
@@ -851,11 +862,74 @@ header.top .langs button { padding: 0 10px; }
       el.addEventListener("mousemove", function (e) {
         var b = el.getBoundingClientRect(), f = Math.min(1, Math.max(0, (e.clientX - b.left) / b.width));
         var tm = f * Math.max(0, g.duration - 0.04);
-        hover.to(c, gm, tm); bar.style.width = (100 * f) + "%"; len.textContent = fmt(tm);
+        ghostAt = { g: g, el: el, c: c, tm: tm };
+        if (peek.on(g)) peek.to(tm); else hover.to(c, gm, tm);
+        bar.style.width = (100 * f) + "%"; len.textContent = fmt(tm);
       });
-      el.addEventListener("mouseleave", function () { hover.off(c); bar.style.width = "0"; len.textContent = fmt(g.duration); });
+      el.addEventListener("mouseleave", function (e) {
+        if (ghostAt && ghostAt.el === el) ghostAt = null;
+        hover.off(c); bar.style.width = "0"; len.textContent = fmt(g.duration);
+        if (peek.on(g) && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".peek"))) peek.later();
+      });
+      el.addEventListener("mouseenter", function () { if (peek.on(g)) peek.stay(); });
     });
   }
+  // ---------- a closer look: space over a shot in the strip opens it a few times larger just above it, scrubbed with
+  // sound (a moment of it where each move lands, as Resolve's audio scrub); a click opens it there. Three levels: find
+  // it small, look closer with sound, then open it.
+  var ghostAt = null;
+  var peek = (function () {
+    var box = document.createElement("div"); box.className = "peek"; box.hidden = true;
+    box.innerHTML = '<video playsinline preload="auto"></video><div class="p-bar"><div></div></div><div class="p-meta"><b></b><span></span></div>';
+    document.body.appendChild(box);
+    var v = box.querySelector("video"), bar = box.querySelector(".p-bar div"), when = box.querySelector(".p-meta span"), name = box.querySelector(".p-meta b");
+    var g = null, el = null, c = null, want = null, seeking = false, burst = null, t = 0, closing = null;
+    var go = function () {
+      if (want === null || seeking || v.readyState < 1) return;
+      var tm = want; want = null; seeking = true; clearTimeout(burst); v.pause(); v.currentTime = tm;
+    };
+    v.addEventListener("loadedmetadata", go);
+    v.addEventListener("seeked", function () {
+      seeking = false;
+      if (want !== null) { go(); return; }
+      v.play().catch(function () {}); clearTimeout(burst); burst = setTimeout(function () { v.pause(); }, 160);
+    });
+    var place = function () {
+      var b = el.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+      box.style.left = Math.max(8, Math.min(innerWidth - w - 8, b.left + b.width / 2 - w / 2)) + "px";
+      box.style.top = Math.max(8, b.top - h - 10) + "px";
+    };
+    var api = {
+      on: function (gg) { return !box.hidden && g && (!gg || gg.rel === g.rel); },
+      open: function (at) {
+        g = at.g; el = at.el; c = at.c; stopAll(); hover.off(c);
+        name.textContent = g.name + (g.at ? " · " + g.at : "");
+        var src = srcOf(c); if (v.dataset.k !== src) { v.dataset.k = src; v.src = src; }
+        box.hidden = false; box.classList.remove("in"); box.offsetWidth; box.classList.add("in");
+        place(); api.to(at.tm);
+      },
+      to: function (tm) {
+        t = Math.max(0, Math.min(tm, g.duration)); want = t; go();
+        bar.style.width = (100 * t / (g.duration || 1)) + "%"; when.textContent = fmt(t) + " / " + fmt(g.duration);
+      },
+      time: function () { return t; },
+      close: function () { clearTimeout(closing); clearTimeout(burst); v.pause(); box.hidden = true; g = null; },
+      later: function () { clearTimeout(closing); closing = setTimeout(api.close, 260); },
+      stay: function () { clearTimeout(closing); },
+      g: function () { return g; }
+    };
+    // on the larger view the same move is finer: its width is the whole shot
+    box.addEventListener("mousemove", function (e) {
+      if (!g) return;
+      var b = v.getBoundingClientRect(), f = Math.min(1, Math.max(0, (e.clientX - b.left) / b.width));
+      api.to(f * Math.max(0, g.duration - 0.04));
+    });
+    box.addEventListener("mouseenter", function () { api.stay(); });
+    box.addEventListener("mouseleave", function (e) { if (!(e.relatedTarget && el && el.contains(e.relatedTarget))) api.later(); });
+    box.addEventListener("click", function () { if (g) { var gg = g; api.close(); openGhost(gg, t); } });
+    window.addEventListener("resize", function () { if (g) place(); });
+    return api;
+  })();
   // A ghost opens as itself: the review's clip when it's one, else the whole file, to trim with i and o and add with s.
   function openGhost(g, at) {
     if (!g || g.current) return;
@@ -874,9 +948,10 @@ header.top .langs button { padding: 0 10px; }
     // opened where it was scrubbed to: the moment they were hunting for, not its start
     var g = ghosts[+el.dataset.i], b = el.getBoundingClientRect();
     var f = Math.min(1, Math.max(0, (e.clientX - b.left) / b.width));
-    openGhost(g, g.proxy ? f * Math.max(0, g.duration - 0.04) : undefined);
+    var at = peek.on(g) ? peek.time() : g.proxy ? f * Math.max(0, g.duration - 0.04) : undefined;
+    peek.close(); openGhost(g, at);
   });
-  function closeDetail() { stopAll(); $("detail").classList.remove("on"); document.body.classList.remove("in-detail"); cur = null; render(); }
+  function closeDetail() { peek.close(); stopAll(); $("detail").classList.remove("on"); document.body.classList.remove("in-detail"); cur = null; render(); }
   function marks() {
     var c = clipBy[cur], r = rangeOf(c), d = dv.duration || (D.files[c.rel] || {}).duration || c.duration || 1;
     $("d-rng").style.left = (100 * r.start / d) + "%"; $("d-rng").style.width = (100 * (r.end - r.start) / d) + "%";
@@ -1085,7 +1160,9 @@ header.top .langs button { padding: 0 10px; }
         return;
       }
       var lk = k.length === 1 ? k.toLowerCase() : k;
-      if (k === "Escape") closeDetail();
+      if (k === "Escape" && peek.on()) peek.close();
+      else if (k === " " && (peek.on() || ghostAt)) { e.preventDefault(); if (peek.on()) peek.close(); else peek.open(ghostAt); }
+      else if (k === "Escape") closeDetail();
       else if (k === " ") { e.preventDefault(); if (dv.paused && !back) { shuttle = 1; forward(1); } else stopAll(); }
       else if (lk === "k") { if (!e.repeat) { kHeld = true; stopAll(); } }
       else if (lk === "j" || lk === "l") {
