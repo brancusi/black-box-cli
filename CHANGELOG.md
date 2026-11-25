@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.37 (2026-11-25)
 
 - Captions sit on a tight plate in the page's own dark, each line on its own, in the page's sans (Archivo where
   installed), balanced across lines; no drop shadow.
