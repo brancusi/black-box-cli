@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.45 (2026-11-25)
 
 - Subclips in a review: `a` adds a clip's in and out to the import as a subclip, and again for every other part,
   from the same clip as often as wanted, overlapping too (never the very same in and out twice). Marks changed later
