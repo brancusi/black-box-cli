@@ -286,13 +286,20 @@ header.top .langs button { padding: 0 10px; }
 /* keys */
 .help { position: fixed; inset: 0; z-index: 30; background: rgba(14,14,13,.55); display: none; place-items: center; }
 .help.on { display: grid; }
-.help .box { background: var(--surface); border: 1px solid var(--line-strong); padding: 18px 22px; width: min(700px, 92vw); max-height: 90vh; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 6px 28px; }
-.help h3 { grid-column: 1 / -1; margin: 0 0 4px; font: 800 20px/24px var(--font-brand); letter-spacing: -.03em; }
-.help h4 { margin: 8px 0 6px; font: 500 12px/20px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
-.help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: baseline; }
-.help dt { text-align: right; white-space: nowrap; min-width: 84px; color: var(--muted); }
-.help dd { margin: 0; }
-.help .foot { grid-column: 1 / -1; color: var(--faint); font-size: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.help .box { background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 24px 60px rgba(0,0,0,.45); padding: 20px 24px 18px; width: min(980px, 94vw); max-height: 90vh; overflow-y: auto; }
+.help .h-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 16px; }
+.help .h-head span { color: var(--faint); font: 13px/18px var(--font-read); flex: 1; }
+.help h3 { margin: 0; font: 800 22px/26px var(--font-brand); letter-spacing: -.03em; }
+.help .h-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px 28px; }
+.help section { border-top: 1px solid var(--line); padding-top: 10px; }
+.help h4 { margin: 0 0 8px; font: 600 11px/16px var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--mustard-deep); }
+.help .row { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 12px; align-items: center; min-height: 30px; padding: 2px 0; }
+.help .ks { display: flex; align-items: center; gap: 3px; flex-wrap: nowrap; white-space: nowrap; }
+.help .ks kbd { margin: 0; min-width: 22px; height: 22px; font-size: 11.5px; color: var(--ink); background: var(--ground); }
+.help .ks i { font-style: normal; color: var(--faint); padding: 0 2px; font-size: 11px; }
+.help .ks em { font-style: normal; color: var(--muted); font-size: 12px; }
+.help .what { font: 13.5px/18px var(--font-read); color: var(--ink); }
+.help .foot { color: var(--faint); font: 12.5px/18px var(--font-read); margin-top: 16px; padding-top: 10px; border-top: 1px solid var(--line); }
 @media (max-width: 900px) { .detail.on { grid-template-columns: 1fr; grid-template-rows: max-content 60vh; overflow: auto; }
   .d-left { overflow: visible; min-height: auto; } .d-left video { width: 100%; } .d-right { border-left: 0; border-top: 1px solid var(--line); } .transcript { padding-bottom: 40px; } }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
@@ -361,35 +368,43 @@ header.top .langs button { padding: 0 10px; }
 <div class="toast" id="toast"><b></b><span></span></div>
 <div class="help" id="help">
   <div class="box">
-    <h3>Keys</h3>
-    <div><h4>Gallery</h4><dl>
-      <dt>hover</dt><dd>scrub through a clip: move across it</dd>
-      <dt>click</dt><dd>open a clip</dd>
-      <dt><kbd>s</kbd></dt><dd>select or deselect the clip under the mouse</dd>
-      <dt><kbd>space</kbd> <kbd>enter</kbd></dt><dd>open the clip under the mouse</dd>
-      <dt><kbd>⌘</kbd> <kbd>↵</kbd></dt><dd>import the selected clips into Resolve (from either view)</dd>
-      <dt><kbd>t</kbd></dt><dd>translated lines: English, both, or as spoken</dd>
-      <dt><kbd>?</kbd></dt><dd>these keys</dd>
-    </dl></div>
-    <div><h4>An open clip: Resolve's keys</h4><dl>
-      <dt><kbd>L</kbd></dt><dd>play forward; again: 2×, 4×, 8×, 16×</dd>
-      <dt><kbd>J</kbd></dt><dd>play backward, with its sound; again: faster</dd>
-      <dt><kbd>K</kbd></dt><dd>stop</dd>
-      <dt><kbd>K</kbd>+<kbd>L</kbd> <kbd>K</kbd>+<kbd>J</kbd></dt><dd>hold K and tap: a frame forward or back; hold both: slowly</dd>
-      <dt><kbd>space</kbd></dt><dd>play or stop</dd>
-      <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>a frame back or forward; with <kbd>shift</kbd>, a second</dd>
-      <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>previous or next clip; with <kbd>shift</kbd>, the shot its camera took before or after (the strip)</dd>
-      <dt><kbd>space</kbd> on a shot</dt><dd>in the strip: a closer look, scrubbed with sound; a click opens it there</dd>
-      <dt><kbd>i</kbd> <kbd>o</kbd></dt><dd>mark in or out at the playhead</dd>
-      <dt><kbd>shift</kbd> <kbd>I</kbd> <kbd>O</kbd></dt><dd>go to the in or the out</dd>
-      <dt><kbd>⌥</kbd> <kbd>I</kbd> <kbd>O</kbd> <kbd>X</kbd></dt><dd>clear the in, the out, or both</dd>
-      <dt><kbd>home</kbd> <kbd>end</kbd></dt><dd>the file's start or end</dd>
-      <dt><kbd>s</kbd></dt><dd>select or deselect it</dd>
-      <dt><kbd>t</kbd></dt><dd>translated lines: English, both, or as spoken</dd>
-      <dt>a word</dt><dd>jump there</dd>
-      <dt><kbd>esc</kbd></dt><dd>back to the gallery</dd>
-    </dl></div>
-    <div class="foot">Selected clips gather at the top, in the order you picked them: that's their order on the timeline. Click one to open it, × to drop it. <kbd>esc</kbd> closes this.</div>
+    <div class="h-head"><h3>Keys</h3><span>The open clip plays as Resolve does: the same J K L, arrows and marks.</span><button class="ghost" id="help-close">Close <kbd>esc</kbd></button></div>
+    <div class="h-grid">
+      <section><h4>Gallery</h4>
+        <div class="row"><span class="ks"><em>hover</em></span><span class="what">Scrub a clip</span></div>
+        <div class="row"><span class="ks"><em>click</em> <i>/</i> <kbd>space</kbd></span><span class="what">Open it</span></div>
+        <div class="row"><span class="ks"><kbd>s</kbd></span><span class="what">Select or deselect it</span></div>
+      </section>
+      <section><h4>Playback</h4>
+        <div class="row"><span class="ks"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd></span><span class="what">Back · stop · forward</span></div>
+        <div class="row"><span class="ks"><kbd>L</kbd><kbd>L</kbd></span><span class="what">Again: 2× 4× 8× 16×</span></div>
+        <div class="row"><span class="ks"><kbd>K</kbd><i>+</i><kbd>L</kbd></span><span class="what">Hold K, tap L: a frame</span></div>
+        <div class="row"><span class="ks"><kbd>K</kbd><i>+</i><kbd>L</kbd> <em>held</em></span><span class="what">Slow motion</span></div>
+        <div class="row"><span class="ks"><kbd>space</kbd></span><span class="what">Play or stop</span></div>
+        <div class="row"><span class="ks"><kbd>←</kbd><kbd>→</kbd></span><span class="what">A frame back or on</span></div>
+        <div class="row"><span class="ks"><kbd>shift</kbd><i>+</i><kbd>←</kbd><kbd>→</kbd></span><span class="what">A second back or on</span></div>
+        <div class="row"><span class="ks"><kbd>home</kbd><kbd>end</kbd></span><span class="what">The file's start or end</span></div>
+      </section>
+      <section><h4>Marks</h4>
+        <div class="row"><span class="ks"><kbd>i</kbd><kbd>o</kbd></span><span class="what">Mark in or out</span></div>
+        <div class="row"><span class="ks"><kbd>shift</kbd><i>+</i><kbd>I</kbd><kbd>O</kbd></span><span class="what">Go to the in or the out</span></div>
+        <div class="row"><span class="ks"><kbd>⌥</kbd><i>+</i><kbd>I</kbd><kbd>O</kbd><kbd>X</kbd></span><span class="what">Clear in, out, or both</span></div>
+        <div class="row"><span class="ks"><kbd>s</kbd></span><span class="what">Select or deselect</span></div>
+      </section>
+      <section><h4>Moving around</h4>
+        <div class="row"><span class="ks"><kbd>↑</kbd><kbd>↓</kbd></span><span class="what">Previous or next clip</span></div>
+        <div class="row"><span class="ks"><kbd>shift</kbd><i>+</i><kbd>↑</kbd><kbd>↓</kbd></span><span class="what">Shot before or after</span></div>
+        <div class="row"><span class="ks"><kbd>space</kbd> <em>on a shot</em></span><span class="what">Closer look, with sound</span></div>
+        <div class="row"><span class="ks"><em>a word</em></span><span class="what">Jump there in the clip</span></div>
+        <div class="row"><span class="ks"><kbd>esc</kbd></span><span class="what">Back to the gallery</span></div>
+      </section>
+      <section><h4>Anywhere</h4>
+        <div class="row"><span class="ks"><kbd>⌘</kbd><i>+</i><kbd>↵</kbd></span><span class="what">Import into Resolve</span></div>
+        <div class="row"><span class="ks"><kbd>t</kbd></span><span class="what">English, both, spoken</span></div>
+        <div class="row"><span class="ks"><kbd>?</kbd></span><span class="what">This sheet</span></div>
+      </section>
+    </div>
+    <div class="foot">Selected clips gather at the top in the order picked: their order on the timeline. View all shows them all; drag one to move it.</div>
   </div>
 </div>
 <script>
@@ -771,6 +786,8 @@ header.top .langs button { padding: 0 10px; }
   });
   $("clear").addEventListener("click", function () { picked = {}; order = []; render(); save(); });
   $("keys").addEventListener("click", function () { $("help").classList.add("on"); });
+  $("help-close").addEventListener("click", function () { $("help").classList.remove("on"); });
+  $("help").addEventListener("click", function (e) { if (e.target === this) this.classList.remove("on"); });
   // The import options: steppers for handles, two-way switches for where and whether the recorders come.
   Array.prototype.forEach.call(document.querySelectorAll("[data-step]"), function (b) {
     b.addEventListener("click", function () { var i = $(b.dataset.step); i.value = Math.max(0, (+i.value || 0) + +b.dataset.by); });

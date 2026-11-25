@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The keys sheet (`?`) is rebuilt: Gallery, Playback, Marks, Moving around and Anywhere, each key in a column of its
+  own beside a short line, every row on one line; a Close button, and a click outside closes it.
+
 ## 0.1.26 (2026-11-25)
 
 - The selection at the top shows as many clips as fit, then "+N more · View all": a panel of every selected clip in
