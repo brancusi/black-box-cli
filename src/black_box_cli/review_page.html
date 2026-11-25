@@ -218,18 +218,27 @@ body.in-detail header.top { padding-top: 8px; }
 .around .a-head b { color: var(--ink); font-weight: 600; }
 .around .a-head .ctl { display: flex; gap: 6px; align-items: center; flex: none; }
 .around .more { font-size: 12px; line-height: 16px; padding: 2px 8px; }
-.around .a-row { display: flex; align-items: flex-start; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin;
+.around .a-row { display: flex; align-items: flex-start; overflow-x: auto; padding: 6px 0 4px; scrollbar-width: thin;
   -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
   mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
 .around .a-row::before, .around .a-row::after { content: ""; flex: none; width: 24px; }
 @keyframes gh-in { from { opacity: 0; transform: translateX(calc(var(--from, 0) * 18px)); } }
 .gh.enter, .gap.enter { animation: gh-in .22s ease-out both; }
 .gh.slide, .gap.slide { transition: transform .26s cubic-bezier(.2, .7, .2, 1); }
-.gh { flex: none; width: 132px; cursor: pointer; opacity: .62; transition: opacity .12s; }
+.gh { flex: none; width: 132px; cursor: pointer; opacity: .5; transition: opacity .12s; }
 .gh:hover, .gh.cur { opacity: 1; }
-.gh .gm { position: relative; aspect-ratio: 16 / 9; background: var(--video); outline: 1px dashed var(--line-strong); outline-offset: -1px; }
-.gh.cur .gm { outline: 2px solid var(--mustard); outline-offset: -2px; }
-.gh.inrev .gm { outline-style: solid; }
+/* edges drawn over the picture (an outline under it would be hidden by it) */
+.gh .gm { position: relative; aspect-ratio: 16 / 9; background: var(--video); }
+.gh .gm::before { content: ""; position: absolute; inset: 0; z-index: 3; border: 1px dashed var(--line-strong); pointer-events: none; }
+.gh.inrev .gm::before { border-style: solid; }
+/* the open clip: where the editor is, unmistakably */
+.a-row { padding-top: 4px; }
+.gh.cur .gm { box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--mustard); }
+.gh.cur .gm::before { border: 0; }
+.gh .here { position: absolute; left: 4px; top: 4px; z-index: 3; font: 700 9.5px/15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; padding: 0 5px; background: var(--mustard); color: #141310; }
+.gh .rng { position: absolute; bottom: 0; height: 4px; z-index: 2; background: var(--mustard); opacity: .55; }
+.gh .ph { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 2; background: var(--mustard); box-shadow: 0 0 3px rgba(0,0,0,.7); }
+.gh.cur .g-meta .at { color: var(--mustard-deep); font-weight: 700; }
 .gh.sel .gm::after { content: "✓"; position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; display: grid; place-items: center; background: var(--mustard); color: #141310; font-size: 11px; font-weight: 700; }
 .gm .still, .gm .hv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; pointer-events: none; }
 .gm .hv { opacity: 0; }
@@ -928,6 +937,7 @@ header.top .langs button { padding: 0 10px; }
       html.push('<div class="gh' + (g.current ? " cur" : "") + (rv.length ? " inrev" : "") + (sel ? " sel" : "") + '" data-i="' + i + '" data-k="' + esc(g.rel) + '" title="' +
                 esc(g.name + " · " + (g.day || "") + " " + (g.at || "")) + '"><div class="gm">' +
                 (g.proxy ? '<img class="still" loading="lazy" src="thumb?rel=' + encodeURIComponent(g.rel) + "&at=" + (g.duration / 2).toFixed(2) + "&t=" + encodeURIComponent(TOKEN) + '" alt="">' : "") +
+                (g.current ? '<span class="here">Open</span><div class="rng"></div><div class="ph"></div>' : "") +
                 '<span class="len">' + fmt(g.duration) + '</span><div class="bar"></div></div>' +
                 '<div class="g-meta"><span class="at">' + esc(g.at || "") + "</span>" + cues.join("") + "</div></div>");
     });
@@ -936,7 +946,7 @@ header.top .langs button { padding: 0 10px; }
     var was = {}, oldRow = box.querySelector(".a-row"), oldCur = box.querySelector(".gh.cur");
     if (oldRow && !box.hidden) Array.prototype.forEach.call(oldRow.querySelectorAll("[data-k]"), function (el) { was[el.dataset.k] = el.getBoundingClientRect().left; });
     var keepAt = more && oldCur ? oldCur.getBoundingClientRect().left : null;
-    box.innerHTML = html.join(""); box.hidden = false;
+    box.innerHTML = html.join(""); box.hidden = false; hereMark();
     var row = box.querySelector(".a-row"), on = box.querySelector(".gh.cur");
     if (on) {
       if (keepAt !== null) row.scrollLeft += on.getBoundingClientRect().left - keepAt; // more: the open shot stays put
@@ -1078,6 +1088,7 @@ header.top .langs button { padding: 0 10px; }
   });
   function closeDetail() { peek.close(); stopAll(); $("detail").classList.remove("on"); document.body.classList.remove("in-detail"); cur = null; render(); }
   function marks() {
+    hereMark();
     var c = clipBy[cur], r = rangeOf(c), d = dv.duration || (D.files[c.rel] || {}).duration || c.duration || 1;
     $("d-rng").style.left = (100 * r.start / d) + "%"; $("d-rng").style.width = (100 * (r.end - r.start) / d) + "%";
     $("d-tc").textContent = (c.tc_in || "") + " · in " + fmt(r.start) + " · out " + fmt(r.end) + " · " + fmt(r.end - r.start);
@@ -1220,15 +1231,23 @@ header.top .langs button { padding: 0 10px; }
     return best;
   }
   // The open clip's caption, over the bottom of its picture (above the controls)
+  // the open shot in the strip shows its in and out, and where the playhead is
+  function hereMark() {
+    var el = document.querySelector("#d-around .gh.cur"); if (!el || cur === null) return;
+    var d = dv.duration || clipBy[cur].duration || 1, r = rangeOf(clipBy[cur]);
+    var rng = el.querySelector(".rng"), ph = el.querySelector(".ph");
+    if (rng) { rng.style.left = (100 * r.start / d) + "%"; rng.style.width = Math.max(0.6, 100 * (r.end - r.start) / d) + "%"; }
+    if (ph) ph.style.left = Math.min(100, 100 * dv.currentTime / d) + "%";
+  }
   function showCap() {
     var el = $("d-cap"), said = capsOn && cur !== null ? capAt(clipBy[cur].rel, dv.currentTime) : "";
     el.textContent = said; el.hidden = !said;
     if (said) { el.style.left = dv.offsetLeft + "px"; el.style.width = dv.offsetWidth + "px"; el.style.top = (dv.offsetTop + dv.offsetHeight - 54) + "px"; }
   }
-  dv.addEventListener("seeked", showCap);
+  dv.addEventListener("seeked", function () { showCap(); hereMark(); });
   window.addEventListener("resize", showCap);
   dv.addEventListener("timeupdate", function () {
-    showCap();
+    showCap(); hereMark();
     if (cur === null) return;
     var c = clipBy[cur], r = rangeOf(c), d = dv.duration || 1;
     $("d-head").style.left = (100 * dv.currentTime / d) + "%";

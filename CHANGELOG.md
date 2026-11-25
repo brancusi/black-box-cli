@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- The open clip stands out in the strip: a yellow ring around it (it was drawn under the picture and lost), an OPEN
+  tag, its time in bold, its in and out and the playhead moving inside it; the shots around it dimmer.
+
 ## 0.1.28 (2026-11-25)
 
 - While a closer look is open, J K L, the arrows, Home and End drive it (backward with sound too, its speed on it);

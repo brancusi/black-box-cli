@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.28:** Captions, and J K L in a closer look ([more](#whats-new))
+**What's new in 0.1.29:** Where you are in the strip ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -291,6 +291,10 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.29 (2026-11-25)
+
+- **Where you are in the strip:** The clip you have open is marked OPEN in the strip of shots around it, with its in, out and playhead inside. `blackbox review open kiln`
 
 ### 0.1.28 (2026-11-25)
 

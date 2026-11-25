@@ -23,6 +23,9 @@
  {:text
   "It all lives on your Mac already: transcripts, proxies and picture search, brought down by Dropbox. Fast, and the NAS is never touched.",
   :seconds 10.031},
+ "b0203ba699873bf2"
+ {:text "New in version 0.1.29: where you are in the strip.",
+  :seconds 5.486},
  "b5e367e65b254f24"
  {:text
   "Online it: back to the camera originals, with handles, and every recorder synced underneath.",
@@ -31,9 +34,6 @@
  {:text
   "This is Black Box. Every clip, every word, every frame, every face. You ask in plain words. Your agent does the rest.",
   :seconds 10.188},
- "c2cab70bfba86c61"
- {:text "New in version 0.1.28: captions, and J K L in a closer look.",
-  :seconds 7.158},
  "c55f36933b66060d"
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
