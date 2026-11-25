@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.34 (2026-11-25)
 
 - A closer look stays open wherever the mouse goes; space, a click outside it, or opening the shot closes it.
 
