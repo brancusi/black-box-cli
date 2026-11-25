@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.23 (2026-11-25)
 
 - Clicking a shot in the strip opens it where it was scrubbed to, playing from there, its transcript at that line:
   the moment an editor was hunting for, not the shot's start.
