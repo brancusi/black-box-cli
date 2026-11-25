@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.38 (2026-11-25)
 
 - A card opens where the mouse was on it: the scrub point on its picture, or the word under it in its text, and plays
   on from there to its out.
