@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.44 (2026-11-25)
 
 - Into Resolve, local or network projects alike: the timeline goes in the Black Box bin at the top of the project
   (each cut's originals still in a bin of their own inside it). A bin Resolve won't make (in a shared project, while
