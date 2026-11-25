@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.35 (2026-11-25)
 
 - A clip id (`k7f3q2ab`, the first part of its line ids) is taken for its file wherever a file is: `transcript`,
   `frame`, a cut list line.
