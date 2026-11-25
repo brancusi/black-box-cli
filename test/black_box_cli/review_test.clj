@@ -241,3 +241,43 @@
          (review/self-argv {:env {"BLACKBOX_BIN" "/bin/sh"} :argv ["review" "open" "x"] :local "/l"}))
       "Black Box's launcher, with where things are")
   (is (= ["/bin/sh"] (review/self-argv {:env {"BLACKBOX_BIN" "/bin/sh"} :argv []}))))
+
+(defn- launcher!
+  "A stand-in for Black Box's launcher at `f` that says it runs `v`, rewritten as an update would."
+  [f v]
+  (spit f (str "#!/bin/sh\necho " v "\n"))
+  (fs/set-posix-file-permissions f "rwxr-xr-x")
+  (fs/set-last-modified-time f (java.nio.file.attribute.FileTime/fromMillis (System/currentTimeMillis))))
+
+(deftest the-server-moves-to-the-version-installed-after-it
+  (let [{:keys [run local home env]} (runner)
+        {:keys [id]} (run selects "review" "new" "-")
+        bin (str (fs/path (fs/create-temp-dir {:prefix "bbcli-bin-"}) "blackbox"))
+        _ (launcher! bin version/version)
+        ctx {:home home :env (assoc env "BLACKBOX_BIN" bin) :meta s/fixture-meta :local local :opts {} :fmt :edn}
+        spawned (atom [])]
+    (testing "an import asked of a server older than the installed blackbox isn't run: it hands over"
+      (with-redefs [tools/spawn-detached! (fn [argv _] (swap! spawned conj argv))]
+        (let [{:keys [port token done]} (review/start! ctx 0)
+              ping (http/post (str "http://127.0.0.1:" port "/" id "/api/ping?t=" token) {:throw false})]
+          (is (= version/version (get-in ping [:headers "x-blackbox-cli"])) "a page learns the server's version")
+          (launcher! bin "9.9.9")
+          (let [res (json/parse-string (:body (http/post (str "http://127.0.0.1:" port "/" id "/api/import?t=" token)
+                                                         {:throw false :body "{\"clips\":[]}"
+                                                          :headers {"content-type" "application/json"}})) true)]
+            (is (= "server-updating" (-> res :error :code)))
+            (is (str/includes? (-> res :error :message) "restarting on 9.9.9")))
+          (is (true? (deref done 5000 :still-running)) "it stops, freeing its port")
+          (is (= [bin "--meta" s/fixture-meta "--local" local "review" "serve" "--port" (str port)] (first @spawned))
+              "and starts the installed version's server on that port"))))
+    (testing "with no import, it sees the update itself"
+      (launcher! bin version/version)
+      (reset! spawned [])
+      (with-redefs [tools/spawn-detached! (fn [argv _] (swap! spawned conj argv))
+                    review/update-check-s 1]
+        (let [{:keys [done]} (review/start! ctx 0)]
+          (Thread/sleep 1200)
+          (is (not (realized? done)) "the same version: it stays")
+          (launcher! bin "9.9.9")
+          (is (true? (deref done 5000 :still-running)))
+          (is (= 1 (count @spawned))))))))

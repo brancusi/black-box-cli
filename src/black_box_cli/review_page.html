@@ -1944,11 +1944,15 @@ header.top .langs button { padding: 0 10px; }
   }
   if (SERVER) {
     // One review server serves every review; when it isn't running, this page waits for it and carries on.
-    var lost = false;
+    var lost = false, cli = null, updated = false;
     var ping = function () {
       fetch("api/ping?t=" + encodeURIComponent(TOKEN), { method: "POST" }).then(function (r) {
         if (!r.ok) throw new Error(r.status);
+        // the server moves to a blackbox installed after it started: this page is the old one's until it's reloaded
+        var v = r.headers.get("x-blackbox-cli");
         if (lost) { lost = false; status("Reconnected to the review server.", "ok"); if (unsaved) save(); }
+        if (v && !cli) cli = v;
+        if (v && v !== cli && !updated) { updated = true; toast("blackbox " + v + " is installed", "Reload this page for it; your selection is kept.", "ok", 3600000); }
       }).catch(function () {
         if (!lost) { lost = true; status("The review server isn't running: ask your agent to run `blackbox review open " + D.id + "`. This page reconnects by itself.", "err"); }
       });

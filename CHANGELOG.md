@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- The review server moves to the blackbox installed after it started. Run by Black Box's launcher, it looks at the
+  launcher every minute and before every import: when that runs another version, it waits for any import to finish,
+  stops, and starts the installed version's server on the same port. An open page goes on with the new server and
+  says to reload it for its page. An import asked of an old server isn't run; it says to press Import again in a few
+  seconds. On one editor's Mac, a server started before an update went on running the old import, which hung Resolve.
+
 ## 0.1.44 (2026-11-25)
 
 - Into Resolve, local or network projects alike: the timeline goes in the Black Box bin at the top of the project

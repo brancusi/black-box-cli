@@ -1,9 +1,5 @@
 ;; Written by `bb narrate`: each narration line's audio and its length. Don't edit by hand.
-{"16aa5907d8ddc05e"
- {:text
-  "New in version 0.1.44: the words as spoken, for Resolve, big and network projects, and an index that heals.",
-  :seconds 10.449},
- "214b0cbbb1540673"
+{"214b0cbbb1540673"
  {:text
   "Need a whole project? The studio's Mac mini builds it on the shared database while you keep working.",
   :seconds 6.113},
@@ -11,6 +7,9 @@
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
+ "43b9a23f13328005"
+ {:text "New in version 0.1.45: the review server keeps up.",
+  :seconds 5.486},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",

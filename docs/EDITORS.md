@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.44:** The words as spoken, for Resolve; Big and network projects; An index that heals ([more](#whats-new))
+**What's new in 0.1.45:** The review server keeps up ([more](#whats-new))
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -291,6 +291,10 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 <a id="whats-new"></a>
 
 ## What's new
+
+### 0.1.45 (2026-11-25)
+
+- **The review server keeps up:** When Black Box installs a newer blackbox, the review server restarts on it by itself, never during an import; an open page says to reload. `blackbox review open kiln`
 
 ### 0.1.44 (2026-11-25)
 

@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.44" :date "2026-11-25"
+  [{:version "0.1.45" :date "2026-11-25"
+    :items [{:title "The review server keeps up" :lesson "review" :run "blackbox review open kiln"
+             :what "When Black Box installs a newer blackbox, the review server restarts on it by itself, never during an import; an open page says to reload."}]}
+   {:version "0.1.44" :date "2026-11-25"
     :items [{:title "The words as spoken, for Resolve" :lesson "online" :run "blackbox online quarry"
              :what "An import with English subtitles over another language makes a hidden \"As spoken\" track above them; drag the words from the Subtitles bin onto it at the start to cut a line where it's said."}
             {:title "Big and network projects" :lesson "online" :run "blackbox online quarry"

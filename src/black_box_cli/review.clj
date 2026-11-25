@@ -250,11 +250,40 @@
     (let [f (fs/path dir id)]
       (when (fs/exists? (fs/path f "review.json")) (str f)))))
 
+(declare self-argv)
+
+(defn- launcher
+  "Black Box's launcher for this Mac's blackbox ($BLACKBOX_BIN), which it rewrites when it installs an update; nil
+  for a blackbox run otherwise (bbin, a checkout) and for the dev server."
+  [{:keys [env] :as ctx}]
+  (when-let [b (get env "BLACKBOX_BIN")]
+    (when (and (fs/executable? b) (not (dev? ctx))) b)))
+
+(defn installed-version
+  "The version the launcher `bin` runs now, or nil when it doesn't answer within 10 s."
+  [bin]
+  (try
+    (let [p (process/process {:out :string :err :string} bin "--version")
+          {:keys [exit out]} (deref p 10000 nil)]
+      (if (zero? (or exit 1))
+        (not-empty (str/trim (str out)))
+        (do (process/destroy-tree p) nil)))
+    (catch Exception _ nil)))
+
+(def update-check-s
+  "How often the review server looks at the launcher for an update (each look is a stat; a run of it only when the
+  launcher changed)."
+  60)
+
 (defn start!
   "Serves every review in this Mac's reviews folder on 127.0.0.1 at /<id>/: its page, its proxies (only those it
   names), thumbnails, /<id>/api/import and /<id>/api/ping; /health says it's this server. Every request needs this
   Mac's review key and this host. On `port` (default-port; 0 for any), or any free port when that's taken. It stops
-  itself after idle-hours with no request, or on POST /api/stop. {:port :token :stop :done}."
+  itself after idle-hours with no request, or on POST /api/stop. Run by Black Box's launcher, it hands over to the
+  version installed after it: when the launcher runs another version (looked at every update-check-s, and before
+  every import), it stops once no import is running and starts that version's server on its port, so an editor's
+  open page goes on with the new one; an import asked of it meanwhile isn't run (an old import once hung Resolve).
+  {:port :token :stop :done}."
   ([ctx] (start! ctx default-port))
   ([ctx port]
    (let [{:keys [reviews review-server]} (index/paths ctx)
@@ -263,6 +292,17 @@
          seen (atom (System/currentTimeMillis))
          done (promise)
          stopper (atom nil)
+         bin (launcher ctx)
+         importing (atom 0)
+         handing (atom nil) ; the version handed over to
+         handover! (fn [v]
+                     (when (compare-and-set! handing nil v)
+                       (future
+                         (loop [] (when (pos? @importing) (Thread/sleep 1000) (recur)))
+                         (@stopper) ; frees the port for the next server
+                         (tools/spawn-detached! (into (self-argv ctx) ["review" "serve" "--port" (str @bound)])
+                                                (str (fs/path (fs/parent review-server) "review-server.log"))))))
+         newer (fn [] (when bin (let [v (installed-version bin)] (when (and v (not= v version/version)) v))))
          json-ok (fn [m] {:status 200 :headers {"content-type" "application/json" "cache-control" "no-store"}
                           :body (json/generate-string m)})
          handler
@@ -309,7 +349,7 @@
                          (if (fs/exists? p) (file-response p (get headers "range")) {:status 404}))
 
                        (and (= :post request-method) (= "/api/ping" rest*))
-                       {:status 204}
+                       {:status 204 :headers {"x-blackbox-cli" (or @handing version/version)}}
 
                        ;; around a select: the clips its camera shot before and after, each file's words, its proxy,
                        ;; a still; only of originals the index knows, and only their proxies (never the NAS)
@@ -372,14 +412,27 @@
                            {:status 400 :body "a state is a JSON object"}))
 
                        (and (= :post request-method) (= "/api/import" rest*))
-                       (json-ok (try (import! ctx doc (json/parse-string (slurp body) true))
-                                     (catch Exception e
-                                       {:error {:code "import-failed" :message (str (.getSimpleName (class e)) ": " (ex-message e))}
-                                        :help ["Tell your agent what it says; it can run `blackbox online` on the clips instead"]})))
+                       (if-let [v (or @handing (newer))]
+                         (do (handover! v)
+                             (json-ok {:error {:code "server-updating"
+                                               :message (str "blackbox " v " was installed after this review server started (it's "
+                                                             version/version "), so it's restarting on " v " now")}
+                                       :help ["Reload this page in a few seconds, then press Import again"]}))
+                         (do (swap! importing inc)
+                             (try (json-ok (try (import! ctx doc (json/parse-string (slurp body) true))
+                                                (catch Exception e
+                                                  {:error {:code "import-failed" :message (str (.getSimpleName (class e)) ": " (ex-message e))}
+                                                   :help ["Tell your agent what it says; it can run `blackbox online` on the clips instead"]})))
+                                  (finally (swap! importing dec)))))
 
                        :else {:status 404})))))))
          run (fn [p] (http/run-server handler {:ip "127.0.0.1" :port p :legacy-return-value? false}))
-         server (try (run port) (catch java.net.BindException _ (run 0)))
+         ;; the port a moment more when it's taken: a server handing over to this one may still be letting it go
+         server (loop [i 0]
+                  (let [s (try (run port) (catch java.net.BindException _ nil))]
+                    (cond s s
+                          (and (pos? port) (< i 30)) (do (Thread/sleep 100) (recur (inc i)))
+                          :else (run 0))))
          _ (reset! bound (http/server-port server))
          stop (fn [] (when-not (realized? done) (http/server-stop! server) (deliver done true)))]
      (reset! stopper stop)
@@ -389,6 +442,16 @@
          (if (> (- (System/currentTimeMillis) @seen) (* idle-hours 3600 1000))
            (stop)
            (when-not (realized? done) (recur)))))
+     (when bin
+       ;; the launcher is rewritten when Black Box installs an update (and at each start): run it only then
+       (future
+         (loop [stamp (fs/last-modified-time bin)]
+           (Thread/sleep (* update-check-s 1000))
+           (when-not (or (realized? done) @handing)
+             (let [now (try (fs/last-modified-time bin) (catch Exception _ stamp))]
+               (when (not= now stamp)
+                 (when-let [v (newer)] (handover! v)))
+               (recur now))))))
      {:port @bound :token token :stop stop :done done})))
 
 (defn url
