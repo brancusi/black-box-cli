@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.19 (2026-11-25)
 
 - Moving across a card scrubs its picture again, frame-exact: one player for the whole gallery moves into the card
   under the mouse (one decoder and one download however many cards; cards of one file share what it loaded), and
