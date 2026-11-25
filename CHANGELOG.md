@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.18 (2026-11-25)
 
 - Selects reviews show a line said in Italian in English, with the Italian word for word under it: the English to
   read, the Italian lit word by word as it plays, to cut on. English, Both and As spoken at the top of the page (or
