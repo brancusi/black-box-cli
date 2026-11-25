@@ -35,6 +35,11 @@
   (let [digest (.digest (MessageDigest/getInstance "SHA-256") (.getBytes ^String rel StandardCharsets/UTF_8))]
     (subs (base32 digest) 0 clip-length)))
 
+(defn clip-id?
+  "Whether `s` looks like a clip id (`k7f3q2ab`)."
+  [s]
+  (boolean (re-matches #"[a-z2-7]{8}" (str s))))
+
 (defn line-id
   "The id of cue `n` (1-based) of the transcript at `rel`."
   [rel n]

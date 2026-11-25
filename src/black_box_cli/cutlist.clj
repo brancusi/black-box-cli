@@ -14,7 +14,7 @@
   title: Harbour selects            optional, once (or --title)
   k7f3q2ab.41                       one transcript line (ids from `blackbox search`)
   k7f3q2ab.41..k7f3q2ab.45          a run of lines from one file
-  C5274.MP4 0:21.9-0:26.6           a file (name or part of its path) from in to out (s, m:ss or h:mm:ss)
+  C5274.MP4 0:21.9-0:26.6           a file (name, part of its path, or clip id) from in to out (s, m:ss or h:mm:ss)
   09/16/src/fx3/C5274.MP4 21.9-26.6 # wide of the kiln
   k7f3q2ab.s3                       a shot's best moment (ids from `blackbox shots`)
   k7f3q2ab.s3 whole                 the whole shot

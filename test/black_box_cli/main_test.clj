@@ -45,3 +45,12 @@
         {:keys [exit out]} (s/cli* {:home home} ["--meta" s/fixture-meta "index"])]
     (is (= 0 exit))
     (is (str/starts-with? out "index: ~/Library/Caches/black-box-cli/search/transcripts.sqlite\n"))))
+
+(deftest a-file-is-found-by-its-clip-id
+  (testing "the clip id the review page copies stands for the file, as its name does"
+    (let [local (:local (s/cli "index"))
+          run #(:out (s/cli* {} (concat ["--meta" s/fixture-meta "--local" local "transcript"] %&)))
+          by-name (run "C5274.MP4" "--limit" "2")
+          by-clip (run "r54qb74c" "--limit" "2")]
+      (is (str/starts-with? by-clip "file:"))
+      (is (= (first (str/split by-name #"help\[")) (first (str/split by-clip #"help\["))) "the same file and lines"))))

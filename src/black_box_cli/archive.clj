@@ -344,16 +344,17 @@
       (some->> (get (probe/facts path) rel) (from-facts path))))
 
 (defn find-file
-  "One indexed transcript by file name or part of its path, narrowed by the scope flags. With `facts?`, an
+  "One indexed transcript by file name, part of its path or clip id (`k7f3q2ab`, as the review page copies it),
+  narrowed by the scope flags. With `facts?`, an
   original nothing is said in is found by its camera facts when it has no transcript (a row without `:id`)."
   ([path opts name] (find-file path opts name false))
   ([path opts name facts?]
    (let [q (str/trim (nfc name))
          {:keys [where params]} (scope opts)
          rows (db/query path (str "SELECT t.* FROM transcripts t WHERE " where
-                                  " AND (t.source_name = :q OR t.rel LIKE :like) ORDER BY t.rel;")
+                                  " AND (t.source_name = :q OR t.clip = :q OR t.rel LIKE :like) ORDER BY t.rel;")
                         (assoc params :q q :like (str "%" q "%")))
-         exact (filter #(or (= q (:source_name %)) (str/ends-with? (:rel %) (str "/" q))) rows)
+         exact (filter #(or (= q (:source_name %)) (= q (:clip %)) (str/ends-with? (:rel %) (str "/" q))) rows)
          rows (if (seq exact) exact rows)
          rows (if (or (seq rows) (not facts?))
                 rows

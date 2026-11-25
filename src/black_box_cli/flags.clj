@@ -107,7 +107,7 @@
     :examples ["blackbox line <id>" "blackbox line <id> --context 1"]}
    {:path ["transcript"] :phase 2
     :summary "a file's transcript, line by line"
-    :args [{:arg "file" :doc "file name or part of its path"}]
+    :args [{:arg "file" :doc "file name, part of its path, or clip id"}]
     :flags (-> [(limit-flag 40 "lines")] (into (scope-flags false)) (into (output-flags false)))
     :examples ["blackbox transcript C5274.MP4" "blackbox transcript C5274.MP4 --full"]}
    {:path ["footage"] :phase 2
@@ -176,7 +176,7 @@
                 "using → Local.\n")}
    {:path ["frame"] :phase 4
     :summary "a frame as a JPEG, pulled from the proxy into this Mac's cache; prints its path"
-    :args [{:arg "what" :doc "a frame id, a shot id (its best moment), a line id (its start), or a file (name or part of its path)"}]
+    :args [{:arg "what" :doc "a frame id, a shot id (its best moment), a line id (its start), or a file (name, part of its path, or clip id)"}]
     :flags (-> [{:flag "--at" :value "time" :doc "for a file: the moment (s, m:ss or h:mm:ss; default 0)"}
                 {:flag "--width" :value "px" :parse :int :default 960 :doc "pixels wide (default 960; 0: the proxy's)"}
                 {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "for a file: only this day (repeatable)"}

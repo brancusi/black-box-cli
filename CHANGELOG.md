@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- A clip id (`k7f3q2ab`, the first part of its line ids) is taken for its file wherever a file is: `transcript`,
+  `frame`, a cut list line.
+- Review page: right-click a clip (a card, a shot in the strip, a closer look, the open clip) to copy its clip id,
+  the id at the moment under the mouse or the playhead, the id with its in and out, or its path: what an editor pastes
+  to an agent with a question.
+- The open clip's heading is its place (day › folders) small, then its file name, smaller than before.
+- The gallery behind an open clip no longer scrolls (its scrollbar showed, scrolling nothing); what's under a shot in
+  the strip wraps instead of being cut off.
+
 ## 0.1.34 (2026-11-25)
 
 - A closer look stays open wherever the mouse goes; space, a click outside it, or opening the shot closes it.

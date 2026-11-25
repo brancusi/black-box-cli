@@ -11,6 +11,7 @@
   (:require
    [babashka.fs :as fs]
    [black-box-cli.db :as db]
+   [black-box-cli.ids :as ids]
    [black-box-cli.out :as out]
    [black-box-cli.tools :as tools]
    [cheshire.core :as json]
@@ -196,10 +197,11 @@ COMMIT;"))
   (fs/exists? (path index-path)))
 
 (defn find-original
-  "The facts of the one original in `facts` (rows) named `q` (its file name, or part of its path): [row], or the
-  rows that match when it isn't one (none, or several)."
+  "The facts of the one original in `facts` (rows) named `q` (its file name, part of its path, or its clip id): [row],
+  or the rows that match when it isn't one (none, or several)."
   [facts q]
-  (let [rows (filter #(or (= q (:name %)) (str/includes? (:rel %) q)) facts)
+  (let [by-clip (when (ids/clip-id? q) (filter #(= q (ids/clip (:rel %))) facts))
+        rows (if (seq by-clip) by-clip (filter #(or (= q (:name %)) (str/includes? (:rel %) q)) facts))
         exact (filter #(or (= q (:name %)) (str/ends-with? (:rel %) (str "/" q))) rows)]
     (vec (sort-by :rel (if (seq exact) exact rows)))))
 

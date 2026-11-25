@@ -199,7 +199,10 @@ body.in-detail header.top { padding-top: 8px; }
 .d-left video { display: block; flex: none; align-self: center; aspect-ratio: var(--ar, 16 / 9); height: auto; background: var(--video);
   width: min(100%, calc((100vh - var(--top, 0px) - var(--foot, 0px) - var(--around, 440px)) * var(--ar-n, 1.7778))); }
 .d-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.d-head b { font: 800 20px/24px var(--font-brand); letter-spacing: -.03em; }
+.d-head .d-name { display: flex; align-items: baseline; gap: 8px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.d-head b { font: 700 16px/22px var(--font-brand); letter-spacing: -.01em; }
+.d-head .crumbs { color: var(--faint); font-size: 12px; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+.d-head .crumbs i { font-style: normal; color: var(--line-strong); margin: 0 5px; }
 .d-head span { color: var(--faint); }
 .d-head .right { display: flex; gap: 12px; align-items: center; }
 /* the player: the picture, then a flat bar under it. The timeline is the clip's sound (its waveform) with each line
@@ -265,6 +268,18 @@ button:focus, video:focus, [tabindex]:focus { outline: none; }
 .a-row { padding-top: 4px; }
 .gh.cur .gm { box-shadow: 0 0 0 2px var(--ground), 0 0 0 4px var(--mustard); }
 .gh.cur .gm::before { border: 0; }
+/* the right-click menu on a clip */
+.ctx { position: fixed; z-index: 60; min-width: 260px; padding: 4px; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+.ctx[hidden] { display: none; }
+.ctx .c-head { padding: 6px 10px 4px; font-size: 11px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 360px; }
+.ctx button { display: flex; justify-content: space-between; gap: 18px; width: 100%; padding: 7px 10px; border: 0; background: none; color: var(--ink); font: 13px/18px var(--font-mono); text-align: left; cursor: pointer; }
+.ctx button:hover { background: var(--sunken); }
+.ctx button code { color: var(--muted); font: inherit; }
+.ctx .c-foot { padding: 6px 10px; border-top: 1px solid var(--line); margin-top: 4px; font-size: 11px; color: var(--faint); }
+/* the gallery behind an open clip doesn't scroll (its scrollbar showed through, scrolling nothing) */
+html:has(body.in-detail), body.in-detail { overflow: hidden; }
+/* what's under a shot wraps within it, never cut off */
+.gh .g-meta { flex-wrap: wrap; row-gap: 4px; }
 .gh .here { position: absolute; left: 4px; top: 4px; z-index: 3; font: 700 9.5px/15px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; padding: 0 5px; background: var(--mustard); color: #141310; }
 .gh .rng { position: absolute; bottom: 0; height: 4px; z-index: 2; background: var(--mustard); opacity: .55; }
 .gh .ph { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; z-index: 2; background: var(--mustard); box-shadow: 0 0 3px rgba(0,0,0,.7); }
@@ -391,7 +406,7 @@ header.top .langs button { padding: 0 10px; }
 <div class="sheet" id="sheet"></div>
 <div class="detail" id="detail">
   <div class="d-left">
-    <div class="d-head"><b id="d-file"></b><div class="right"><span id="d-tc"></span><button class="ghost" id="d-close">Close <kbd>esc</kbd></button></div></div>
+    <div class="d-head"><span class="d-name"><span class="crumbs" id="d-path"></span><b id="d-file"></b></span><div class="right"><span id="d-tc"></span><button class="ghost" id="d-close">Close <kbd>esc</kbd></button></div></div>
     <video id="d-video" playsinline tabindex="-1"></video>
     <div class="cap d-cap" id="d-cap" hidden></div>
     <div class="player">
@@ -425,6 +440,7 @@ header.top .langs button { padding: 0 10px; }
   </div>
 </div>
 <div class="toast" id="toast"><b></b><span></span></div>
+<div class="ctx" id="ctx" hidden></div>
 <div class="help" id="help">
   <div class="box">
     <div class="h-head"><h3>Keys</h3><span>The open clip plays as Resolve does: the same J K L, arrows and marks.</span><button class="ghost" id="help-close">Close <kbd>esc</kbd></button></div>
@@ -663,6 +679,29 @@ header.top .langs button { padding: 0 10px; }
     if (box) { var near = nearest(box.querySelectorAll(".cw, .ln:not(:has(.cw))"), e.clientX, e.clientY); return near ? +near.dataset.s : null; }
     return null;
   }
+  // Where a clip is, as a breadcrumb: its day, then its folders (media/2026/11/24/video/fx3 → 2026-11-24 › video › fx3)
+  function crumbs(rel) {
+    var parts = String(rel || "").split("/").slice(0, -1);
+    if (parts[0] === "media") parts.shift();
+    if (/^\d{4}$/.test(parts[0]) && /^\d{2}$/.test(parts[1]) && /^\d{2}$/.test(parts[2])) parts.splice(0, 3, parts[0] + "-" + parts[1] + "-" + parts[2]);
+    return parts.map(esc).join("<i>›</i>") + (parts.length ? "<i>›</i>" : "");
+  }
+  // A clip's id, as the CLI makes it (the first 8 characters of the lowercase base32 SHA-256 of its path): what an
+  // agent takes for the file in `blackbox transcript`, `frame` and a cut list.
+  var clipIds = {};
+  function clipId(rel) {
+    if (clipIds[rel]) return Promise.resolve(clipIds[rel]);
+    if (!(window.crypto && crypto.subtle)) return Promise.reject(new Error("no crypto"));
+    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(rel)).then(function (buf) {
+      var b = new Uint8Array(buf), A = "abcdefghijklmnopqrstuvwxyz234567", out = "", acc = 0, bits = 0;
+      for (var i = 0; i < b.length && out.length < 8; i++) {
+        acc = (acc << 8) | b[i]; bits += 8;
+        while (bits >= 5 && out.length < 8) { out += A[(acc >> (bits - 5)) & 31]; bits -= 5; }
+        acc &= (1 << bits) - 1;
+      }
+      return (clipIds[rel] = out);
+    });
+  }
   function card(c) {
     if (c.extra && !D.files[c.rel]) fetchWords(c.rel, function () { if (cur === null) render(); });
     var r = rangeOf(c), lines = linesIn(c, r), said = clipLang(lines);
@@ -693,7 +732,7 @@ header.top .langs button { padding: 0 10px; }
           var at = textTime(e); if (at === null) return; // off the words (on the name): it stays where it was
           tm = Math.min(rr.start + span, Math.max(rr.start, at)); f = span ? (tm - rr.start) / span : 0;
         }
-        hover.to(c, media, tm);
+        hover.to(c, media, tm); a.dataset.tm = tm;
         bar.style.width = (100 * f) + "%"; head.style.left = (100 * f) + "%";
         len.textContent = fmt(tm - rr.start) + " / " + fmt(rr.end - rr.start);
         markSnippet(snip, tm, !!e.target.closest(".media"));
@@ -925,7 +964,7 @@ header.top .langs button { padding: 0 10px; }
     if (c.extra && !D.files[c.rel] && SERVER) fetchWords(c.rel, function () { if (cur === n) openDetail(n, dv.currentTime); });
     if (!c.extra) anchor = null;
     stopAll(); showSpan(null);
-    $("d-file").textContent = c.file; $("d-note").textContent = c.note || "";
+    $("d-file").textContent = c.file; $("d-note").textContent = c.note || ""; $("d-path").innerHTML = crumbs(c.rel); $("d-path").title = c.rel;
     var src = srcOf(c);
     if (dv.dataset.k !== src) { dv.dataset.k = src; dv.src = src; }
     var startAt = typeof at === "number" ? at : rangeOf(c).start;
@@ -1548,6 +1587,53 @@ header.top .langs button { padding: 0 10px; }
     capsOn = !capsOn; try { localStorage.setItem("bb-caps", capsOn ? "on" : "off"); } catch (x) {}
     $("d-cc").classList.toggle("on", capsOn); showCap();
   }
+  // ---------- right click on a clip (a card, a shot in the strip, the open one): copy what an agent needs to find it
+  (function () {
+    var menu = $("ctx"), items = [];
+    var hide = function () { menu.hidden = true; };
+    var copy = function (text, what) {
+      var done = function () { toast("Copied " + what, text + " · paste it to your agent.", "ok", 2200); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { prompt("Copy:", text); });
+      else prompt("Copy:", text);
+    };
+    var target = function (e) {
+      var t = e.target; if (!t.closest) return null;
+      var a = t.closest(".card");
+      if (a && cur === null) { var c = clipBy[+a.dataset.n]; return c && { rel: c.rel, file: c.file, at: a.dataset.tm ? +a.dataset.tm : null, range: rangeOf(c) }; }
+      var gh = t.closest("#d-around .gh");
+      if (gh) {
+        var g = ghostOf(gh.dataset.k); if (!g) return null;
+        var n = g.current ? cur : ghostN(g, false), at = peek.on(g) ? peek.time() : ghostAt && ghostAt.el === gh ? ghostAt.tm : null;
+        return { rel: g.rel, file: g.name, at: at, range: n !== null && clipBy[n] && (ranges[n] || !clipBy[n].extra) ? rangeOf(clipBy[n]) : null };
+      }
+      if (t.closest(".peek") && peek.on()) { var pg = peek.shot(); return { rel: pg.rel, file: pg.name, at: peek.time(), range: null }; }
+      if (cur !== null && t.closest(".d-left")) {
+        var oc = clipBy[cur]; return { rel: oc.rel, file: oc.file, at: dv.currentTime, range: oc.extra && !ranges[cur] ? null : rangeOf(oc) };
+      }
+      return null;
+    };
+    document.addEventListener("contextmenu", function (e) {
+      var it = target(e); if (!it) { hide(); return; }
+      e.preventDefault();
+      var x = e.clientX, y = e.clientY;
+      clipId(it.rel).then(function (id) {
+        items = [["Copy clip ID", id, "clip ID"]];
+        if (it.at !== null && it.at !== undefined) items.push(["Copy clip ID at " + fmt(it.at), id + " at " + fmt(it.at), "clip ID and moment"]);
+        if (it.range) items.push(["Copy clip ID, in to out", id + " " + fmt(it.range.start) + "-" + fmt(it.range.end), "clip ID, in to out"]);
+        items.push(["Copy its path", it.rel, "path"]);
+        menu.innerHTML = '<div class="c-head">' + esc(it.file) + "</div>" +
+          items.map(function (m, i) { return '<button data-i="' + i + '"><span>' + esc(m[0]) + "</span><code>" + esc(m[1].length > 26 ? m[1].slice(0, 25) + "…" : m[1]) + "</code></button>"; }).join("") +
+          '<div class="c-foot">An agent finds it with <code>blackbox transcript ' + esc(id) + "</code></div>";
+        menu.hidden = false;
+        var w = menu.offsetWidth, h = menu.offsetHeight;
+        menu.style.left = Math.max(4, Math.min(innerWidth - w - 4, x)) + "px"; menu.style.top = Math.max(4, Math.min(innerHeight - h - 4, y)) + "px";
+      }).catch(function () { toast("Can't work out the clip ID", "This browser has no SHA-256 here; open the review with `blackbox review open`.", "err", 3000); });
+    });
+    menu.addEventListener("click", function (e) { var b = e.target.closest("button"); if (!b) return; var m = items[+b.dataset.i]; hide(); copy(m[1], m[2]); });
+    document.addEventListener("mousedown", function (e) { if (!menu.hidden && !menu.contains(e.target)) hide(); }, true);
+    document.addEventListener("keydown", function (e) { if (!menu.hidden && e.key === "Escape") { e.stopImmediatePropagation(); hide(); } }, true);
+    window.addEventListener("scroll", hide, true); window.addEventListener("blur", hide);
+  })();
   // a clicked button gives its focus back, so space and the arrows stay the player's
   document.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest("button"); if (b) b.blur(); });
   $("d-play").addEventListener("click", function () { dv.currentTime = rangeOf(clipBy[cur]).start; playClip = true; dv.play(); });

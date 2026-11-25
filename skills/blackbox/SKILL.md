@@ -82,7 +82,10 @@ how many files are `pending` (new, not read yet) or `offline`. If `health` is:
 3. `blackbox footage --month 2026-09` lists the files in scope (day, length, lines, and the camera, resolution
    and frame rate when Black Box has read them).
 
-Line ids look like `k7f3q2ab.41`: the clip, then the line. They're the same on every Mac and after every
+Line ids look like `k7f3q2ab.41`: the clip, then the line. The clip part alone (`k7f3q2ab`) stands for its file
+wherever a file is taken (`transcript`, `frame`, a cut list line): an editor right-clicks a clip in a review page to
+copy it ("k7f3q2ab", "k7f3q2ab at 1:23.4" or "k7f3q2ab 1:20.0-1:31.5", in to out) and pastes it to you with a
+question. They're the same on every Mac and after every
 `index`, so they can be kept. Speaker labels (S1, S2) are per file, not people: for people, see below.
 
 One moment is often heard on several devices: a camera and the recorders on people's collars. Once Black Box
@@ -215,7 +218,7 @@ ask you to open it. One moment is a one-clip cut.
    ```
    title: Marble
    k7f3q2ab.41..k7f3q2ab.43  # a run of lines from one file (ids from search)
-   C5274.MP4 0:26.5-0:30  # a file (name or part of its path) from in to out
+   C5274.MP4 0:26.5-0:30  # a file (name, part of its path, or clip id) from in to out
    m2xq7rja.7
    sqlknzuz.s2  # a shot's best moment (ids from shots); `sqlknzuz.s2 whole` for all of it
    ```
