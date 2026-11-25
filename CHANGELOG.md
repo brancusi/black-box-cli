@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.22 (2026-11-25)
 
 - An open clip in a review takes Resolve's keys: J K L shuttle (L again 2×, 4×, 8×, 16×; J backward, with its sound,
   cut a few seconds at a time from the proxy by the review server and reversed on the page; K held with J or L a
