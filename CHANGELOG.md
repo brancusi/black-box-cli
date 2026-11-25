@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.40 (2026-11-25)
 
 - Importing no longer shifts the open clip's player: how it's going is said in the toast (warnings in it too), and
   the bar's own status line (the review server lost or back) floats above the bar instead of growing it.
