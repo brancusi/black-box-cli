@@ -11,9 +11,6 @@
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
   :seconds 7.889},
- "64f320d1036e145f"
- {:text "New in version 0.1.27: a clearer keys sheet.",
-  :seconds 5.146},
  "8536408f509e5a99"
  {:text
   "Find what was said. Any word, in English or Italian, across every transcript. Then read around the hit.",
@@ -34,6 +31,9 @@
  {:text
   "This is Black Box. Every clip, every word, every frame, every face. You ask in plain words. Your agent does the rest.",
   :seconds 10.188},
+ "c2cab70bfba86c61"
+ {:text "New in version 0.1.28: captions, and J K L in a closer look.",
+  :seconds 7.158},
  "c55f36933b66060d"
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",

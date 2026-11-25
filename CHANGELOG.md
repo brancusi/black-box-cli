@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- While a closer look is open, J K L, the arrows, Home and End drive it (backward with sound too, its speed on it);
+  `o`, ↵ or a click opens the shot right there, playing on; space closes it.
+- Captions: what's said, in the review's language (the English of a line said in Italian), over the open clip and
+  over a closer look. `c` turns them off or on, remembered.
+- A clip opened at a moment (a shot from the strip) plays on from there, instead of stopping at a review clip's out.
+
 ## 0.1.27 (2026-11-25)
 
 - The keys sheet (`?`) is rebuilt: Gallery, Playback, Marks, Moving around and Anywhere, each key in a column of its

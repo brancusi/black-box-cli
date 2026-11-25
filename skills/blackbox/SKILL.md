@@ -285,7 +285,7 @@ said in Italian shows its English ("Translated from Italian"), with the Italian 
 follows, lit word by word as it plays); English, Both and As spoken at the top (or `t`) switch between them.
 Under an open clip, a strip shows the shots its camera took before and after it, in the order it shot them, with
 the time between them (Shift+↑ ↓ step through them); space over one gives a closer look, scrubbed with sound and
-playing on where the mouse rests; a
+playing on where the mouse rests, driven by J K L and the arrows while it's open (`o` or ↵ opens the shot there); a
 shot opens like any clip, where it was scrubbed to, and `s` adds it, trimmed with `i`
 and `o`, to an "Added by you" group. What they select, trim and add is kept in the review's folder
 (`state.jsonl`, the last line is the latest) and comes back when the page is reloaded; read it to see what an

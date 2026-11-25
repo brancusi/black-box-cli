@@ -243,6 +243,14 @@ body.in-detail header.top { padding-top: 8px; }
 .cue-i.slow { border-color: var(--mustard); color: var(--mustard-deep); }
 .cue-i.rev { border-color: var(--green); color: var(--green); }
 /* the time between two shots: one width for all, its length written on the line */
+/* captions: what's said, in the review's language */
+.cap { position: absolute; z-index: 2; padding: 0 12px; text-align: center; pointer-events: none; font: 500 15px/1.35 var(--font-read); color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 0 6px rgba(0,0,0,.6); transform: translateY(-100%); }
+.cap[hidden] { display: none; }
+.d-left { position: relative; }
+.p-v { position: relative; }
+.p-v .cap { left: 0; right: 0; top: auto; bottom: 8px; transform: none; font-size: 13px; }
+.p-v .speed { position: absolute; right: 6px; top: 6px; z-index: 2; font: 600 11px/18px var(--font-mono); padding: 0 6px; background: var(--mustard); color: #141310; }
 /* a closer look at a shot, over it */
 .peek { position: fixed; z-index: 20; width: min(400px, 90vw); background: var(--video); border: 1px solid var(--line-strong); box-shadow: 0 14px 36px rgba(0,0,0,.5); cursor: ew-resize; }
 .peek.in { animation: peek-in .14s ease-out; }
@@ -346,6 +354,7 @@ header.top .langs button { padding: 0 10px; }
   <div class="d-left">
     <div class="d-head"><b id="d-file"></b><div class="right"><span id="d-tc"></span><button class="ghost" id="d-close">Close <kbd>esc</kbd></button></div></div>
     <video id="d-video" controls playsinline></video>
+    <div class="cap d-cap" id="d-cap" hidden></div>
     <div class="track" id="d-track"><div class="rng" id="d-rng"></div><div class="head" id="d-head"></div></div>
     <div class="d-tools">
       <button class="ghost" id="d-play">Play the clip</button>
@@ -394,13 +403,19 @@ header.top .langs button { padding: 0 10px; }
       <section><h4>Moving around</h4>
         <div class="row"><span class="ks"><kbd>↑</kbd><kbd>↓</kbd></span><span class="what">Previous or next clip</span></div>
         <div class="row"><span class="ks"><kbd>shift</kbd><i>+</i><kbd>↑</kbd><kbd>↓</kbd></span><span class="what">Shot before or after</span></div>
-        <div class="row"><span class="ks"><kbd>space</kbd> <em>on a shot</em></span><span class="what">Closer look, with sound</span></div>
         <div class="row"><span class="ks"><em>a word</em></span><span class="what">Jump there in the clip</span></div>
         <div class="row"><span class="ks"><kbd>esc</kbd></span><span class="what">Back to the gallery</span></div>
+      </section>
+      <section><h4>A closer look</h4>
+        <div class="row"><span class="ks"><kbd>space</kbd> <em>on a shot</em></span><span class="what">Open it, or close it</span></div>
+        <div class="row"><span class="ks"><em>move</em> <i>/</i> <em>rest</em></span><span class="what">Scrub with sound, then it plays</span></div>
+        <div class="row"><span class="ks"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd> <kbd>←</kbd><kbd>→</kbd></span><span class="what">Drive it, as the open clip</span></div>
+        <div class="row"><span class="ks"><kbd>o</kbd> <i>/</i> <kbd>↵</kbd> <i>/</i> <em>click</em></span><span class="what">Open the shot right there</span></div>
       </section>
       <section><h4>Anywhere</h4>
         <div class="row"><span class="ks"><kbd>⌘</kbd><i>+</i><kbd>↵</kbd></span><span class="what">Import into Resolve</span></div>
         <div class="row"><span class="ks"><kbd>t</kbd></span><span class="what">English, both, spoken</span></div>
+        <div class="row"><span class="ks"><kbd>c</kbd></span><span class="what">Captions on or off</span></div>
         <div class="row"><span class="ks"><kbd>?</kbd></span><span class="what">This sheet</span></div>
       </section>
     </div>
@@ -482,6 +497,13 @@ header.top .langs button { padding: 0 10px; }
     return '<span class="' + (enOf(l) ? "under" : "") + '" lang="' + esc(l.lang) + '" translate="no"><span class="lang">' +
            esc(l.lang.toUpperCase()) + "</span>" + inner + "</span>";
   };
+  // A caption: the line being said at `t` in `rel`, in the review's language (its English when it was said in another).
+  var capsOn = true; try { capsOn = localStorage.getItem("bb-caps") !== "off"; } catch (e) {}
+  function capAt(rel, t) {
+    var ls = (D.files[rel] || {}).lines || [], best = null;
+    for (var i = 0; i < ls.length; i++) { if (ls[i].start <= t + 0.05) best = ls[i]; else break; }
+    return best && t <= best.end + 0.4 ? (enOf(best) || best.text || "") : "";
+  }
   var english = function (l) { return enOf(l) ? '<span class="tr">' + esc(enOf(l)) + "</span>" : ""; };
   var LANGS = ["en", "both", "spoken"], langMode = "both";
   try { var lm = localStorage.getItem("bb-lang"); if (LANGS.indexOf(lm) >= 0) langMode = lm; } catch (e) {}
@@ -848,7 +870,8 @@ header.top .langs button { padding: 0 10px; }
     document.body.classList.add("in-detail"); tray();
     marks(); pickLabel(); $("detail").classList.add("on"); follow = true; followLabel();
     hover.pause();
-    playClip = true; dv.play().catch(function () {}); // the clip plays once, with sound; space carries on
+    // the clip plays once, in to out, with sound; opened at a moment (a shot from the strip), it plays on from there
+    playClip = typeof at !== "number"; dv.play().catch(function () {}); showCap();
     var first = null;
     if (typeof at === "number") Array.prototype.forEach.call(document.querySelectorAll("#d-transcript .cue"), function (q) { if (+q.dataset.s <= at + 0.05) first = q; });
     first = first || document.querySelector(".cue.inrange"); if (first) first.scrollIntoView({ block: "center" });
@@ -963,22 +986,26 @@ header.top .langs button { padding: 0 10px; }
   var ghostAt = null;
   var peek = (function () {
     var box = document.createElement("div"); box.className = "peek"; box.hidden = true;
-    box.innerHTML = '<video playsinline preload="auto"></video><div class="p-bar"><div></div></div><div class="p-meta"><b></b><span></span></div>';
+    box.innerHTML = '<div class="p-v"><video playsinline preload="auto"></video><div class="cap"></div><span class="speed" hidden></span></div><div class="p-bar"><div></div></div><div class="p-meta"><b></b><span></span></div>';
     document.body.appendChild(box);
     var v = box.querySelector("video"), bar = box.querySelector(".p-bar div"), when = box.querySelector(".p-meta span"), name = box.querySelector(".p-meta b");
-    var g = null, el = null, c = null, want = null, seeking = false, burst = null, t = 0, closing = null, rest = null;
+    var g = null, el = null, c = null, want = null, seeking = false, burst = null, t = 0, closing = null, rest = null, scrubSeek = false;
+    var cap = box.querySelector(".cap"), spd = box.querySelector(".speed");
+    transportOn(v);
     var go = function () {
       if (want === null || seeking || v.readyState < 1) return;
-      var tm = want; want = null; seeking = true; clearTimeout(burst); v.pause(); v.currentTime = tm;
+      var tm = want; want = null; seeking = true; scrubSeek = true; clearTimeout(burst); v.pause(); v.currentTime = tm;
     };
     v.addEventListener("loadedmetadata", go);
     v.addEventListener("seeked", function () {
-      seeking = false;
+      if (!scrubSeek) { if (g) { t = v.currentTime; show(t); } return; } // the keys moved it
+      scrubSeek = false; seeking = false;
       if (want !== null) { go(); return; }
       v.play().catch(function () {}); clearTimeout(burst); burst = setTimeout(function () { v.pause(); }, 160);
     });
     var show = function (tm) {
       bar.style.width = (100 * tm / (g.duration || 1)) + "%"; when.textContent = fmt(tm) + " / " + fmt(g.duration);
+      var said = capsOn ? capAt(g.rel, tm) : ""; cap.textContent = said; cap.hidden = !said;
     };
     v.addEventListener("timeupdate", function () { if (g && !v.paused && !seeking) { t = v.currentTime; show(t); } });
     var place = function () {
@@ -989,19 +1016,29 @@ header.top .langs button { padding: 0 10px; }
     var api = {
       on: function (gg) { return !box.hidden && g && (!gg || gg.rel === g.rel); },
       open: function (at) {
-        g = at.g; el = at.el; c = at.c; stopAll(); hover.off(c);
+        g = at.g; el = at.el; c = at.c; stopAll(); tv = v; hover.off(c);
+        if (!D.files[g.rel]) fetchWords(g.rel, function () { if (g) show(t); });
         name.textContent = g.name + (g.at ? " · " + g.at : "");
         var src = srcOf(c); if (v.dataset.k !== src) { v.dataset.k = src; v.src = src; }
         box.hidden = false; box.classList.remove("in"); box.offsetWidth; box.classList.add("in");
         place(); api.to(at.tm);
       },
       to: function (tm) {
+        if (tv === v && (back || shuttle)) stopAll(); // the mouse takes it back from the keys
         t = Math.max(0, Math.min(tm, g.duration)); want = t; go(); show(t);
         // the mouse at rest: it plays on from there, picture and sound, until it moves again
         clearTimeout(rest); rest = setTimeout(function () { if (g && want === null && !seeking) { clearTimeout(burst); v.play().catch(function () {}); } else if (g) api.to(t); }, 350);
       },
       time: function () { return t; },
-      close: function () { clearTimeout(closing); clearTimeout(burst); clearTimeout(rest); v.pause(); box.hidden = true; g = null; },
+      close: function () {
+        clearTimeout(closing); clearTimeout(burst); clearTimeout(rest);
+        if (tv === v) { stopAll(); tv = dv; }
+        v.pause(); box.hidden = true; g = null;
+      },
+      quiet: function () { clearTimeout(rest); clearTimeout(burst); }, // the keys have it now
+      openHere: function () { if (g) { var gg = g, at = v.currentTime; api.close(); openGhost(gg, at); } },
+      rel: function () { return g ? g.rel : null; },
+      speedEl: function () { return spd; },
       later: function () { clearTimeout(closing); closing = setTimeout(api.close, 260); },
       stay: function () { clearTimeout(closing); },
       g: function () { return g; }
@@ -1014,7 +1051,7 @@ header.top .langs button { padding: 0 10px; }
     });
     box.addEventListener("mouseenter", function () { api.stay(); });
     box.addEventListener("mouseleave", function (e) { if (!(e.relatedTarget && el && el.contains(e.relatedTarget))) api.later(); });
-    box.addEventListener("click", function () { if (g) { var gg = g; api.close(); openGhost(gg, t); } });
+    box.addEventListener("click", function () { api.openHere(); });
     window.addEventListener("resize", function () { if (g) place(); });
     return api;
   })();
@@ -1055,9 +1092,11 @@ header.top .langs button { padding: 0 10px; }
   // stops; K held with a tap of J or L moves a frame, with J or L held too, slowly. Forward is the video's own playback
   // (its sound kept); backward, which browsers can't play, follows a few seconds of the clip's sound at a time, cut
   // from the proxy by the review server and reversed here, so it's heard as it is in Resolve.
-  var FPS = 24000 / 1001, SPEEDS = [1, 2, 4, 8, 16], shuttle = 0, kHeld = false, slow = false, actx = null, back = null;
+  // tv: the player the keys drive, the open clip's (dv) or, while it's open, the closer look's
+  var FPS = 24000 / 1001, SPEEDS = [1, 2, 4, 8, 16], shuttle = 0, kHeld = false, slow = false, actx = null, back = null, tv = dv;
+  function tvRel() { return tv === dv ? clipBy[cur].rel : peek.rel(); }
   function speedLabel() {
-    var el = $("d-speed"), sp = back ? back.speed : dv.paused ? 0 : dv.playbackRate;
+    var el = tv === dv ? $("d-speed") : peek.speedEl(), sp = back ? back.speed : tv.paused ? 0 : tv.playbackRate;
     el.hidden = !sp || (sp === 1 && !back);
     el.textContent = (back ? "◀ " : "▶ ") + (sp < 1 ? "1/" + Math.round(1 / sp) : sp) + "×";
   }
@@ -1066,13 +1105,13 @@ header.top .langs button { padding: 0 10px; }
     cancelAnimationFrame(back.raf); if (back.src) try { back.src.stop(); } catch (e) {}
     back = null;
   }
-  function stopAll() { stopBack(); shuttle = 0; slow = false; dv.pause(); dv.playbackRate = 1; speedLabel(); }
+  function stopAll() { stopBack(); shuttle = 0; slow = false; tv.pause(); tv.playbackRate = 1; speedLabel(); }
   function forward(speed) {
-    stopBack(); playClip = false; dv.playbackRate = speed; dv.play().catch(function () {}); speedLabel();
+    stopBack(); playClip = false; tv.playbackRate = speed; tv.play().catch(function () {}); speedLabel();
   }
   function frameStep(n) {
     stopAll();
-    var d = dv.duration || 1e9; dv.currentTime = Math.min(d, Math.max(0, dv.currentTime + n / FPS));
+    var d = tv.duration || 1e9; tv.currentTime = Math.min(d, Math.max(0, tv.currentTime + n / FPS));
   }
   function clock() { return actx && actx.state === "running" ? actx.currentTime : performance.now() / 1000; }
   function backPos() { return back.pos0 - (back.clock() - back.t0) * back.speed; }
@@ -1088,21 +1127,21 @@ header.top .langs button { padding: 0 10px; }
       }).catch(function () { then(null); });
   }
   function backPlay() { // the sound from where the picture is, backwards, at the speed
-    var me = back, ch = me && me.chunk; if (!ch || dv.muted) return;
+    var me = back, ch = me && me.chunk; if (!ch || tv.muted) return;
     if (me.src) try { me.src.stop(); } catch (e) {}
     var off = ch.to - backPos();
     if (off < 0 || off >= ch.buf.duration) return;
     var s = actx.createBufferSource(), g = actx.createGain();
-    g.gain.value = dv.volume; s.buffer = ch.buf; s.playbackRate.value = me.speed; s.connect(g); g.connect(actx.destination);
+    g.gain.value = tv.volume; s.buffer = ch.buf; s.playbackRate.value = me.speed; s.connect(g); g.connect(actx.destination);
     s.start(0, off); me.src = s;
   }
   function backward(speed) {
     playClip = false;
     if (back) { back.pos0 = backPos(); back.t0 = back.clock(); back.speed = speed; backPlay(); speedLabel(); return; }
-    dv.pause();
+    tv.pause();
     if (!actx) try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
     if (actx && actx.state === "suspended") actx.resume();
-    var me = back = { speed: speed, pos0: dv.currentTime, t0: 0, clock: clock, rel: clipBy[cur].rel, chunk: null, next: null, asked: false, src: null, raf: 0, seeking: false };
+    var me = back = { speed: speed, pos0: tv.currentTime, t0: 0, clock: clock, rel: tvRel(), chunk: null, next: null, asked: false, src: null, raf: 0, seeking: false };
     me.t0 = me.clock();
     var size = function () { return Math.min(40, Math.max(6, me.speed * 3)); };
     var load = function (to) {
@@ -1116,8 +1155,8 @@ header.top .langs button { padding: 0 10px; }
     var tick = function () {
       if (back !== me) return;
       var p = backPos();
-      if (p <= 0) { stopAll(); dv.currentTime = 0; return; }
-      if (!me.seeking) { me.seeking = true; dv.currentTime = p; }
+      if (p <= 0) { stopAll(); tv.currentTime = 0; return; }
+      if (!me.seeking) { me.seeking = true; tv.currentTime = p; }
       if (me.chunk && !me.next && !me.asked && me.chunk.from > 0 && p - me.chunk.from < Math.max(2, me.speed * 1.2)) load(me.chunk.from);
       if (me.chunk && p <= me.chunk.from + 0.01 && me.next) { me.chunk = me.next; me.next = null; backPlay(); }
       me.raf = requestAnimationFrame(tick);
@@ -1125,10 +1164,13 @@ header.top .langs button { padding: 0 10px; }
     me.raf = requestAnimationFrame(tick);
     speedLabel();
   }
-  dv.addEventListener("seeked", function () { if (back) back.seeking = false; });
-  dv.addEventListener("pause", function () { if (!back) { shuttle = 0; speedLabel(); } });
-  dv.addEventListener("play", function () { if (back) stopBack(); speedLabel(); });
-  dv.addEventListener("ratechange", speedLabel);
+  function transportOn(v) {
+    v.addEventListener("seeked", function () { if (back && v === tv) back.seeking = false; });
+    v.addEventListener("pause", function () { if (!back && v === tv) { shuttle = 0; speedLabel(); } });
+    v.addEventListener("play", function () { if (back && v === tv) stopBack(); if (v === tv) speedLabel(); });
+    v.addEventListener("ratechange", function () { if (v === tv) speedLabel(); });
+  }
+  transportOn(dv);
   // the frame rate, from the frames as they play (23.976 until known)
   if (dv.requestVideoFrameCallback) {
     var lastMT = null;
@@ -1146,7 +1188,7 @@ header.top .langs button { padding: 0 10px; }
   }
   function shuttleKey(dir) { // J or L, pressed
     if (kHeld) { frameStep(dir); return; }
-    if (shuttle === 0 && !back && !dv.paused) shuttle = 1; // already playing: L again is 2×
+    if (shuttle === 0 && !back && !tv.paused) shuttle = 1; // already playing: L again is 2×
     shuttle = shuttle * dir > 0 ? dir * Math.min(SPEEDS.length, Math.abs(shuttle) + 1) : dir;
     var sp = SPEEDS[Math.abs(shuttle) - 1];
     if (dir > 0) forward(sp); else backward(sp);
@@ -1177,7 +1219,16 @@ header.top .langs button { padding: 0 10px; }
     while (lo <= hi) { var mid = (lo + hi) >> 1; if (words[mid].s <= t) { best = mid; lo = mid + 1; } else hi = mid - 1; }
     return best;
   }
+  // The open clip's caption, over the bottom of its picture (above the controls)
+  function showCap() {
+    var el = $("d-cap"), said = capsOn && cur !== null ? capAt(clipBy[cur].rel, dv.currentTime) : "";
+    el.textContent = said; el.hidden = !said;
+    if (said) { el.style.left = dv.offsetLeft + "px"; el.style.width = dv.offsetWidth + "px"; el.style.top = (dv.offsetTop + dv.offsetHeight - 54) + "px"; }
+  }
+  dv.addEventListener("seeked", showCap);
+  window.addEventListener("resize", showCap);
   dv.addEventListener("timeupdate", function () {
+    showCap();
     if (cur === null) return;
     var c = clipBy[cur], r = rangeOf(c), d = dv.duration || 1;
     $("d-head").style.left = (100 * dv.currentTime / d) + "%";
@@ -1251,11 +1302,14 @@ header.top .langs button { padding: 0 10px; }
       var lk = k.length === 1 ? k.toLowerCase() : k;
       if (k === "Escape" && peek.on()) peek.close();
       else if (k === " " && (peek.on() || ghostAt)) { e.preventDefault(); if (peek.on()) peek.close(); else peek.open(ghostAt); }
+      else if (peek.on() && (k === "o" || k === "Enter")) { e.preventDefault(); peek.openHere(); }
+      else if (peek.on() && /^[iIOsSx]$/.test(k)) { /* marks and selecting are the open clip's: not while looking closer */ }
       else if (k === "Escape") closeDetail();
       else if (k === " ") { e.preventDefault(); if (dv.paused && !back) { shuttle = 1; forward(1); } else stopAll(); }
-      else if (lk === "k") { if (!e.repeat) { kHeld = true; stopAll(); } }
+      else if (lk === "c" && !e.altKey) { capsOn = !capsOn; try { localStorage.setItem("bb-caps", capsOn ? "on" : "off"); } catch (x) {} showCap(); toast(capsOn ? "Captions on" : "Captions off", "c turns them " + (capsOn ? "off" : "on") + ".", "ok", 1600); }
+      else if (lk === "k") { if (!e.repeat) { kHeld = true; if (peek.on()) peek.quiet(); stopAll(); } }
       else if (lk === "j" || lk === "l") {
-        var dir = lk === "l" ? 1 : -1;
+        var dir = lk === "l" ? 1 : -1; if (peek.on()) peek.quiet();
         if (e.repeat) { if (kHeld && !slow) { slow = true; if (dir > 0) forward(0.25); else backward(0.25); } }
         else shuttleKey(dir);
       }
@@ -1267,12 +1321,13 @@ header.top .langs button { padding: 0 10px; }
       else if (lk === "t") setLang(LANGS[(LANGS.indexOf(langMode) + 1) % 3]);
       else if (k === "ArrowLeft" || k === "ArrowRight") {
         e.preventDefault(); var n = k === "ArrowLeft" ? -1 : 1;
-        if (e.shiftKey) { stopAll(); dv.currentTime = Math.max(0, Math.min(dv.duration || 1e9, dv.currentTime + n)); } else frameStep(n);
+        if (peek.on()) peek.quiet();
+        if (e.shiftKey) { stopAll(); tv.currentTime = Math.max(0, Math.min(tv.duration || 1e9, tv.currentTime + n)); } else frameStep(n);
       }
       else if (k === "ArrowUp" || k === "ArrowDown") { e.preventDefault(); var m = k === "ArrowUp" ? -1 : 1; if (e.shiftKey) shot(m); else step(m); }
       else if (k === "[" || k === "]") { e.preventDefault(); step(k === "[" ? -1 : 1); }
-      else if (k === "Home") { e.preventDefault(); stopAll(); dv.currentTime = 0; }
-      else if (k === "End") { e.preventDefault(); stopAll(); dv.currentTime = Math.max(0, (dv.duration || 0) - 1 / FPS); }
+      else if (k === "Home") { e.preventDefault(); stopAll(); tv.currentTime = 0; }
+      else if (k === "End") { e.preventDefault(); stopAll(); tv.currentTime = Math.max(0, (tv.duration || 0) - 1 / FPS); }
       return;
     }
     if (e.altKey) return;
