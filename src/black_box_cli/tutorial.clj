@@ -250,7 +250,10 @@
   "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
   :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
   tutorial new` and the animated tutorial's What's new show it."
-  [{:version "0.1.33" :date "2026-11-25"
+  [{:version "0.1.34" :date "2026-11-25"
+    :items [{:title "A closer look stays open" :lesson "review" :run "blackbox review open kiln"
+             :what "The closer look at a shot stays open when the mouse leaves it; space or a click outside closes it."}]}
+   {:version "0.1.33" :date "2026-11-25"
     :items [{:title "Words under the mouse, exactly" :lesson "review" :run "blackbox review open kiln"
              :what "On a card's words, the picture follows the word nearest the mouse, even between words."}]}
    {:version "0.1.32" :date "2026-11-25"

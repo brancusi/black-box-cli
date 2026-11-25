@@ -7,9 +7,6 @@
  {:text
   "Describe a shot in plain words and get the frames. Like one? Find more like it.",
   :seconds 5.642},
- "5a2af7af31ea9a6f"
- {:text "New in version 0.1.33: words under the mouse, exactly.",
-  :seconds 6.426},
  "5bfc004f4da848c1"
  {:text
   "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out.",
@@ -38,6 +35,9 @@
  {:text
   "Search by person: who's talking, who's on screen, and in how many clips.",
   :seconds 5.721},
+ "d007fae1e40d2231"
+ {:text "New in version 0.1.34: a closer look stays open.",
+  :seconds 5.642},
  "ee646e730511565f"
  {:text
   "Selects on a page. Hover to preview, click to read along. S selects, I imports them into Resolve.",

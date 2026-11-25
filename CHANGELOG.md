@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A closer look stays open wherever the mouse goes; space, a click outside it, or opening the shot closes it.
+
 ## 0.1.33 (2026-11-25)
 
 - On a card's words, the mouse between two words lands on the nearer one, never back on the start of its line; on a

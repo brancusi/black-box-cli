@@ -1131,9 +1131,7 @@ header.top .langs button { padding: 0 10px; }
       el.addEventListener("mouseleave", function (e) {
         if (ghostAt && ghostAt.el === el) ghostAt = null;
         hover.off(c); bar.style.width = "0"; len.textContent = fmt(g.duration);
-        if (peek.on(g) && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest(".peek"))) peek.later();
       });
-      el.addEventListener("mouseenter", function () { if (peek.on(g)) peek.stay(); });
     });
   }
   // ---------- a closer look: space over a shot in the strip opens it a few times larger just above it, scrubbed with
@@ -1196,8 +1194,7 @@ header.top .langs button { padding: 0 10px; }
       rel: function () { return g ? g.rel : null; },
       shot: function () { return g; },
       speedEl: function () { return spd; },
-      later: function () { clearTimeout(closing); closing = setTimeout(api.close, 260); },
-      stay: function () { clearTimeout(closing); },
+      holds: function (t) { return box.contains(t) || !!(el && el.contains(t)); },
       g: function () { return g; }
     };
     // on the larger view the same move is finer: its width is the whole shot
@@ -1206,8 +1203,8 @@ header.top .langs button { padding: 0 10px; }
       var b = v.getBoundingClientRect(), f = Math.min(1, Math.max(0, (e.clientX - b.left) / b.width));
       api.to(f * Math.max(0, g.duration - 0.04));
     });
-    box.addEventListener("mouseenter", function () { api.stay(); });
-    box.addEventListener("mouseleave", function (e) { if (!(e.relatedTarget && el && el.contains(e.relatedTarget))) api.later(); });
+    // it stays open wherever the mouse goes: space, a click outside it, or opening the shot closes it
+    document.addEventListener("mousedown", function (e) { if (g && !api.holds(e.target)) api.close(); }, true);
     box.addEventListener("click", function () { api.openHere(); });
     window.addEventListener("resize", function () { if (g) place(); });
     return api;
