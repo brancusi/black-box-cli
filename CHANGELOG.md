@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.27 (2026-11-25)
 
 - The keys sheet (`?`) is rebuilt: Gallery, Playback, Marks, Moving around and Anywhere, each key in a column of its
   own beside a short line, every row on one line; a Close button, and a click outside closes it.
