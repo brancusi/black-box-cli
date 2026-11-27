@@ -122,6 +122,46 @@ section.group h2::after { content: ""; flex: 1; height: 1px; background: var(--l
 .meta b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .meta span { color: var(--faint); font-size: 12px; white-space: nowrap; }
 .note { padding: 0 10px; color: var(--mustard-deep); font-size: 12px; }
+/* photos: a photo camera's or a phone's, never a frame of the footage; marked so it can't be taken for one */
+.navs { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.navs nav:empty { display: none; }
+.card.photo .meta span { display: none; }
+.card.photo .facts { padding: 0 10px 2px; color: var(--faint); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kindtag { position: absolute; top: 6px; left: 6px; z-index: 2; display: inline-flex; gap: 6px; align-items: center; height: 20px; padding: 0 7px; background: var(--mustard); color: #1a1408; font: 600 10.5px/1 var(--font-mono); letter-spacing: .12em; pointer-events: none; }
+.kindtag svg { width: 12px; height: 12px; }
+.card.photo { border-top: 3px solid var(--mustard); }
+.card.photo .media .still { object-fit: contain; }
+.media .printed { position: absolute; left: 6px; bottom: 6px; font-size: 11px; line-height: 18px; padding: 0 6px; background: rgba(14,14,13,.78); color: var(--video-fg); }
+.media .pullb { position: absolute; right: 6px; bottom: 6px; z-index: 2; height: 22px; padding: 0 8px; border: 1px solid var(--video-fg); background: rgba(14,14,13,.6); color: var(--video-fg); font: 11px/1 var(--font-mono); opacity: 0; }
+.card:hover .media .pullb { opacity: 1; }
+.media .pullb:hover { background: var(--mustard); color: #1a1408; border-color: var(--mustard); }
+.desc { padding: 4px 10px 6px; color: var(--muted); font: 12.5px/18px var(--font-read); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.who { padding: 0 10px 10px; color: var(--green); font-size: 12px; }
+.pv { position: fixed; inset: 0; z-index: 25; background: var(--video); display: none; grid-template-columns: minmax(0, 1fr) 340px; }
+.pv.on { display: grid; }
+.pv .pic { position: relative; display: grid; place-items: center; min-height: 0; padding: 20px; }
+.pv .pic img { max-width: 100%; max-height: calc(100vh - 40px); object-fit: contain; display: block; }
+.pv .side { background: var(--surface); border-left: 1px solid var(--line); padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.pv .side .kindtag { position: static; align-self: flex-start; }
+.pv .side h3 { margin: 0; font: 700 16px/22px var(--font-brand); word-break: break-all; }
+.pv .side .crumbs { color: var(--faint); font-size: 12px; }
+.pv .side dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 12px; }
+.pv .side dt { color: var(--faint); }
+.pv .side dd { margin: 0; }
+.pv .side .said { font: 13px/19px var(--font-read); color: var(--ink); }
+.pv .side .btns { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; }
+.pv .side .go2 { background: var(--mustard); color: #1a1408; border-color: var(--mustard); }
+.pv .side .go2 kbd { color: #1a1408; border-color: #1a1408; }
+.stills { position: fixed; right: 16px; bottom: calc(var(--foot, 56px) + 14px); z-index: 35; width: 340px; max-height: 40vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 12px 30px rgba(0,0,0,.25); display: none; }
+.stills.on { display: block; }
+.stills .s-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--line); color: var(--faint); font-size: 12px; }
+.stills .s-head b { color: var(--ink); font-weight: 600; flex: 1; }
+.stills .s-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--line); font-size: 12px; }
+.stills .s-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stills .s-row .st { color: var(--faint); white-space: nowrap; }
+.stills .s-row .st.done { color: var(--green); }
+.stills .s-row .st.failed { color: var(--danger); white-space: normal; }
+.stills .s-row .ghost { height: 22px; padding: 0 8px; }
 /* A clip's words as one snippet to read: what it says (in English), then, quieter, the words as said. Moving across
    the clip lights the line being said there, and the snippet keeps it in view. */
 .lines { position: relative; padding: 6px 12px 14px; max-height: 214px; overflow: auto; scrollbar-width: thin; font: 400 14px/21px var(--font-read); color: var(--ink);
@@ -421,7 +461,7 @@ header.top .langs button { padding: 0 10px; }
   <div class="titles">
     <h1 id="title"></h1>
     <div class="sub" id="sub"></div>
-    <nav class="groups" id="groups"></nav>
+    <div class="navs"><nav class="groups" id="groups"></nav><nav class="groups" id="kinds" hidden></nav></div>
   </div>
   <div class="tray" id="tray"></div>
 </header>
@@ -480,6 +520,7 @@ header.top .langs button { padding: 0 10px; }
       <button class="ghost" id="d-out">Set out <kbd>o</kbd></button>
       <button class="ghost" id="d-reset">Reset in/out</button>
       <button class="ghost" id="d-pick">Add subclip <kbd>a</kbd></button>
+      <button class="ghost" id="d-pull" title="This frame, full size from the camera original, graded: for a poster or the web">Pull still <kbd>p</kbd></button>
       <button class="ghost" id="d-prev">‹ Prev <kbd>←</kbd></button>
       <button class="ghost" id="d-next">Next › <kbd>→</kbd></button>
       <span class="keys"><span class="k"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd>shuttle, as in Resolve</span><span class="k"><kbd>←</kbd><kbd>→</kbd>a frame</span><span class="k"><kbd>↑</kbd><kbd>↓</kbd>clip</span><span class="k"><kbd>?</kbd>keys</span></span>
@@ -493,6 +534,24 @@ header.top .langs button { padding: 0 10px; }
     <div class="transcript" id="d-transcript"></div>
   </div>
 </div>
+<div class="pv" id="pv">
+  <div class="pic"><img id="pv-img" alt=""></div>
+  <div class="side">
+    <span class="kindtag" title="A photo from a photo camera or a phone, not a frame of the footage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h3.5l2-2.5h6l2 2.5h3.5v11.5h-17z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/></svg>PHOTO · not a frame of the footage</span>
+    <h3 id="pv-file"></h3>
+    <div class="crumbs" id="pv-path"></div>
+    <div class="btns">
+      <button class="ghost go2" id="pv-pull" title="The photo itself, developed full size from the original (raw too)">Pull still <kbd>p</kbd></button>
+      <button class="ghost" id="pv-prev">‹ Prev <kbd>←</kbd></button>
+      <button class="ghost" id="pv-next">Next › <kbd>→</kbd></button>
+      <button class="ghost" id="pv-close">Close <kbd>esc</kbd></button>
+    </div>
+    <dl id="pv-facts"></dl>
+    <div class="said" id="pv-desc"></div>
+    <div class="note" id="pv-note" style="padding:0"></div>
+  </div>
+</div>
+<div class="stills" id="stills"></div>
 <div class="toast" id="toast"><b></b><span></span><button class="x" id="toast-x" title="Close">×</button></div>
 <div class="ctx" id="ctx" hidden></div>
 <div class="help" id="help">
@@ -503,6 +562,7 @@ header.top .langs button { padding: 0 10px; }
         <div class="row"><span class="ks"><em>hover</em></span><span class="what">Scrub a clip</span></div>
         <div class="row"><span class="ks"><em>click</em> <i>/</i> <kbd>space</kbd></span><span class="what">Open it</span></div>
         <div class="row"><span class="ks"><kbd>a</kbd></span><span class="what">Add it to the import</span></div>
+        <div class="row"><span class="ks"><kbd>p</kbd></span><span class="what">Pull a still, full size: the photo, or the frame under the mouse</span></div>
       </section>
       <section><h4>Playback</h4>
         <div class="row"><span class="ks"><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd></span><span class="what">Back · stop · forward</span></div>
@@ -520,6 +580,7 @@ header.top .langs button { padding: 0 10px; }
         <div class="row"><span class="ks"><kbd>shift</kbd><i>+</i><kbd>I</kbd><kbd>O</kbd></span><span class="what">Go to the in or the out</span></div>
         <div class="row"><span class="ks"><kbd>⌥</kbd><i>+</i><kbd>I</kbd><kbd>O</kbd><kbd>X</kbd></span><span class="what">Clear in, out, or both</span></div>
         <div class="row"><span class="ks"><kbd>a</kbd></span><span class="what">Add the in and out as a subclip (again for another part)</span></div>
+        <div class="row"><span class="ks"><kbd>p</kbd></span><span class="what">Pull the frame under the playhead as a full-size still</span></div>
       </section>
       <section><h4>Moving around</h4>
         <div class="row"><span class="ks"><kbd>↑</kbd><kbd>↓</kbd></span><span class="what">Previous or next clip</span></div>
@@ -578,6 +639,9 @@ header.top .langs button { padding: 0 10px; }
   // one leaves only by its × in the queue at the top. ranges: each clip's marks now (its select's, until changed).
   var queue = [], nextQ = 1, ranges = {}, filter = null, hoverN = null;
   var clipBy = {}; D.clips.forEach(function (c) { clipBy[c.n] = c; });
+  // A photo (a photo camera's or a phone's): shown, opened and pulled as a still, never imported into Resolve.
+  var isPhoto = function (c) { return !!c && c.kind === "photo"; };
+  var kind = null; // null: everything; "video" or "photo"
   // Clips from around a select (the ones its camera shot before and after): opened from the strip under a clip, added
   // with s like any other, the whole clip until i and o trim it. Numbered from 100001, one number per original.
   var extraN = {}, nextExtra = 100001;
@@ -656,10 +720,15 @@ header.top .langs button { padding: 0 10px; }
   $("title").textContent = D.title; document.title = (D.dev ? "DEV · " : "") + D.title + " · selects";
   // served from a checkout (bb review-dev): say so, so it's never mistaken for the installed one
   if (D.dev) document.body.insertAdjacentHTML("beforeend", '<div class="devmark" title="Served from the black-box-cli checkout by bb review-dev">DEV</div>');
-  var groups = D.groups.length ? D.groups : ["Clips"];
+  // the groups in the clips' order; clips before the cut list's first group: are in "Clips" (never left out)
+  var groups = [];
+  D.clips.forEach(function (c) { var g = c.group || "Clips"; if (groups.indexOf(g) < 0) groups.push(g); });
+  if (!groups.length) groups = ["Clips"];
   var elsewhere = {};
   D.clips.forEach(function (c) { var g = clipLang(linesIn(c, c)); if (g) elsewhere[g] = (elsewhere[g] || 0) + 1; });
-  $("sub").textContent = D.clips.length + " clips · " + fmt(D.clips.reduce(function (a, c) { return a + c.end - c.start; }, 0)) +
+  var VIDEOS = D.clips.filter(function (c) { return !isPhoto(c); }), PHOTOS = D.clips.filter(isPhoto);
+  $("sub").textContent = (VIDEOS.length ? VIDEOS.length + " clip" + (VIDEOS.length > 1 ? "s" : "") + " · " + fmt(VIDEOS.reduce(function (a, c) { return a + c.end - c.start; }, 0)) : "") +
+    (PHOTOS.length ? (VIDEOS.length ? " · " : "") + PHOTOS.length + " photo" + (PHOTOS.length > 1 ? "s" : "") : "") +
     Object.keys(elsewhere).map(function (g) { return " · " + elsewhere[g] + " in " + langName(g); }).join("") +
     " · made " + D.made_at.slice(0, 16).replace("T", " ") + " · move across a clip to scrub it, click it to open it" + (SERVER ? "" : " · open with `blackbox review open " + D.id + "` to import");
   var nav = $("groups");
@@ -670,6 +739,17 @@ header.top .langs button { padding: 0 10px; }
       b.dataset.g = g || ""; nav.appendChild(b);
     });
   }
+
+  // Clips and photos together, or one kind: only when the review has both.
+  if (VIDEOS.length && PHOTOS.length) {
+    var kinds = $("kinds"); kinds.hidden = false;
+    [[null, "Clips and photos"], ["video", "Clips · " + VIDEOS.length], ["photo", "Photos · " + PHOTOS.length]].forEach(function (x) {
+      var b = document.createElement("button"); b.textContent = x[1]; b.dataset.k = x[0] || "";
+      b.addEventListener("click", function () { kind = x[0]; render(); });
+      kinds.appendChild(b);
+    });
+  }
+  var ofKind = function (c) { return !kind || (kind === "photo") === isPhoto(c); };
 
   // ---------- the grid
   // A clip's words as one snippet: what it says, each line in English where it has it, then the words as said (each
@@ -774,7 +854,30 @@ header.top .langs button { padding: 0 10px; }
       return (clipIds[rel] = out);
     });
   }
+  var CAM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h3.5l2-2.5h6l2 2.5h3.5v11.5h-17z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+  var PHOTO_TITLE = "A photo from a photo camera or a phone, not a frame of the footage";
+  // A photo's card: the picture whole, marked PHOTO, with what Black Box says of it; p (or its button) pulls it full size.
+  function photoCard(c) {
+    var a = document.createElement("article"), facts = [c.camera, c.size].filter(Boolean).join(" · ");
+    a.className = "card photo"; a.dataset.n = c.n;
+    a.innerHTML =
+      '<div class="media">' + (thumbURL(c) ? '<img class="still" src="' + esc(thumbURL(c)) + '" alt="">' : "") +
+      '<span class="kindtag" title="' + PHOTO_TITLE + '">' + CAM + "PHOTO</span>" +
+      (c.print ? '<span class="printed" title="' + esc(c.print_why || "") + '">print ' + esc(c.print) + "/5</span>" : "") +
+      '<button class="pullb" title="The photo itself, developed full size from the original (raw too)">Pull still <kbd>p</kbd></button><span class="open">Open ↗</span></div>' +
+      '<div class="meta"><b title="' + esc(c.rel) + '">' + esc(c.file) + "</b><span></span></div>" +
+      (facts ? '<div class="facts" title="' + esc(facts) + '">' + esc(facts) + "</div>" : "") +
+      (c.note ? '<div class="note">' + esc(c.note) + "</div>" : "") +
+      '<div class="desc">' + esc(c.description || "Not described yet") + "</div>" +
+      (c.people && c.people.length ? '<div class="who">with ' + esc(c.people.join(", ")) + "</div>" : "");
+    a.addEventListener("mouseenter", function () { hoverN = c.n; });
+    a.addEventListener("mouseleave", function () { if (hoverN === c.n) hoverN = null; });
+    a.querySelector(".pullb").addEventListener("click", function (e) { e.stopPropagation(); pull(c); });
+    a.addEventListener("click", function () { openPhoto(c.n); });
+    return a;
+  }
   function card(c) {
+    if (isPhoto(c)) return photoCard(c);
     if (c.extra && !D.files[c.rel]) fetchWords(c.rel, function () { if (cur === null) render(); });
     var r = rangeOf(c), lines = linesIn(c, r), said = clipLang(lines), k = queuedOf(c.n).length;
     var a = document.createElement("article");
@@ -836,13 +939,14 @@ header.top .langs button { padding: 0 10px; }
       : "A shot around a select";
   }
   function shown() {
-    return D.clips.filter(function (c) { return !filter || (c.group || "Clips") === filter; }).concat(filter ? [] : addedClips());
+    return D.clips.filter(function (c) { return (!filter || (c.group || "Clips") === filter) && ofKind(c); })
+      .concat(filter || kind === "photo" ? [] : addedClips());
   }
   function render() {
     var main = $("main"); main.innerHTML = "";
     groups.concat(["Added by you"]).forEach(function (g) {
       if (filter && g !== filter) return;
-      var cs = g === "Added by you" ? addedClips() : D.clips.filter(function (c) { return (c.group || "Clips") === g; }); if (!cs.length) return;
+      var cs = g === "Added by you" ? (kind === "photo" ? [] : addedClips()) : D.clips.filter(function (c) { return (c.group || "Clips") === g && ofKind(c); }); if (!cs.length) return;
       var s = document.createElement("section"); s.className = "group";
       if (groups.length > 1 || g === "Added by you") s.innerHTML = "<h2>" + esc(g) + " · " + cs.length + "</h2>";
       var grid = document.createElement("div"); grid.className = "grid";
@@ -850,11 +954,13 @@ header.top .langs button { padding: 0 10px; }
       s.appendChild(grid); main.appendChild(s);
     });
     Array.prototype.forEach.call(nav.children, function (b) { b.classList.toggle("on", (b.dataset.g || null) === filter); });
+    Array.prototype.forEach.call($("kinds").children, function (b) { b.classList.toggle("on", (b.dataset.k || null) === kind); });
     count();
   }
   // Adds clip n's in and out as a subclip to import, at the end: never a second of the very same in and out.
   function add(n) {
     if (n === null || n === undefined || !clipBy[n]) return;
+    if (isPhoto(clipBy[n])) { toast("A photo isn't imported into Resolve", "Press p to pull it full size from the original, as a still.", "", 4000); return; }
     var c = clipBy[n], r = rangeOf(c), i = queuedAt(n, r);
     if (i >= 0) { toast("Already in the import", "This in and out is #" + (i + 1) + ". Mark another in and out, then a, for another subclip.", "", 3000); return; }
     queue.push({ q: nextQ++, n: n, start: r.start, end: r.end });
@@ -1031,7 +1137,7 @@ header.top .langs button { padding: 0 10px; }
     if (!SERVER) $("go").title = "Open this review with `blackbox review open " + D.id + "` to import";
   }
   $("all").addEventListener("click", function () {
-    shown().forEach(function (c) { var r = rangeOf(c); if (queuedAt(c.n, r) < 0) queue.push({ q: nextQ++, n: c.n, start: r.start, end: r.end }); }); render(); save();
+    shown().filter(function (c) { return !isPhoto(c); }).forEach(function (c) { var r = rangeOf(c); if (queuedAt(c.n, r) < 0) queue.push({ q: nextQ++, n: c.n, start: r.start, end: r.end }); }); render(); save();
   });
   // Clearing takes everything out: a second click within a few seconds, so a stray one never does
   var clearArmed = null;
@@ -1881,7 +1987,8 @@ header.top .langs button { padding: 0 10px; }
   var step = function (d) {
     var list = shown(), i = list.findIndex(function (c) { return c.n === cur; });
     if (i < 0 && anchor !== null) i = list.findIndex(function (c) { return c.n === anchor; });
-    var next = list[i + d]; if (next) openDetail(next.n);
+    var next = list[i + d]; if (!next) return;
+    if (isPhoto(next)) { closeDetail(); openPhoto(next.n); } else openDetail(next.n);
   };
   $("d-prev").addEventListener("click", function () { step(-1); });
   $("w-back").addEventListener("click", function () { closeDetail(); });
@@ -1896,6 +2003,15 @@ header.top .langs button { padding: 0 10px; }
     if (k === "?") { e.preventDefault(); help.classList.toggle("on"); return; }
     if (help.classList.contains("on")) { if (k === "Escape") help.classList.remove("on"); return; }
     if (k === "Escape" && $("sheet").classList.contains("on")) { sheet(false); return; }
+    if (pvN !== null) {
+      var pk = k.length === 1 ? k.toLowerCase() : k;
+      if (k === "Escape") closePhoto();
+      else if (k === "ArrowLeft" || k === "ArrowUp" || k === "[") { e.preventDefault(); pvStep(-1); }
+      else if (k === "ArrowRight" || k === "ArrowDown" || k === "]") { e.preventDefault(); pvStep(1); }
+      else if (pk === "p") pull(clipBy[pvN]);
+      else if (pk === "a") add(pvN);
+      return;
+    }
     if (cur !== null) {
       if (e.altKey) { // ⌥I, ⌥O, ⌥X: clear the in, the out, both (by the key's place: ⌥ changes the letter)
         if (code === "KeyI") { e.preventDefault(); clearRange("in"); }
@@ -1912,6 +2028,7 @@ header.top .langs button { padding: 0 10px; }
       else if (k === "/") { e.preventDefault(); tfind.open(); }
       else if (lk === "n" && tfind.active()) { e.preventDefault(); tfind.go(1); }
       else if (lk === "p" && tfind.active()) { e.preventDefault(); tfind.go(-1); }
+      else if (lk === "p" && !peek.on()) pull(clipBy[cur], dv.currentTime);
       else if (k === "Escape" && tfind.on()) tfind.close();
       else if (k === "Escape" && span) showSpan(null);
       else if (k === "Enter" && !e.metaKey && !e.ctrlKey && span) { e.preventDefault(); useSpan(); }
@@ -1946,9 +2063,100 @@ header.top .langs button { padding: 0 10px; }
     if (e.altKey) return;
     if (k === "a" || k === "A") { if (hoverN !== null) add(hoverN); }
     else if (k === "s" || k === "S") sHint();
+    else if ((k === "p" || k === "P") && hoverN !== null) pullHovered();
     else if (k === "t") setLang(LANGS[(LANGS.indexOf(langMode) + 1) % 3]);
-    else if ((k === " " || k === "Enter") && hoverN !== null) { e.preventDefault(); openDetail(hoverN); }
+    else if ((k === " " || k === "Enter") && hoverN !== null) { e.preventDefault(); if (isPhoto(clipBy[hoverN])) openPhoto(hoverN); else openDetail(hoverN); }
   });
+
+  // ---------- a photo, open
+  var pvN = null;
+  function openPhoto(n) {
+    var c = clipBy[n]; if (!isPhoto(c)) return;
+    if (cur !== null) closeDetail();
+    pvN = n;
+    $("pv-img").src = mediaURL(c.media);
+    $("pv-file").textContent = c.file; $("pv-path").innerHTML = crumbs(c.rel); $("pv-path").title = c.rel;
+    var row = function (k, v) { return v ? "<dt>" + k + "</dt><dd>" + esc(v) + "</dd>" : ""; };
+    $("pv-facts").innerHTML = row("taken", (c.taken || "").replace("T", " ")) + row("camera", c.camera) + row("size", c.size) +
+      row("print", c.print ? c.print + " of 5" + (c.print_why ? ": " + c.print_why : "") : "") +
+      row("with", (c.people || []).join(", ")) + row("id", c.id);
+    $("pv-desc").textContent = c.description || "Not described yet: Black Box describes photos on the mini, a month at a time.";
+    $("pv-note").textContent = c.note || "";
+    $("pv").classList.add("on");
+  }
+  function closePhoto() { $("pv").classList.remove("on"); pvN = null; }
+  function pvStep(d) {
+    var list = shown(), i = list.findIndex(function (c) { return c.n === pvN; }), next = list[i + d];
+    if (!next) return;
+    if (isPhoto(next)) openPhoto(next.n); else { closePhoto(); openDetail(next.n); }
+  }
+  $("pv-close").addEventListener("click", closePhoto);
+  $("pv-prev").addEventListener("click", function () { pvStep(-1); });
+  $("pv-next").addEventListener("click", function () { pvStep(1); });
+  $("pv-pull").addEventListener("click", function () { pull(clipBy[pvN]); });
+  $("d-pull").addEventListener("click", function () { if (cur !== null) pull(clipBy[cur], dv.currentTime); });
+
+  // ---------- stills from the originals: the photo itself, or the frame under the playhead (or the mouse), asked of
+  // the mini full size and graded (`still new`). Each shows on the right until it's back; Open shows it on this Mac.
+  var SKEY = "bb-stills-" + D.id, pulled = [];
+  try { pulled = JSON.parse(localStorage.getItem(SKEY) || "[]") || []; } catch (e) { pulled = []; }
+  var keepPulled = function () { try { localStorage.setItem(SKEY, JSON.stringify(pulled.slice(-30))); } catch (e) {} };
+  var over = function (x) { return x.state === "done" || x.state === "failed"; };
+  function drawStills() {
+    var box = $("stills");
+    if (!pulled.length || box.dataset.hide === "1") { box.classList.remove("on"); return; }
+    box.innerHTML = '<div class="s-head"><b>Stills from the originals</b><span>' + pulled.filter(over).length + " of " + pulled.length + ' back</span><button class="ghost" data-hide="1" title="Hide (it comes back with the next still)">×</button></div>' +
+      pulled.slice().reverse().map(function (x, i) {
+        var st = x.state === "done" ? "✓ " + (x.size || "done") : x.state === "failed" ? (x.err || "failed") : x.state === "asking" ? "asking…" : "rendering on the mini…";
+        return '<div class="s-row"><span class="nm" title="' + esc(x.label) + '">' + esc(x.label) + '</span><span class="st ' + esc(x.state) + '">' + esc(st) + "</span>" +
+          (x.state === "done" ? '<button class="ghost" data-open="' + (pulled.length - 1 - i) + '">Open</button>' : "") + "</div>";
+      }).join("");
+    box.classList.add("on");
+  }
+  $("stills").addEventListener("click", function (e) {
+    var h = e.target.closest("[data-hide]"); if (h) { this.dataset.hide = "1"; drawStills(); return; }
+    var o = e.target.closest("[data-open]"); if (!o) return;
+    var x = pulled[+o.dataset.open];
+    fetch("api/still/open?t=" + encodeURIComponent(TOKEN), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: x.id, n: x.n || 1 }) })
+      .then(function (r) { if (!r.ok) toast("Not back yet", "That still isn't on this Mac yet.", "err", 3000); });
+  });
+  var pollTimer = null;
+  function pollStills() {
+    clearTimeout(pollTimer);
+    var waiting = pulled.filter(function (x) { return x.id && !over(x); });
+    if (!waiting.length || !SERVER) return;
+    Promise.all(waiting.map(function (x) {
+      return fetch("api/still?id=" + encodeURIComponent(x.id) + "&t=" + encodeURIComponent(TOKEN)).then(function (r) { return r.json(); }).then(function (st) {
+        var it = st && st.stills && st.stills[0]; if (!it) return;
+        x.n = it.n; x.size = it.size; x.err = it.error;
+        if (x.state !== it.state && it.state === "done") toast("✓ Still back: " + x.label, (it.size ? it.size + " · " : "") + "Open it from the list on the right.", "ok", 5000);
+        x.state = it.state === "done" || it.state === "failed" ? it.state : "rendering";
+      }).catch(function () {});
+    })).then(function () { keepPulled(); drawStills(); pollTimer = setTimeout(pollStills, 8000); });
+  }
+  function pull(c, t) {
+    if (!c) return;
+    if (!SERVER) { toast("Can't pull a still from a file", "Ask your agent to open the review (blackbox review open " + D.id + ").", "err", 6000); return; }
+    var photo = isPhoto(c), at = photo ? 0 : Math.max(0, +t || 0);
+    var x = { label: c.file + (photo ? " (photo)" : " @ " + fmt(at)), state: "asking" };
+    pulled.push(x); $("stills").dataset.hide = ""; drawStills();
+    fetch("api/still?t=" + encodeURIComponent(TOKEN), { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ what: photo ? c.id : c.rel + "@" + at.toFixed(3) }) })
+      .then(function (r) { return r.json(); }).then(function (res) {
+        if (res.error) { x.state = "failed"; x.err = res.error.message + (res.help && res.help.length ? " — " + res.help[0] : ""); }
+        else { x.id = res.id; x.state = "rendering"; toast("Pulling a still from the original", x.label + " · the mini renders it full size; it's listed on the right until it's back.", "ok", 4000); }
+        keepPulled(); drawStills(); pollStills();
+      }).catch(function (e) { x.state = "failed"; x.err = "the review's server didn't answer (" + e + ")"; keepPulled(); drawStills(); });
+  }
+  // in the gallery: the photo, or the frame where the mouse is across the clip (its middle when it hasn't moved)
+  function pullHovered() {
+    var c = clipBy[hoverN]; if (!c) return;
+    if (isPhoto(c)) { pull(c); return; }
+    var el = document.querySelector('.card[data-n="' + hoverN + '"]'), r = rangeOf(c);
+    pull(c, el && el.dataset.tm ? +el.dataset.tm : (r.start + r.end) / 2);
+  }
+  pulled.forEach(function (x) { if (x.state === "asking") { x.state = "failed"; x.err = "interrupted"; } });
+  drawStills(); pollStills();
 
   // ---------- importing
   var busy = false;

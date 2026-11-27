@@ -5,7 +5,9 @@
   (:require
    [babashka.fs :as fs]
    [babashka.process :as process]
+   [black-box-cli.edl :as edl]
    [black-box-cli.frames :as frames]
+   [black-box-cli.review :as review]
    [black-box-cli.support :as s]
    [black-box-cli.tools :as tools]
    [cheshire.core :as json]
@@ -111,7 +113,10 @@
                  "case \"$2\" in\n"
                  "  embed) echo '{\"model\": \"google/siglip2-base-patch16-256\", \"label\": "
                  "\"google/siglip2-base-patch16-256-5s\", \"dim\": 4, \"vector\": [0.6, 0.8, 0.0, 0.0]}' ;;\n"
-                 "  still) cat > '" dir "/sent'; echo '{\"request\": \"s-1\", \"state\": \"queued\"}' ;;\n"
+                 "  still) case \"$3\" in\n"
+                 "    request) cat > '" dir "/sent'; echo '{\"request\": \"s-1\", \"state\": \"queued\"}' ;;\n"
+                 "    status) echo '{\"state\": \"rendering\", \"items\": [{\"n\": 1, \"state\": \"rendering\"}]}' ;;\n"
+                 "  esac ;;\n"
                  "esac\n"))
     (fs/set-posix-file-permissions f "rwxr-xr-x")
     f))
@@ -125,7 +130,53 @@
               (let [res (s/cli* {:home home :env {"BLACKBOX_APP" app}}
                                 (concat ["--meta" meta "--local" local "--format" "edn"] args))]
                 (assoc (read-string (:out res)) :exit (:exit res))))]
-    {:run run :dir dir}))
+    {:run run :dir dir :ctx {:home home :env {"BLACKBOX_APP" app} :meta meta :local local :opts {} :fmt :edn}}))
+
+(deftest photos-in-a-selects-review
+  (let [meta (copy-meta)
+        {:keys [run dir ctx]} (runner meta)
+        _ (run "index")
+        photo (:id (first (:photos (run "photos" "stone"))))
+        video-frame "r54qb74c.f2" ; C5274's, which has a proxy in the fixture
+        line "r54qb74c.3"
+        selects (str "title: Stone, clips and stills\n" line "\n" video-frame " # the moment\ngroup: Stills\n" photo " # poster?\n")
+        res (s/cli* {:home (:home ctx) :env (:env ctx) :stdin selects}
+                    ["--meta" meta "--local" (:local ctx) "--format" "edn" "review" "new" "-"])
+        made (read-string (:out res))
+        doc (json/parse-string (slurp (str (fs/path (fs/expand-home (str/replace (:folder made) #"^~" (System/getProperty "user.home")))
+                                                    "review.json")))
+                               true)
+        [a b c] (:clips doc)]
+    (testing "a photo goes in a review beside the clips, as a photo"
+      (is (= [2 1] ((juxt :clips :photos) made)))
+      (is (= ["photo" ""] ((juxt :in :out) (last (:review made)))))
+      (is (= [nil nil "photo"] (map :kind [a b c])))
+      (is (= [photo "P0001.ARW" "Stills" "poster?" "MAKER CAM-B, 35mm F2" "6000x4000 (24 MP)" 4 ["Mara Vento"]]
+             ((juxt :id :file :group :note :camera :size :print :people) c)))
+      (is (str/ends-with? (nth (:media doc) (:media c)) ".proxy.jpg"))
+      (is (not (contains? (:files doc) (keyword (:rel c)))) "no transcript for a photo"))
+    (testing "a video's frame id is the 5 s around it"
+      (is (= 5.0 (- (:end b) (:start b))))
+      (is (= "the moment" (:note b))))
+    (testing "a rough cut leaves the photo out, and says where it goes"
+      (let [cut (read-string (:out (s/cli* {:home (:home ctx) :env (:env ctx) :stdin selects}
+                                           ["--meta" meta "--local" (:local ctx) "--format" "edn" "edl" "new" "-" "--dry-run"])))]
+        (is (= 2 (:clips cut)))
+        (is (some #(str/includes? % "is a photo (P0001.ARW): left out; photos go in a selects review") (:warnings cut)))))
+    (testing "the review's Import never sends a photo"
+      (with-redefs [edl/online-cmd (fn [_] [{:sent (slurp *in*)} []])]
+        (is (not (str/includes? (:sent (review/import! ctx doc {:clips [{:n 3 :start 0 :end 0} {:n 1}]})) "P0001")))))
+    (testing "Pull still: the photo, or a frame of a clip, asked of the mini; where it stands"
+      (let [asked (review/pull-still! ctx {:what photo})]
+        (is (= [["P0001" "photo"]] (map (juxt :name :at) (:stills asked))))
+        (is (= {:id (:id asked) :state "rendering"} (select-keys (review/still-status ctx (:id asked)) [:id :state])))
+        (is (= ["rendering"] (map :state (:stills (review/still-status ctx (:id asked)))))))
+      (let [asked (review/pull-still! ctx {:what (str (:rel a) "@12.5") :look "filmic"})
+            sent (json/parse-string (slurp (str (fs/path dir "sent"))) true)]
+        (is (= "filmic" (:look sent)))
+        (is (= [12.5] (map :t (:items sent))))
+        (is (:id asked)))
+      (is (= "usage" (-> (review/pull-still! ctx {:what "rm -rf"}) :error :code))))))
 
 (deftest photos-stand-beside-the-footage
   (let [{:keys [run dir]} (runner (copy-meta))

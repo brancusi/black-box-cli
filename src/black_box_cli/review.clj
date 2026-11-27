@@ -17,8 +17,11 @@
    [black-box-cli.ids :as ids]
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
+   [black-box-cli.people :as people]
+   [black-box-cli.photos :as photos]
    [black-box-cli.picture :as picture]
    [black-box-cli.resolve :as resolve]
+   [black-box-cli.stills :as stills]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
    [black-box-cli.version :as version]
@@ -73,8 +76,34 @@
                    (str/replace "\u2029" "\\u2029"))))
 
 (defn- row [n s lines]
-  (array-map :n n :group (:group s) :file (:source_name s) :in (tc/hms (:start s)) :out (tc/hms (:end s))
-             :length (tc/round-to (cuts/length s) 1) :lines lines))
+  (if (= "photo" (:kind s))
+    (array-map :n n :group (:group s) :file (:source_name s) :in "photo" :out "" :length 0 :lines 0)
+    (array-map :n n :group (:group s) :file (:source_name s) :in (tc/hms (:start s)) :out (tc/hms (:end s))
+               :length (tc/round-to (cuts/length s) 1) :lines lines)))
+
+(defn- photo-facts
+  "What a review shows of each photo among `segments`: {rel {:camera :size :print :print_why :description :taken
+  :people}}, from Black Box's descriptions and the names of the faces in it."
+  [index-path segments]
+  (let [ps (filter #(= "photo" (:kind %)) segments)
+        described (photos/of index-path (map :rel ps) (map :source_sha256 ps))
+        names-db (when (people/available? index-path) (people/path index-path))
+        faces (if names-db (people/photo-faces names-db) [])
+        who (if names-db (into {} (map (juxt :id :name)) (people/people names-db)) {})]
+    (into {}
+          (for [p ps
+                :let [d (or (described (:rel p)) (described (:source_sha256 p)))
+                      seen (->> faces
+                                (filter #(or (= (:rel p) (:rel %))
+                                             (and (:source_sha256 p) (= (:source_sha256 p) (:source_sha256 %)))))
+                                (keep (comp who :person)) distinct)]]
+            [(:rel p) (array-map :camera (or (some-> d photos/camera-words) "")
+                                 :size (or (some-> d photos/size-words) "")
+                                 :print (:print_score d)
+                                 :print_why (or (:print_why d) "")
+                                 :description (or (:description d) "")
+                                 :taken (or (:taken_at d) "")
+                                 :people (vec seen))]))))
 
 ;; ------------------------------------------------------------------------------------------------ the server
 
@@ -188,7 +217,7 @@
                             :let [c (or (by n)
                                         (when (and (string? rel) (number? start) (number? end) (around/known? index-path rel))
                                           {:rel rel :group "Added"}))]
-                            :when c
+                            :when (and c (not= "photo" (:kind c))) ; a photo isn't imported: it's pulled as a still
                             :let [s (max 0.0 (double (or start (:start c))))
                                   e (min (double (or (:duration c) 1e9)) (double (or end (:end c))))]
                             :when (> e s)]
@@ -208,6 +237,29 @@
       (if-let [{:keys [code message help]} (out/error-of e)]
         {:error {:code code :message message} :help (vec help)}
         (throw e)))))
+
+(defn- answer
+  "What a command run for the page returns, as data: its output with its help, or {:error {:code :message} :help}."
+  [f]
+  (try
+    (let [[m help] (f)] (assoc m :help (vec help)))
+    (catch clojure.lang.ExceptionInfo e
+      (if-let [{:keys [code message help]} (out/error-of e)]
+        {:error {:code code :message message} :help (vec help)}
+        (throw e)))))
+
+(defn pull-still!
+  "The page's Pull still: `what` (a photo's frame id, or `<rel>@<seconds>` for the frame under the playhead) asked
+  of the mini, full size from the original, as `still new` would (`look`, default neutral)."
+  [ctx {:keys [what look]}]
+  (if-not (and (string? what) (re-matches #"[A-Za-z2-7]{8}\.[fF][0-9]+|[^@=~]+@[0-9]+(\.[0-9]+)?" what))
+    {:error {:code "usage" :message "a still is a photo's id or a clip's rel@seconds"} :help []}
+    (answer #(stills/new-cmd (assoc ctx :opts {:look (or (some #{look} stills/looks) "neutral")} :args {:what [what]})))))
+
+(defn still-status
+  "Where the still request `id` stands, for the page: stills/status, or an error."
+  [ctx id]
+  (answer #(vector (stills/status ctx (str id)) [])))
 
 (defn dev?
   "Whether this server runs from a checkout beside the installed one (`bb review-dev`): it doesn't take the review
@@ -425,6 +477,22 @@
                                                    :help ["Tell your agent what it says; it can run `blackbox online` on the clips instead"]})))
                                   (finally (swap! importing dec)))))
 
+                       ;; stills from the originals (the mini renders them): a photo, or the frame under the playhead
+                       (and (= :post request-method) (= "/api/still" rest*))
+                       (json-ok (pull-still! ctx (try (json/parse-string (slurp body) true) (catch Exception _ {}))))
+
+                       (and (= :get request-method) (= "/api/still" rest*))
+                       (json-ok (still-status ctx (get q "id")))
+
+                       ;; a still that's back, opened in the Mac's picture viewer: only a JPEG of that request
+                       (and (= :post request-method) (= "/api/still/open" rest*))
+                       (let [{:keys [id n]} (try (json/parse-string (slurp body) true) (catch Exception _ {}))
+                             st (still-status ctx id)
+                             jpeg (some #(when (= n (:n %)) (:jpeg %)) (:stills st))]
+                         (if jpeg
+                           (do (tools/spawn! ["/usr/bin/open" jpeg]) {:status 204})
+                           {:status 404 :body "that still isn't back yet"}))
+
                        :else {:status 404})))))))
          run (fn [p] (http/run-server handler {:ip "127.0.0.1" :port p :legacy-return-value? false}))
          ;; the port a moment more when it's taken: a server handing over to this one may still be letting it go
@@ -543,7 +611,9 @@
 (defn new-cmd
   "`blackbox review new <selects|->`."
   [{:keys [home opts args] :as ctx}]
-  (let [{:keys [text title segments warnings version]} (edl/read-cut (assoc-in ctx [:args :cutlist] (:selects args))
+  (let [{:keys [text title segments warnings version]} (edl/read-cut (-> ctx
+                                                                         (assoc-in [:args :cutlist] (:selects args))
+                                                                         (assoc :photos? true))
                                                                      "review new")
         ;; the editor's language (what the page reads in; --language is its old name), and the subtitles' in Resolve
         language (or (:language opts) (:read-in opts) "en")
@@ -563,7 +633,9 @@
         _ (when (empty? segments)
             (out/fail! "no-clips" "none of the clips has a proxy to play" {:help ["Make the proxies available offline in Finder"]}))
         warnings (into (vec warnings) no-proxy)
-        files (into {} (for [rel (distinct (map :rel segments))]
+        photo? #(= "photo" (:kind %))
+        videos (remove photo? segments)
+        files (into {} (for [rel (distinct (map :rel videos))]
                          [rel (array-map :name (str (fs/file-name rel))
                                          :duration (:duration (first (filter #(= rel (:rel %)) segments)))
                                          :lines (or (file-lines path version rel) []))]))
@@ -572,10 +644,11 @@
         ;; a clip is in another language when most of its lines whose language is known are
         elsewhere (fn [s] (let [known (keep :lang (in-range s))]
                             (and (seq known) (> (* 2 (count (remove #{language} known))) (count known)))))
-        rows (vec (map-indexed (fn [i s] (row (inc i) s (lines-in s))) segments))
+        rows (vec (map-indexed (fn [i s] (row (inc i) s (if (photo? s) 0 (lines-in s)))) segments))
         groups (vec (distinct (keep :group segments)))
-        head [:title title :clips (count segments) :groups (if (seq groups) groups "none")
-              :read_in language :subtitles_in subs-in :in_another_language (count (filter elsewhere segments))
+        head [:title title :clips (count videos) :photos (count (filter photo? segments))
+              :groups (if (seq groups) groups "none")
+              :read_in language :subtitles_in subs-in :in_another_language (count (filter elsewhere videos))
               :warnings (if (seq warnings) warnings "none")]]
     (if (:dry-run opts)
       [(apply array-map (concat head [:written "nothing (--dry-run)" :review rows]))
@@ -584,18 +657,26 @@
             id (str (fs/file-name folder))
             media (vec (distinct (map :play_path segments)))
             thumbs (vec (pmap (fn [[i s]] (thumb! ctx folder (inc i) s)) (map-indexed vector segments)))
+            facts (photo-facts path segments)
             doc (array-map
                  :schema schema :id id :title title :made_at (str (java.time.Instant/now)) :transcripts version
                  :read_in language :subtitles_in subs-in
                  :groups groups :warnings warnings :media media
                  :clips (vec (map-indexed
                               (fn [i s]
-                                (array-map :n (inc i) :group (:group s) :note (not-empty (:why s))
-                                           :file (:source_name s) :rel (:rel s) :media (.indexOf ^java.util.List media (:play_path s))
-                                           :audio_only (not (resolve/video? s))
-                                           :start (:start s) :end (:end s) :duration (:duration s)
-                                           :tc_in (tc/source-tc s (:start s) (cuts/timeline-rate [s]))
-                                           :thumb (nth thumbs i)))
+                                (if (photo? s)
+                                  (apply array-map
+                                         (concat [:n (inc i) :kind "photo" :group (:group s) :note (not-empty (:why s))
+                                                  :id (:id s) :file (:source_name s) :rel (:rel s)
+                                                  :media (.indexOf ^java.util.List media (:play_path s))
+                                                  :start 0 :end 0 :thumb (nth thumbs i)]
+                                                 (mapcat identity (facts (:rel s)))))
+                                  (array-map :n (inc i) :group (:group s) :note (not-empty (:why s))
+                                             :file (:source_name s) :rel (:rel s) :media (.indexOf ^java.util.List media (:play_path s))
+                                             :audio_only (not (resolve/video? s))
+                                             :start (:start s) :end (:end s) :duration (:duration s)
+                                             :tc_in (tc/source-tc s (:start s) (cuts/timeline-rate [s]))
+                                             :thumb (nth thumbs i))))
                               segments))
                  :files files
                  :cutlist (subs text 0 (min 20000 (count text))))

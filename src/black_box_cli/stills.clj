@@ -311,6 +311,19 @@
        (conj (str "A still flagged not_camera_original came from an edited export, not a camera: "
                   "`blackbox like <frame id>` may find the camera's own clip")))]))
 
+(defn status
+  "Request `id` now, as data for the review page: {:id :state :stills [{:n :name :file :at :state :size :error
+  :jpeg}]}, :jpeg the done still's JPEG (its absolute path) or nil."
+  [{:keys [env home] :as ctx} id]
+  (let [{:keys [folder doc] id :id} (find-request ctx id)
+        {:keys [ans err rows]} (snapshot env home folder doc)]
+    {:id id
+     :state (if err (str "unknown: " (:message err)) (:state ans))
+     :stills (mapv (fn [r]
+                     (assoc (select-keys r [:n :name :file :at :state :size :error])
+                            :jpeg (first (filter #(re-find #"(?i)\.jpe?g$" %) (files-for folder (:name r))))))
+                   rows)}))
+
 (defn list-cmd
   "`blackbox still list`: stills requests made on this Mac, newest first."
   [{:keys [home opts] :as ctx}]

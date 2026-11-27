@@ -9,6 +9,7 @@
    [black-box-cli.cutlist :as cutlist]
    [black-box-cli.cuts :as cuts]
    [black-box-cli.db :as db]
+   [black-box-cli.frames :as frames]
    [black-box-cli.ids :as ids]
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
@@ -152,9 +153,36 @@
     (cond-> (range-segment ctx t a b (if (str/blank? note) (str (:id r) ": " (:action r)) note))
       (nil? (:clock_kind t)) (update 1 #(str/join "; " (remove nil? [% no-timecode]))))))
 
+(def frame-span
+  "Seconds of a video a frame id stands for in a cut list: the frame in the middle (frames are a few seconds apart)."
+  5.0)
+
+(defn- frame-segment
+  "A frame id: a photo as a segment of kind photo ({:kind :id :rel :source_name :source_sha256 :play_path :start 0
+  :end 0}, its proxy the JPEG), or a video's `frame-span` seconds around the frame, as a file clip."
+  [{:keys [meta path version home] :as ctx} {:keys [frame note]}]
+  (let [{:keys [db]} (frames/require-index! path home)
+        {:keys [file n t]} (frames/lookup db (str/lower-case frame))
+        id (frames/frame-id (:clip file) n)]
+    (if (= "photo" (:kind file))
+      (let [proxy (some-> (:proxy_rel file) (#(fs/path meta "proxies" %)) (#(when (fs/exists? %) (str %))))]
+        [{:kind "photo" :id id :rel (:rel file) :source_name (:source_name file) :source_sha256 (:source_sha256 file)
+          :play_path proxy :proxy (some? proxy) :start 0.0 :end 0.0 :duration nil :why note}
+         (when-not proxy (str "no proxy, " cuts/no-proxy))])
+      (let [row (or (archive/original-row path version (:rel file))
+                    (out/fail! "not-found" (str "no transcript or camera facts for " (:rel file)
+                                                ", which cut.edl needs for its timecode")))
+            dur (or (:duration row) (:duration file))
+            a (max 0.0 (- t (/ frame-span 2)))
+            b (cond-> (+ a frame-span) dur (min dur))]
+        (when (<= b a) (out/fail! "bad-clip" (str id " has no length")))
+        (cond-> (range-segment ctx row a b (if (str/blank? note) (str id ", the moment " (tc/hms t)) note))
+          (nil? (:clock_kind row)) (update 1 #(str/join "; " (remove nil? [% no-timecode]))))))))
+
 (defn segments
   "The cut list's clips as segments, in order: {:segments :warnings :problems}. Any problem means nothing is
-  written; each names its clip and line."
+  written; each names its clip and line. A photo is kept only when `:photos?` is in `ctx` (a selects review);
+  otherwise it's left out with a warning."
   [ctx items]
   (reduce (fn [acc [k it]]
             (let [where (if (pos? (:n it)) (str "clip " k " (line " (:n it) ")") (str "clip " k))]
@@ -162,7 +190,12 @@
                 (let [[s warning] (case (:kind it)
                                     :lines (lines-segment ctx it)
                                     :shot (shot-segment ctx it)
-                                    (file-segment ctx it))]
+                                    :frame (frame-segment ctx it)
+                                    (file-segment ctx it))
+                      [s warning] (if (and s (= "photo" (:kind s)) (not (:photos? ctx)))
+                                    [nil (str (:id s) " is a photo (" (:source_name s) "): left out; photos go in a"
+                                              " selects review (`review new`), and `still new` gets one full size")]
+                                    [s warning])]
                   (cond-> acc
                     s (update :segments conj (merge s (select-keys it [:pre :post :group])))
                     warning (update :warnings conj (str where ": " warning))))

@@ -18,6 +18,7 @@
   09/16/src/fx3/C5274.MP4 21.9-26.6 # wide of the kiln
   k7f3q2ab.s3                       a shot's best moment (ids from `blackbox shots`)
   k7f3q2ab.s3 whole                 the whole shot
+  k7f3q2ab.f3                       a frame (ids from `blackbox look`): a video's 5 s around it; a photo, in a review
 
   /…/media_meta/proxies/media/2026/09/16/src/fx3/C5274.MP4.proxy.mp4 21.9-26.6   a proxy's path works as the file
   C5274.MP4 0:21.9-0:26.6 pre 1 post 3   pre- and post-roll for `online` (seconds; default --pre/--post)
@@ -26,7 +27,8 @@
 Line clips get 0.25 s handles and in/out from the words' own times; file and shot clips are cut exactly.
 JSON works too: {\"title\": …, \"clips\": [{\"from\": \"k7f3q2ab.41\", \"to\": \"k7f3q2ab.43\", \"note\": …},
 {\"file\": …, \"in\": …, \"out\": …, \"pre\": 2, \"post\": 2}, {\"proxy\": \"<a proxy's path>\", \"in\": …, \"out\": …},
-{\"shot\": \"k7f3q2ab.s3\", \"whole\": false}]}; any clip can have a \"group\". A line clip's \"text\", when given,
+{\"shot\": \"k7f3q2ab.s3\", \"whole\": false}, {\"frame\": \"k7f3q2ab.f3\"}]}; any clip can have a \"group\".
+A photo goes only in a selects review (`review new`): a rough cut and `online` leave it out and say so. A line clip's \"text\", when given,
 must still be what its lines say.
 ")
 
@@ -55,6 +57,8 @@ must still be what its lines say.
 
 (def ^:private shot-re #"([A-Za-z2-7]{8}\.[sS][0-9]+)(?:\s+(whole))?")
 
+(def ^:private frame-re #"([A-Za-z2-7]{8}\.[fF][0-9]+)")
+
 (def ^:private file-re #"(.+?)\s+([\d:.]+)\s*(?:-|–|\.\.)\s*([\d:.]+)")
 
 (def ^:private handles-re
@@ -68,10 +72,12 @@ must still be what its lines say.
     [:item {:n n :kind :lines :a a :b (or b a) :note note}]
     (if-let [[_ id whole] (re-matches shot-re line)]
       [:item {:n n :kind :shot :shot id :whole (some? whole) :note note}]
-      (if-let [[_ file t-in t-out] (re-matches file-re line)]
-        [:item {:n n :kind :file :file (str/trim file) :in t-in :out t-out :note note}]
-        [:problem (str "line " n ": " (quoted (str/trim raw))
-                       " isn't a clip (a line id, id..id, a shot id, or <file> <in>-<out>)")]))))
+      (if-let [[_ id] (re-matches frame-re line)]
+        [:item {:n n :kind :frame :frame id :note note}]
+        (if-let [[_ file t-in t-out] (re-matches file-re line)]
+          [:item {:n n :kind :file :file (str/trim file) :in t-in :out t-out :note note}]
+          [:problem (str "line " n ": " (quoted (str/trim raw))
+                         " isn't a clip (a line id, id..id, a shot id, a frame id, or <file> <in>-<out>)")])))))
 
 (defn- text-item
   "One line of the text form: [:title t], [:item m], [:problem p] or nil for a blank line or a comment."
@@ -127,11 +133,14 @@ must still be what its lines say.
       (s "shot")
       (merge {:n 0 :kind :shot :shot (s "shot") :whole (true? (get cl "whole")) :note note} handles)
 
+      (or (s "frame") (s "photo"))
+      (merge {:n 0 :kind :frame :frame (or (s "frame") (s "photo")) :note note} handles)
+
       (s "from")
       (cond-> (merge {:n 0 :kind :lines :a (s "from") :b (or (s "to") (s "from")) :note note} handles)
         (s "text") (assoc :text (s "text")))
 
-      :else (throw (ex-info "a clip needs from (a line id), shot, file or proxy" {})))))
+      :else (throw (ex-info "a clip needs from (a line id), shot, frame, file or proxy" {})))))
 
 (defn- parse-json [text]
   (try
@@ -148,8 +157,9 @@ must still be what its lines say.
 
 (defn parse
   "The cut list in `text`: {:title :items :problems}. Each item is {:n (its line, 0 in JSON) :kind (:lines or
-  :file or :shot) :note}, with :a :b (line ids as written) and maybe :text for lines, :file :in :out for a file (a
-  proxy's path too), :shot :whole for a shot, and maybe its own :pre and :post (as written)."
+  :file, :shot or :frame) :note}, with :a :b (line ids as written) and maybe :text for lines, :file :in :out for a
+  file (a proxy's path too), :shot :whole for a shot, :frame for a frame or a photo, and maybe its own :pre and :post
+  (as written)."
   [text]
   (if (str/starts-with? (str/trim text) "{")
     (parse-json (str/trim text))

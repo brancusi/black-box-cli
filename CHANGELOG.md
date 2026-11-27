@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Photos in a selects review. A cut list takes a frame id (`k7f3q2ab.f12`, from `look` or `photos`): a photo goes in
+  a review as itself, marked PHOTO, whole, with its camera, size, print score, description and who's in it, and opens
+  in a viewer of its own; a video's frame is the 5 s around it. A rough cut and `online` leave photos out and say so.
+  The page can show clips and photos together or one kind, and Import never sends a photo.
+- Pull still, in a review: `p` (or the button) asks the mini for a photo full size from its original, or for the
+  frame of a clip under the playhead (in the gallery, under the mouse): a poster frame without leaving the page. A
+  list on the right says when each is back, with Open.
+- A review whose cut list has clips before its first `group:` showed only the grouped ones; those clips are now in
+  "Clips".
 - Faces in photos (Black Box 0.45.4 publishes their prints and names): a person's `faces` in `people` count the photos
   they're in, `whose` and `like` take a photo's face (`like` shows it `at` `photo`), `frame` of a photo lists its faces,
   and `photos --person Mara` lists the photos someone is in (`--fields people`: who's in each). `footage --person`

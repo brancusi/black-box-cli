@@ -291,7 +291,18 @@ When the user asks for selects ("build me selects for …", "a selects review of
    group: B-roll
    k7f3q2ab.s3  # flames through the spy hole, the shot's best moment
    C5274.MP4 0:26.5-0:30  # wide, the kiln at dusk
+   group: Stills
+   m2xq7rja.f1  # a photo (an id from `photos` or `look --photos`)
+   k7f3q2ab.f12  # a video's frame from `look`: the 5 s around it
    ```
+
+   **Photos go in a review too.** For "clips and stills of Mara", "options for a poster", "stills I can pull my own
+   poster frame from": find clips (`footage --person`, `search --person`, `shots`, `look --video`) and photos
+   (`photos --person`, `photos <words> --min-print 4`, `look <words> --photos`), and put the photos' ids in their
+   own group (`Stills` or `Photos`). On the page a photo is marked PHOTO and opens whole, with what Black Box says of
+   it. It's never imported into Resolve: `p` pulls it full size from the original as a still. `p` on a clip pulls
+   the frame under the playhead (or under the mouse in the gallery) the same way, for a poster frame from the
+   footage. A rough cut and `online` leave photos out and say so.
 3. `blackbox review new - --dry-run` checks it (every problem listed, nothing written).
 4. `blackbox review new - --open`: it makes the review in `~/Black Box/reviews/<id>/` (clips without a proxy are
    left out, under `warnings`), opens it in their browser and returns at once. Tell them in a line or two what's
