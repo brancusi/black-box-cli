@@ -3,12 +3,13 @@
 ## Unreleased
 
 - The originals on the NAS are read-only, no longer off limits (AGENTS.md rule 1, the skill): an agent may read,
-  copy off or open one the user asks for, and never writes there. An app that writes beside its files (Lightroom's
-  XMP) gets a copy on the Mac.
+  copy off or open one the user asks for, through the paths Black Box sets up on every Mac (`/VideoSource`,
+  `/AssetSource`), never a NAS mount, and never writes there. An app that writes beside its files (Lightroom's XMP)
+  gets a copy on the Mac.
 - `source` puts the best original first among the confirmed copies: a raw, then a TIFF, PSD or EXR (or a camera's
-  video, its frames' own source), then a PNG, then a JPEG or HEIC, larger first, then the one with more matching points (of a burst's frames, the
-  one holding all of the picture). The first is `match: source`, the
-  others `version`s of it, and each shows its size.
+  video, its frames' own source), then a PNG, then a JPEG or HEIC, larger first, then the one with more matching
+  points (of a burst's frames, the one holding all of the picture). The first is `match: source`, the others
+  `version`s of it, and each shows its size.
 - Photos in a selects review. A cut list takes a frame id (`k7f3q2ab.f12`, from `look` or `photos`): a photo goes in
   a review as itself, marked PHOTO, whole, with its camera, size, print score, description and who's in it, and opens
   in a viewer of its own; a video's frame is the 5 s around it. A rough cut and `online` leave photos out and say so.
