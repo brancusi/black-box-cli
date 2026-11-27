@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.47 (2026-11-27)
 
 - The originals on the NAS are read-only, no longer off limits (AGENTS.md rule 1, the skill): an agent may read,
   copy off or open one the user asks for, through the paths Black Box sets up on every Mac (`/VideoSource`,
