@@ -258,6 +258,15 @@
   (fs/set-posix-file-permissions f "rwxr-xr-x")
   (fs/set-last-modified-time f (java.nio.file.attribute.FileTime/fromMillis (System/currentTimeMillis))))
 
+(defn- spawned-after
+  "What `spawned` holds once the stopped server has started its successor: it stops first (`done`), then spawns."
+  [spawned]
+  (loop [i 0]
+    (when (and (empty? @spawned) (< i 100))
+      (Thread/sleep 20)
+      (recur (inc i))))
+  @spawned)
+
 (deftest the-server-moves-to-the-version-installed-after-it
   (let [{:keys [run local home env]} (runner)
         {:keys [id]} (run selects "review" "new" "-")
@@ -277,7 +286,7 @@
             (is (= "server-updating" (-> res :error :code)))
             (is (str/includes? (-> res :error :message) "restarting on 9.9.9")))
           (is (true? (deref done 5000 :still-running)) "it stops, freeing its port")
-          (is (= [bin "--meta" s/fixture-meta "--local" local "review" "serve" "--port" (str port)] (first @spawned))
+          (is (= [bin "--meta" s/fixture-meta "--local" local "review" "serve" "--port" (str port)] (first (spawned-after spawned)))
               "and starts the installed version's server on that port"))))
     (testing "with no import, it sees the update itself"
       (launcher! bin version/version)
@@ -289,4 +298,4 @@
           (is (not (realized? done)) "the same version: it stays")
           (launcher! bin "9.9.9")
           (is (true? (deref done 5000 :still-running)))
-          (is (= 1 (count @spawned))))))))
+          (is (= 1 (count (spawned-after spawned)))))))))

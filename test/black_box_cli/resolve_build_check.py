@@ -139,4 +139,5 @@ print(json.dumps({"in_our_bin": {p.split("/media/")[1]: i.bin for p, i in have.i
                   "shown_after": project.GetCurrentTimeline().GetName(),
                   "xml_written": os.path.isfile(xml),
                   "xml_has_format": "<format>" in pool.xml and "<timecode><string>10:00:00:00</string>" in pool.xml,
-                  "xml_quoted": "REC02%20b%27s.WAV" in pool.xml}))
+                  "xml_quoted": "REC02%20b%27s.WAV" in pool.xml,
+                  "names": [rb.unique(n, {"Kiln"}) for n in ["Credits: A, B (selects)", 'a/b\\c?d*e"f<g>h|i', "Kiln"]]}))

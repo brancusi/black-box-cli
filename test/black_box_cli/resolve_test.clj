@@ -175,8 +175,9 @@
               "shown_after" "the editor's own"
               "xml_written" true
               "xml_has_format" true
-              "xml_quoted" true}
+              "xml_quoted" true
+              "names" ["Credits - A, B (selects)" "a b c d e f g h i" "Kiln 2"]}
              (json/parse-string out))
           (str "C0001 is taken by its path over another card's of the same name; C0003 Resolve matched by its name to "
                "another card's file: not taken, it's imported; the recorder in a bin's own bin is found; the editor's "
-               "timeline is back on screen")))))
+               "timeline is back on screen; a name Resolve would turn down (a colon in a title) is made one it takes")))))

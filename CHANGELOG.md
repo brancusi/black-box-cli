@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Into Resolve with a colon in the edit's title: Resolve turns down a timeline, bin or project named with any of
+  `: / \ ? * " < > |` (it answered nothing, and the import stopped with "Resolve couldn't create the timeline"). Each
+  name now goes in with a colon as a dash and the rest as spaces (`Credits: Mara` → `Credits - Mara`).
 - Into Resolve without the wrong clips flashing up: to find the originals already in the project, the import handed
   Resolve the edit's EDL, which names only each clip, so Resolve took the first clip with the name (a camera's C0001
   from another card, another month) and showed it until the real timeline replaced it. Resolve is now handed the

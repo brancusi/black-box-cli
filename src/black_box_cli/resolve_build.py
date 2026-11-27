@@ -15,6 +15,7 @@ import importlib.util
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import time
@@ -83,7 +84,16 @@ def connect(module, wait_s):
         time.sleep(1)
 
 
+def resolve_name(name):
+    """`name` as Resolve takes it for a project, timeline or bin: it turns down a name with any of : / \\ ? * " < > |
+    (tried on 21.2: CreateEmptyTimeline answers None). A colon becomes a dash, the rest a space."""
+    name = re.sub(r"\s*:\s*", " - ", str(name))
+    name = re.sub(r'[/\\?*"<>|]', " ", name)
+    return re.sub(r"\s+", " ", name).strip() or "Black Box"
+
+
 def unique(name, taken):
+    name = resolve_name(name)
     if name not in taken:
         return name
     n = 2
@@ -96,6 +106,7 @@ def subfolder(media_pool, parent, name):
     """The bin `name` in `parent`, made when it isn't there. In a project on a shared database (a network project,
     collaboration on), Resolve can refuse to make one, as while another editor has the bin it goes in open: said
     plainly, never left to fail on later."""
+    name = resolve_name(name)
     for f in parent.GetSubFolderList() or []:
         if f.GetName() == name:
             return f
