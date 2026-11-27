@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.46 (2026-11-27)
 
 - The tutorial's What's new is the release notes: every release's lines from this file (the jar carries it), in
   `blackbox tutorial new` and the animated page's What's new tab. The animated, narrated parts are now the featured,
