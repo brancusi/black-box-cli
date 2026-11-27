@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The originals on the NAS are read-only, no longer off limits (AGENTS.md rule 1, the skill): an agent may read,
+  copy off or open one the user asks for, and never writes there. An app that writes beside its files (Lightroom's
+  XMP) gets a copy on the Mac.
 - `source` puts the best original first among the confirmed copies: a raw, then a TIFF, PSD or EXR (or a camera's
   video, its frames' own source), then a PNG, then a JPEG or HEIC, larger first, then the one with more matching points (of a burst's frames, the
   one holding all of the picture). The first is `match: source`, the

@@ -51,10 +51,13 @@ also read the same lessons in docs/EDITORS.md.
   `cut.json` (every clip's source file and timecode), kept for good. Earlier ones in
   `~/Library/Application Support/black-box-cli/cuts/` are still listed. **Selects reviews:**
   `~/Black Box/reviews/<id>/` (review.html, review.json, thumbnails; state.jsonl, what the editor picked).
-- **The originals are on the NAS** (`source_path`, `/Volumes/…`, `/VideoSource/…`). Never open, read, probe
-  (ffprobe, mediainfo), copy, play or transcode them, and never browse the NAS: it's slow, shared and holds the
-  only copies. Work from proxies, transcripts and `blackbox frame`. If a clip has no proxy, say so; don't fall
-  back to the original.
+- **The originals are on the NAS**, reached by the same paths on every Mac (`/VideoSource/…`, `/AssetSource/…`, as
+  `source_path` and `original` print them; never a `/Volumes/…` mount). They're read-only: reading,
+  copying off or opening one the user asks for is fine, writing never is (no renaming, moving, deleting or new
+  files there). It holds the only copies, so to open one in an app that writes beside its files (Lightroom, which
+  writes XMP; Resolve), copy it to this Mac first and open the copy. The NAS is slow and shared: find the file with
+  `blackbox` first and go straight to it; don't browse. For looking, work from proxies, transcripts and `blackbox
+  frame`; if a clip has no proxy, say so.
 
 ## Start
 

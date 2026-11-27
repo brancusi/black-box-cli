@@ -23,10 +23,15 @@ requests this CLI hands it (stills, cut projects), and bundles this CLI.
 
 The footage is irreplaceable. When a rule and a request conflict, stop and ask the owner.
 
-1. **Never touch the originals or the NAS.** Never open, read, probe (`ffprobe`, `mediainfo`), copy, play, transcode
-   or list anything under `/Volumes/`, `/VideoSource/`, `/AssetSource/` or a transcript's `source.path`. Work from
-   `media_meta` (proxies, transcripts, embeddings) only. A clip without a proxy is reported, never fetched from the
-   NAS.
+1. **The originals and the NAS are read-only.** Reading them is allowed (owner, 2026-11-27): opening, probing,
+   copying off or playing an original. Reach it only through the normalized paths Black Box sets up on every Mac
+   (`/VideoSource/…`, `/AssetSource/…`, as `source_path` and `original` print them), never through a mount such as
+   `/Volumes/<nas>/…`, which differs from one editing station to the next. Never write there: never rename, move,
+   delete or create a file or folder, and never open an original in an app that writes beside it (Lightroom's XMP
+   files, Resolve's caches); copy it to this Mac and open the copy. The NAS is slow and shared: look it up from
+   `media_meta` first, and go to the one file you need, not a browse. The CLI itself
+   still works from `media_meta` only (proxies, transcripts, embeddings); a clip without a proxy is reported, never
+   fetched from the NAS.
 2. **`media_meta` is read-only.** Never write, rename, move or delete anything in it, never create a folder there,
    and never set Dropbox's ignore flag (`com.apple.fileprovider.ignore#P`) on anything in Dropbox: on a synced file
    it deletes it from every Mac. New kinds of data in `media_meta` are made by Black Box; ask for a change to a
