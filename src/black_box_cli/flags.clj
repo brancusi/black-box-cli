@@ -257,10 +257,11 @@
                 (limit-flag 20 "photos")
                 {:flag "--month" :value "YYYY-MM" :repeat true :doc "only this month (repeatable)"}
                 {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "only this day (repeatable)"}
-                {:flag "--path" :value "text" :doc "only photos whose path contains this, e.g. images/camb"}]
+                {:flag "--path" :value "text" :doc "only photos whose path contains this, e.g. images/camb"}
+                {:flag "--person" :value "name" :doc "only photos this person is in (by face, as Black Box names them)"}]
                (into (output-flags)))
     :examples ["blackbox photos --month 2026-11" "blackbox photos sculpture beach dusk --min-print 4"
-               "blackbox photos portrait --camera iphone --fields all"]
+               "blackbox photos portrait --camera iphone --fields all" "blackbox photos --person Mara --min-print 4"]
     :about (str "Every photo is in the picture index (`look --photos` and `like --photos` search them by the picture);
 "
                 "Black Box also describes them on the mini (Gemini: what's in it, subjects, setting, framing, tags, the

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Faces in photos (Black Box 0.45.4 publishes their prints and names): a person's `faces` in `people` count the photos
+  they're in, `whose` and `like` take a photo's face (`like` shows it `at` `photo`), `frame` of a photo lists its faces,
+  and `photos --person Mara` lists the photos someone is in (`--fields people`: who's in each). `footage --person`
+  says how many photos they're in too.
+
 ## 0.1.46 (2026-11-27)
 
 - The tutorial's What's new is the release notes: every release's lines from this file (the jar carries it), in

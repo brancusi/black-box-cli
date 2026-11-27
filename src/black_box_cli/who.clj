@@ -158,7 +158,7 @@
                                :person (person-of [(:rel q) (:transcript_sha256 q) (:label q)]) :score (score sc)
                                :rel (:rel q)))
                   (array-map :id (prints/face-id (:clip q) (:label q)) :day (archive/day-of (:rel q)) :file file
-                             :at (tc/hms (ffirst (:ranges q)))
+                             :at (if (= "photo" (:transcript q)) "photo" (tc/hms (ffirst (:ranges q))))
                              :person (person-of [(:rel q) (:transcript_sha256 q) (:label q)]) :score (score sc)
                              :rel (:rel q)))))
         per-clip (:per-clip opts)

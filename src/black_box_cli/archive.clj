@@ -448,12 +448,19 @@
                       (concat rows)
                       (sort-by :rel)
                       vec)))
-        head (cond-> (array-map :scope (scope-words opts)) person (assoc :person (:name person)))]
+        head (cond-> (array-map :scope (scope-words opts)) person (assoc :person (:name person)))
+        in-photos (when person
+                    (->> (people/photo-faces (people/require! path) (:id person))
+                         (map :rel) distinct (filter #(in-scope? (dissoc opts :video) %)) count))
+        photos-line (when (and in-photos (pos? in-photos))
+                      (str "Run `blackbox photos --person " (pr-str (:name person)) "` for the " in-photos
+                           " photo" (when (> in-photos 1) "s") " they're in"))]
     (if (empty? rows)
       [(merge head (array-map :count 0 :total 0 :result (cond person (str "0 files where " (:name person) " is heard or seen in scope")
                                                               (seq facts) "0 files in scope"
                                                               :else "0 files with transcripts in scope")))
        (cond-> ["Run `blackbox` to see which months are indexed"]
+         photos-line (conj photos-line)
          (probe/asked? opts) (conj "Loosen --device, --fps, --res… (`blackbox footage --fields file,device,res,fps` shows what's there)"))]
       (let [shown (if (:full opts) rows (take (:limit opts) rows))
             row (fn [r] (apply array-map
@@ -487,5 +494,6 @@
            (conj (str "Run the same with `--limit " (count rows) "` for all " (count rows) " files"))
            person (conj "Add `--fields file,day,heard,seen,heard_at,seen_at` for when"
                         (str "Run `blackbox search <words> --person " (pr-str (:name person)) "` for what they said"))
+           photos-line (conj photos-line)
            (not person) (conj "Run `blackbox transcript <file>` to read one"
                               "Run `blackbox search <words> --day YYYY-MM-DD` to search one day"))]))))

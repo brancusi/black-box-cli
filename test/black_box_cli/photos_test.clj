@@ -5,6 +5,7 @@
   (:require
    [babashka.fs :as fs]
    [babashka.process :as process]
+   [black-box-cli.frames :as frames]
    [black-box-cli.support :as s]
    [black-box-cli.tools :as tools]
    [cheshire.core :as json]
@@ -47,6 +48,39 @@
             :producer {:label "google/siglip2-base-patch16-256-5s" :model {:repo "google/siglip2-base-patch16-256" :dim 4}}
             :dim 4 :dtype "float16" :items [{:n 1 :t 0.0 :pts 0.0 :frame nil}] :vectors (f16-base64 v)}))))
 
+(defn- f32-base64 [xs]
+  (let [b (.order (ByteBuffer/allocate (* 4 (count xs))) ByteOrder/LITTLE_ENDIAN)]
+    (doseq [x xs] (.putFloat b (float x)))
+    (.encodeToString (Base64/getEncoder) (.array b))))
+
+(def ^:private proxy-sha (apply str (repeat 64 "3")))
+
+(defn- add-faces!
+  "Two faces in the described photo, as Black Box 0.45.4 publishes them: F1 Mara's (confirmed, the vector of her
+  confirmed face in C5274), F2 unnamed (C5274's F1). The names file gains F1's line, and the registry its sha256."
+  [meta]
+  (let [f (fs/path meta "prints/fal/auraface-glintr100-v1" (str described ".20261127T100000Z.prints.json"))
+        reg-f (str (fs/path meta "people/registry/20261020T100000Z.json"))
+        reg (json/parse-string (slurp reg-f) true)
+        asg (str (fs/path meta "people" (:assignments reg)))]
+    (fs/create-dirs (fs/parent f))
+    (spit (str f)
+          (json/generate-string
+           {:schema "media-mgmt.prints/1" :kind "face" :dim 4 :dtype "float32" :byte_order "little" :normalised "L2"
+            :source {:rel described :sha256 (apply str (repeat 64 "1")) :kind "photo"}
+            :transcript {:label "photo" :sha256 proxy-sha}
+            :producer {:label "fal/auraface-glintr100-v1" :tool "black-box" :version "0.45.4"}
+            :items [{:label "F1" :seconds 1 :ranges [[0 1]]} {:label "F2" :seconds 1 :ranges [[0 1]]}]
+            :vectors (f32-base64 [0 1 0 0 1 0 0 0])}))
+    (spit asg (str (json/generate-string
+                    {:schema "media-mgmt.people/1" :kind "face" :label "F1" :person "p1a2b3c4d5e6f" :how "confirmed"
+                     :rel described :source_sha256 (apply str (repeat 64 "1")) :transcript "photo"
+                     :transcript_sha256 proxy-sha :ranges [[0 1]]})
+                   "\n")
+          :append true)
+    (spit reg-f (json/generate-string (assoc reg :assignments_sha256 (frames/sha256-hex (fs/read-all-bytes asg))
+                                             :lines (inc (:lines reg)))))))
+
 (defn- copy-meta []
   (let [meta (fs/path (fs/create-temp-dir {:prefix "bbcli-meta-"}) "media_meta")
         desc (fs/path meta "photos/gemini-3.1-pro/v1" (str described ".photo.json"))]
@@ -66,6 +100,7 @@
             :quality {:focus "sharp" :motion_blur false :exposure "good" :noise "low" :issues []}
             :print {:score 4 :why "Sharp and well lit."}
             :orientation "landscape"}))
+    (add-faces! meta)
     (str meta)))
 
 (defn- fake-black-box
@@ -132,6 +167,20 @@
         (is (= photo (:id (run "frame" "P0001.ARW"))))
         (is (= "not described yet (Black Box describes photos on the mini, a month at a time)"
                (:photo (run "frame" "IMG_0002.JPG"))))))
+    (testing "faces in photos: counted, named, found, and the photos a person is in"
+      (let [clip (first (str/split photo #"\."))]
+        (is (= {:name "Mara Vento" :voices 2 :faces 3} (first (:people (run "people")))) "seen in 2 clips and 1 photo")
+        (is (= "Mara Vento (confirmed)" (:named (run "whose" (str clip ".face1")))))
+        (is (= "no one" (:named (run "whose" (str clip ".face2")))))
+        (let [faces (:faces (run "like" "luyk4sl6.face1"))]
+          (is (some #(= [(str clip ".face1") "photo" "Mara Vento"] ((juxt :id :at :person) %)) faces)))
+        (is (= [(str clip ".face1") (str clip ".face2")] (map :id (:faces (run "frame" photo)))))
+        (let [with-mara (run "photos" "--person" "mara" "--fields" "id,people")]
+          (is (= [[photo "Mara Vento"]] (map (juxt :id :people) (:photos with-mara))))
+          (is (str/includes? (:scope with-mara) "with Mara Vento")))
+        (is (= 0 (:count (run "photos" "--person" "tobia"))))
+        (is (some #(str/includes? % "photos --person \"Mara Vento\"` for the 1 photo they're in")
+                  (:help (run "footage" "--person" "mara"))))))
     (testing "still new: a photo is asked for whole, named by itself"
       (let [res (run "still" "new" photo)
             sent (json/parse-string (slurp (str (fs/path dir "sent"))) true)]

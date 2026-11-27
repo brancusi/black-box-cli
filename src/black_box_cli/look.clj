@@ -14,6 +14,7 @@
    [black-box-cli.ids :as ids]
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
+   [black-box-cli.people :as people]
    [black-box-cli.photos :as photos]
    [black-box-cli.picture :as picture]
    [black-box-cli.preview :as preview]
@@ -477,8 +478,9 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
        (sort-by (juxt #(archive/day-of (:rel %)) :rel) #(compare %2 %1))))
 
 (defn- photo-row
-  "Every field a photo can show, in order: `p` its picture-index row, `d` its description (or nil)."
-  [{:keys [meta home]} p d full]
+  "Every field a photo can show, in order: `p` its picture-index row, `d` its description (or nil), `seen` the people
+  named in it."
+  [{:keys [meta home]} p d seen full]
   (array-map :id (:id p)
              :day (archive/day-of (:rel p))
              :file (:name p)
@@ -492,6 +494,7 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
              :framing (or (:framing d) "")
              :tags (if d (str/join ", " (photos/tags d :tags)) "")
              :issues (if d (str/join ", " (photos/tags d :issues)) "")
+             :people (str/join ", " seen)
              :print_why (or (:print_why d) "")
              :sequence (or (:sequence d) "")
              :rel (:rel p)
@@ -513,8 +516,16 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
         desc-of (fn [p] (or (described (:rel p)) (described (:sha256 p))))
         min-print (:min-print opts)
         camera (some-> (:camera opts) str/lower-case str/trim)
+        names-db (when (or (:person opts) (people/available? path)) (people/require! path))
+        person (when (:person opts) (people/resolve! names-db (:person opts)))
+        faces (if names-db (people/photo-faces names-db) [])
+        who (if names-db (into {} (map (juxt :id :name)) (people/people names-db)) {})
+        seen-in (fn [p] (->> faces
+                             (filter #(or (= (:rel p) (:rel %)) (and (:sha256 p) (= (:sha256 p) (:source_sha256 %)))))
+                             (map :person) distinct))
         keep? (fn [p] (let [d (desc-of p)]
-                        (and (or (nil? min-print) (and d (:print_score d) (>= (:print_score d) min-print)))
+                        (and (or (nil? person) (some #{(:id person)} (seen-in p)))
+                             (or (nil? min-print) (and d (:print_score d) (>= (:print_score d) min-print)))
                              (or (nil? camera) (and d (str/includes? (str/lower-case (str (photos/camera-words d))) camera))))))
         hits (if (seq terms)
                (->> (photos/search path {:q (archive/fts-query terms (:all opts))})
@@ -522,18 +533,21 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
                     distinct)
                all)
         hits (filterv keep? hits)
-        shown (mapv #(out/pick (photo-row ctx % (desc-of %) (:full opts))
+        shown (mapv #(out/pick (photo-row ctx % (desc-of %) (keep who (seen-in %)) (:full opts))
                                [:id :day :file :camera :size :print :description] opts)
                     (take (:limit opts) hits))
         n-described (count (filter desc-of all))
         head (array-map :query (if (seq terms) (str/join " " terms) "every photo in scope")
                         :scope (str (archive/scope-words (dissoc opts :video))
+                                    (when person (str ", with " (:name person)))
                                     (when camera (str ", camera~" camera))
                                     (when min-print (str ", print " min-print "+")))
                         :in_scope (count all)
                         :described n-described)]
     (if (empty? shown)
-      [(merge head (array-map :count 0 :total 0 :result (if (seq terms) "no described photo matches" "no photos in scope")))
+      [(merge head (array-map :count 0 :total 0 :result (cond (seq terms) "no described photo matches"
+                                                              person (str "no photos " (:name person) " is named in, in scope")
+                                                              :else "no photos in scope")))
        (cond-> []
          (seq terms) (conj (str "Run `blackbox look " (str/join " " terms) " --photos` to search every photo's picture"
                                 " (only " n-described " of " (count all) " are described)"))
@@ -547,4 +561,4 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
                     (str/join " " terms) " --photos` searches every photo's picture"))
          (> (count hits) (count shown)) (conj (str "Run the same with `--limit " (min (count hits) (* 3 (:limit opts)))
                                                    "` for more"))
-         true (conj "Add `--fields all` for when it was taken, subjects, setting, tags, issues and why it would print"))])))
+         true (conj "Add `--fields all` for when it was taken, subjects, setting, tags, issues, who's in it and why it would print"))])))

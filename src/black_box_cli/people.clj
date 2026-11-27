@@ -169,6 +169,12 @@ COMMIT;")
         (db/query db (str "SELECT * FROM names" (when kind " WHERE kind = :kind") " ORDER BY rel, kind DESC, label;")
                   {:kind kind})))
 
+(defn photo-faces
+  "The named faces in photos (a photo's face prints have transcript `photo`), of person `id` when given:
+  [{:rel :source_sha256 :label :person ...}]."
+  ([db] (filterv #(= "photo" (:transcript %)) (names db "face")))
+  ([db id] (filterv #(= id (:person %)) (photo-faces db))))
+
 (defn voice-names
   "Who each voice is: {[rel transcript-version transcript-sha256 label] person-name}, or {} without names."
   [index-path]

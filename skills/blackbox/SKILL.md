@@ -129,7 +129,8 @@ them. Everyone filmed has signed a consent form.
 - "Make a cut of <a person> talking about <x>": `blackbox search marble cava --person Mara`, where `--person`
   takes a name, an alias or the start of one (accents and case ignored). Then cut as below.
 - `blackbox footage --person Mara --fields file,day,heard,seen,heard_at,seen_at` says where they're heard or seen,
-  and when.
+  and when. Faces are named in photos too (Black Box 0.45.4 on): `blackbox photos --person Mara` lists the photos
+  they're in. "All the clips and stills of Mara" is both: `footage --person` and `photos --person`.
 - `--fields all` on `search` and `line` shows each line's `person` (by voice; empty when no one is named).
 - `blackbox whose k7f3q2ab.41` says who a line's voice may be: the published name, if any, and everyone scored
   against the voices people confirmed (at or above `threshold` is how the mini names).
@@ -167,7 +168,9 @@ with the camera, lens and size); not every month is described yet.
 - `blackbox photos --month 2026-11` lists the photos in scope, newest first, with camera, size, print score and
   description; `blackbox photos sculpture beach dusk` searches the descriptions (any word; `--all` for every one).
   `--camera a7c` (make, model or lens), `--min-print 4` (for a poster or a print), `--day`, `--path`.
-  `--fields all` adds when it was taken, subjects, setting, tags, issues and why it would print.
+  `--person Mara` (the photos they're in, by face). `--fields all` adds when it was taken, subjects, setting, tags,
+  issues, who's in it (`people`) and why it would print. A face in a photo has an id like a clip's
+  (`k7f3q2ab.face1`) for `whose` and `like`, and `like` shows it `at` `photo`.
 - Words only find described photos: `photos` says how many are (`described` of `in_scope`). For the rest, or for
   what the picture looks like, `blackbox look <words> --photos`.
 - `blackbox frame <photo id>` (or `frame DSC01234.ARW`, its file name) shows it as a JPEG with what Black Box says
