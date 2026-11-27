@@ -55,13 +55,27 @@
       (is (= [(str "--cli source " pic " --candidates 60 --max-diff 0.1 --format json")] (calls dir))))
     (is (= [{:picture pic :size "320x180" :checked 60 :found 1 :best "C5274.MP4" :seconds 6.5}] (:pictures out)))
     (let [[m] (:matches out)]
-      (is (= "best" (:match m)))
+      (is (= "source" (:match m)) "the best original among the confirmed copies")
       (is (str/starts-with? (:id m) (str (ids/clip rel) ".f")) "the picture index's frame nearest the hit")
       (is (= ["C5274.MP4" "0:12.0" "/VideoSource/2026/09/16/src/fx3/C5274.MP4"] ((juxt :file :at :original) m)))
       (is (not (contains? m :proxy)) "small default fields")
       (is (not (contains? m :picture)) "one picture: no column to repeat it"))
     (is (= 0.81 (:similarity (first (:similar out)))))
     (is (some #(str/includes? % "still new") (:help out)))))
+
+(deftest the-best-original-comes-first
+  (let [{:keys [pic run]} (runner)
+        jpg (hit {:rel "media/2026/11/18/photo/P0002.jpg" :kind "photo" :at "" :t 0 :diff 0.01 :points 361
+                  :original "/AssetSource/photo/P0002.jpg"})
+        raw (hit {:rel "media/2026/11/18/images/camb/P0002.ARW" :kind "photo" :at "" :t 0 :diff 0.04 :points 120
+                  :original "/AssetSource/images/P0002.ARW"})
+        {:keys [app]} (fake-black-box (json/generate-string {:query "x" :size [2342 412] :checked 40 :seconds 7.0
+                                                             :matches [jpg raw] :similar []})
+                                      0)
+        out (run app "source" pic)]
+    (is (= [["P0002.ARW" "source"] ["P0002.jpg" "version"]] (map (juxt :file :match) (:matches out)))
+        "a raw before its JPEG, though the JPEG matched closer")
+    (is (= "P0002.ARW" (:best (first (:pictures out)))))))
 
 (deftest nothing-confirmed-says-so
   (let [{:keys [pic run]} (runner)

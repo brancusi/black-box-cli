@@ -180,8 +180,10 @@ with the camera, lens and size); not every month is described yet.
 
 **The original of a copy:** given a screenshot, a thumbnail, a crop or a picture someone sent,
 `blackbox source ~/Desktop/screenshot.png` finds the photo or the clip and moment it came from (Black Box 0.43.0 or
-later, on this Mac; about 7 s a picture, several at once). `matches` are confirmed copies, best first, each with its
-frame `id` (for `frame`, `like` and `still new`) and the original's path, shown, never opened; `similar` are
+later, on this Mac; about 7 s a picture, several at once). `matches` are confirmed copies, the best original first
+(`match: source`: a raw before a TIFF, PSD or EXR or a camera's video, then a PNG, then a JPEG, larger first; the
+rest are `version`s of it: exports, crops, regrades), each with its size, its frame `id` (for `frame`, `like` and
+`still new`) and the original's path, shown, never opened; `similar` are
 look-alikes it couldn't confirm. It finds copies, not ideas: for pictures like a reference or a repaint, use
 `look` with words, or `like` from the closest `similar` frame. Never give it a picture on the NAS.
 

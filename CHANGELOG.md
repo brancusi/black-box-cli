@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `source` puts the best original first among the confirmed copies: a raw, then a TIFF, PSD or EXR (or a camera's
+  video, its frames' own source), then a PNG, then a JPEG or HEIC, larger first. The first is `match: source`, the
+  others `version`s of it, and each shows its size.
 - Photos in a selects review. A cut list takes a frame id (`k7f3q2ab.f12`, from `look` or `photos`): a photo goes in
   a review as itself, marked PHOTO, whole, with its camera, size, print score, description and who's in it, and opens
   in a viewer of its own; a video's frame is the 5 s around it. A rough cut and `online` leave photos out and say so.

@@ -10,6 +10,8 @@
    [black-box-cli.frames :as frames]
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
+   [black-box-cli.photos :as photos]
+   [black-box-cli.probe :as probe]
    [clojure.string :as str]))
 
 (def ^:private nas-roots
@@ -41,15 +43,49 @@
                     {:rel rel :t (double (or t 0))})
             ((fn [{:keys [clip n]}] (frames/frame-id clip n))))))
 
+(defn- tier
+  "How much of an original a file is, best first: a raw (0); a TIFF, PSD or EXR, or a camera's video, its own frames'
+  source (1); a PNG (2); a JPEG or HEIC (3); anything else (4). As findsrc ranks them."
+  [rel]
+  (let [ext (some-> (re-find #"\.([A-Za-z0-9]+)$" (str rel)) second str/lower-case)]
+    (cond
+      (#{"arw" "dng" "cr2" "cr3" "nef" "raf" "orf" "rw2" "iiq" "3fr" "srw"} ext) 0
+      (#{"tif" "tiff" "psd" "psb" "exr" "mp4" "mov" "mxf" "m4v" "braw" "r3d" "insv" "lrf"} ext) 1
+      (= "png" ext) 2
+      (#{"jpg" "jpeg" "heic" "heif"} ext) 3
+      :else 4)))
+
+(defn- sizes
+  "Each original's size in pixels, {rel [w h]}: a photo's from Black Box's description, a video's from its camera facts."
+  [index-path hits]
+  (let [rels (distinct (keep :rel hits))
+        described (photos/of index-path rels [])
+        facts (try (probe/facts index-path) (catch Exception _ {}))]
+    (into {} (for [rel rels
+                   :let [d (or (described rel) (get facts rel))]
+                   :when (and (:width d) (:height d))]
+               [rel [(:width d) (:height d)]]))))
+
+(defn- ranked
+  "One picture's confirmed matches, best original first: by `tier`, then larger, then as Black Box found them. The
+  first is `source`, the rest `version`s of it."
+  [rows]
+  (->> rows
+       (map-indexed vector)
+       (sort-by (fn [[i r]] [(tier (:rel r)) (- (or (:pixels r) 0)) i]))
+       (map-indexed (fn [j [_ r]] (-> r (assoc :match (if (zero? j) "source" "version")) (dissoc :pixels))))))
+
 (defn- hit-row
   "One hit as a row: its frame id and file first, every field in a fixed order (rows of a table share their keys)."
-  [frames-db picture h]
+  [frames-db size-of picture h]
   (array-map :picture picture
              :match (:match h)
              :id (frame-of frames-db (:rel h) (:t h))
              :file (some-> (:rel h) fs/file-name str)
              :kind (:kind h)
              :at (:at h)
+             :size (if-let [[w hh] (size-of (:rel h))] (str w "x" hh) "")
+             :pixels (when-let [[w hh] (size-of (:rel h))] (* w hh))
              :diff (:diff h)
              :points (:points h)
              :similarity (:similarity h)
@@ -58,7 +94,7 @@
              :t (:t h)
              :proxy (:proxy h)))
 
-(def ^:private match-fields [:picture :match :id :file :at :diff :points :original])
+(def ^:private match-fields [:picture :match :id :file :at :size :diff :points :original])
 (def ^:private similar-fields [:picture :id :file :at :diff :similarity :original])
 
 (defn- results-of
@@ -90,15 +126,17 @@
         results (results-of ans)
         ;; Black Box answers in argument order: each result is named by the picture as it was given
         named (map vector (concat given (repeat nil)) results)
-        matches (vec (for [[p r] named h (:matches r)] (hit-row frames-db p h)))
-        similar (vec (for [[p r] named h (:similar r)] (hit-row frames-db p h)))
-        summary (mapv (fn [[p r]] (array-map :picture p
-                                             :size (str/join "x" (:size r))
-                                             :checked (:checked r)
-                                             :found (count (:matches r))
-                                             :best (some-> (first (:matches r)) :rel fs/file-name str)
-                                             :seconds (:seconds r)))
-                      named)
+        size-of (sizes (:index (index/paths ctx)) (mapcat #(concat (:matches %) (:similar %)) results))
+        by-picture (mapv (fn [[p r]] (vec (ranked (map #(hit-row frames-db size-of p %) (:matches r))))) named)
+        matches (vec (apply concat by-picture))
+        similar (vec (for [[p r] named h (:similar r)] (dissoc (hit-row frames-db size-of p h) :pixels)))
+        summary (mapv (fn [[p r] ms] (array-map :picture p
+                                                :size (str/join "x" (:size r))
+                                                :checked (:checked r)
+                                                :found (count (:matches r))
+                                                :best (some-> (first ms) :file)
+                                                :seconds (:seconds r)))
+                      named by-picture)
         ;; one picture: every row is its, so the column only says it again
         pick #(out/pick % (if (next given) %2 (vec (remove #{:picture} %2))) opts)
         first-id (some :id (concat matches similar))
