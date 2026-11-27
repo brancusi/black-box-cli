@@ -81,8 +81,10 @@
     :runs [["blackbox look two people at a table --month 2026-09 --per-clip 2" "frames that match the words"]
            ["blackbox like k7f3q2ab.f12" "frames that look like this one"]
            ["blackbox frame k7f3q2ab.f12" "that frame as a picture"]
-           ["blackbox look boat at sea --open" "a page of the frames in your browser"]]
-    :tips ["Picture search needs the Black Box app open; the first search on a Mac downloads its model once (0.9 GB)."]}
+           ["blackbox look boat at sea --open" "a page of the frames in your browser"]
+           ["blackbox look boat at sea --photos" "only the photos (--video: only the footage)"]]
+    :tips ["Picture search needs the Black Box app open; the first search on a Mac downloads its model once (0.9 GB)."
+           "The photos are searched with the footage: a photo camera's and a phone's, raw too."]}
    {:id "shots"
     :punch "B-roll logged shot by shot, the best moment starred."
     :narration "B-roll, logged shot by shot. Close-ups, pans, the best moment starred, the shaky ones left out."
@@ -175,10 +177,13 @@
     :punch "Full-res graded stills from the originals."
     :narration "Stills for print and the web, rendered full size from the originals, in the house look or yours."
     :title "Stills for print and the web"
-    :what "Full-resolution, graded stills rendered from the camera originals by the mini, for a website, press or print."
+    :what (str "Full-resolution, graded stills rendered from the camera originals by the mini, for a website, press or"
+               " print: a frame of the footage, or a photo developed from its raw.")
     :ask ["Give me a full-res still of this frame for the website"
-          "Three stills from the kiln scene, filmic look, with TIFFs, in my Downloads"]
-    :runs [["blackbox still new k7f3q2ab.f12 --look filmic --tiff --out ~/Downloads" "ask the mini for the still"]
+          "Three stills from the kiln scene, filmic look, with TIFFs, in my Downloads"
+          "The best photos of the sculpture for a poster, and pull the top three"]
+    :runs [["blackbox photos sculpture --min-print 4" "the photos, by what's in them and how well they'd print"]
+           ["blackbox still new k7f3q2ab.f12 --look filmic --tiff --out ~/Downloads" "ask the mini for the still"]
            ["blackbox still show 20261124T080000Z-kiln --wait" "waits until the stills are back, with their paths"]
            ["blackbox still list" "every request and where it stands"]]
     :tips ["Looks: neutral (the house look), filmic, rec709, or log for a colourist."

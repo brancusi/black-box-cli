@@ -149,6 +149,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
    ["like"] look/like-cmd
    ["source"] source/source-cmd
    ["shots"] look/shots-cmd
+   ["photos"] look/photos-cmd
    ["people"] who/people-cmd
    ["whose"] who/whose-cmd
    ["tutorial"] tutorial/tutorial-cmd
@@ -163,7 +164,7 @@ Nothing prompts. `blackbox <command> --help` for a command's flags and examples.
 (def ^:private reads-index
   "The commands that read the index, which bring it up to date first (status/refresh!)."
   #{["search"] ["line"] ["transcript"] ["footage"] ["edl" "new"] ["online"] ["review" "new"] ["frame"] ["still" "new"] ["look"] ["like"]
-    ["source"] ["shots"] ["people"] ["whose"]})
+    ["source"] ["shots"] ["photos"] ["people"] ["whose"]})
 
 (defn- meta!
   "media_meta for a command that reads it, or error.code no-meta."

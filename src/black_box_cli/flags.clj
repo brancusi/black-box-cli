@@ -57,7 +57,8 @@
      {:flag "--month" :value "YYYY-MM" :repeat true :doc "only this month (repeatable)"}
      {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "only this day (repeatable)"}
      {:flag "--path" :value "text" :doc "only files whose path contains this, e.g. src/fx3"}
-     {:flag "--video" :doc "only video files"}]
+     {:flag "--video" :doc "only video (no photos)"}
+     {:flag "--photos" :doc "only photos: a photo camera's or a phone's, raw or not (no video)"}]
     media-flags
     [{:flag "--html" :doc "also write a page of the frames (prints its path)"}
      {:flag "--open" :doc "write the page and open it in the browser"}])))
@@ -247,6 +248,27 @@
                 "a tripod; same picture). similar are look-alikes it couldn't confirm. id is the picture index's frame\n"
                 "(for `frame`, `like`, `still new`); original is the file's path on the NAS, shown, never opened.\n"
                 "It finds copies, not ideas: for pictures like a reference, use `look` or `like`.\n")}
+   {:path ["photos"] :phase 14
+    :summary "photos (a photo camera's or a phone's, raw or not): every one in scope, newest first, or by what's in them"
+    :args [{:arg "words" :many true :optional true :doc "what's in them, e.g. sculpture on the beach at dusk"}]
+    :flags (-> [{:flag "--all" :doc "every word must match"}
+                {:flag "--camera" :value "text" :doc "only photos from this camera or lens (make, model or lens: a7c, iphone, 35mm)"}
+                {:flag "--min-print" :value "n" :parse :int :doc "only photos Black Box says would print at least this well (1 to 5)"}
+                (limit-flag 20 "photos")
+                {:flag "--month" :value "YYYY-MM" :repeat true :doc "only this month (repeatable)"}
+                {:flag "--day" :value "YYYY-MM-DD" :repeat true :doc "only this day (repeatable)"}
+                {:flag "--path" :value "text" :doc "only photos whose path contains this, e.g. images/camb"}]
+               (into (output-flags)))
+    :examples ["blackbox photos --month 2026-11" "blackbox photos sculpture beach dusk --min-print 4"
+               "blackbox photos portrait --camera iphone --fields all"]
+    :about (str "Every photo is in the picture index (`look --photos` and `like --photos` search them by the picture);
+"
+                "Black Box also describes them on the mini (Gemini: what's in it, subjects, setting, framing, tags, the
+"
+                "picture's quality and how well it would print, 1 to 5), which words here search. Each id is the photo's
+"
+                "frame (k7f3q2ab.f1): `frame` shows it, `still new` has the mini develop the original full size (raw too).
+")}
    {:path ["shots"] :phase 13
     :summary "shots by what happens in them (the shot logs): framing, the camera's move, the action, the best moment, issues"
     :args [{:arg "words" :many true :optional true :doc "what happens, e.g. hands carving stone (optional with a filter)"}]

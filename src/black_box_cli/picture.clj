@@ -4,6 +4,7 @@
   (:require
    [babashka.fs :as fs]
    [babashka.process :as process]
+   [black-box-cli.frames :as frames]
    [black-box-cli.out :as out]
    [black-box-cli.tc :as tc]
    [black-box-cli.tools :as tools]
@@ -34,8 +35,9 @@
             tmp (fs/path dir (str "." (fs/file-name out-path) ".partial-" (.pid (java.lang.ProcessHandle/current))))
             ;; A hair before t: the first frame at or after the seek point is t's own, whatever the rounding.
             seek (tc/fixed (max 0.0 (- t 0.001)) 6)
-            {:keys [exit err]} (process/sh (concat [ffmpeg "-nostdin" "-v" "error" "-ss" seek "-i" (str proxy)
-                                                    "-frames:v" "1" "-an"]
+            {:keys [exit err]} (process/sh (concat [ffmpeg "-nostdin" "-v" "error"]
+                                                   (when-not (frames/photo-proxy? proxy) ["-ss" seek]) ; seeking in a photo's writes nothing
+                                                   ["-i" (str proxy) "-frames:v" "1" "-an"]
                                                    (when (pos? width) ["-vf" (str "scale=w='min(" width ",iw)':h=-2")])
                                                    ["-pix_fmt" "yuvj420p" "-c:v" "mjpeg" "-q:v" "3" "-f" "image2"
                                                     "-y" (str tmp)]))]

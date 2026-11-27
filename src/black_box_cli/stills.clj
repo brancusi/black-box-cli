@@ -48,9 +48,15 @@
                                         "gains" "~gains=r,g,b takes three gains, 0.25 to 4"))))))
 
 (defn- default-name
-  "A still's file name without extension when none is given: the original's name and the time, e.g. C5274_40.000s."
-  [{:keys [name t]}]
-  (str (str/replace (str name) #"\.[^.]*$" "") "_" (format "%.3f" (double t)) "s"))
+  "A still's file name without extension when none is given: the original's name and the time, e.g. C5274_40.000s;
+  a photo's, its name alone (DSC01234)."
+  [{:keys [name t kind]}]
+  (str (str/replace (str name) #"\.[^.]*$" "") (when-not (= "photo" kind) (str "_" (format "%.3f" (double t)) "s"))))
+
+(defn- at-words
+  "Where in its original a still is: its time, or `photo` for a photo (the whole picture)."
+  [{:keys [kind t]}]
+  (if (= "photo" kind) "photo" (tc/hms t)))
 
 (defn- item
   "The still `s` names, or [nil problem]."
@@ -71,7 +77,8 @@
                                 :t (tc/round-to (double (:t t)) 3)
                                 :source_name (:name t)
                                 :tc (:tc t)
-                                :name (or name (default-name t)))
+                                :name (or name (default-name t))
+                                :kind (or (:kind t) "video"))
                balance (assoc :balance balance))
              nil]))
         (catch clojure.lang.ExceptionInfo e
@@ -183,7 +190,7 @@
                     :state (:state ans)
                     :folder (out/home-path folder home)
                     :out (if out (out/home-path out home) "none (they stay in folder)")
-                    :stills (mapv #(array-map :n (:n %) :name (:name %) :file (:source_name %) :at (tc/hms (:t %))
+                    :stills (mapv #(array-map :n (:n %) :name (:name %) :file (:source_name %) :at (at-words %)
                                               :tc (:tc %))
                                   numbered))
          [(str "Run `blackbox still show " id " --wait` (in the background) to be told when they're done, with their paths")
@@ -226,7 +233,7 @@
   [env home folder doc]
   (let [[ans err] (app/ask env ["still" "status" (:request doc)])
         by-n (into {} (map (juxt :n identity)) (:items ans))
-        rows (mapv (fn [{:keys [n name source_name t]}]
+        rows (mapv (fn [{:keys [n name source_name] :as it}]
                      (let [files (files-for folder name)
                            theirs (by-n n)
                            ;; Black Box's word first: a still is done once all its files are here (a TIFF may still
@@ -239,7 +246,7 @@
                               (concat [:n n
                                        :name name
                                        :file source_name
-                                       :at (tc/hms t)
+                                       :at (at-words it)
                                        :state state
                                        :size (if (and (:width theirs) (:height theirs))
                                                (str (:width theirs) "x" (:height theirs))

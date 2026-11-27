@@ -12,6 +12,7 @@
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
    [black-box-cli.people :as people]
+   [black-box-cli.photos :as photos]
    [black-box-cli.prints :as prints]
    [black-box-cli.probe :as probe]
    [black-box-cli.shots :as shots]
@@ -94,6 +95,7 @@
         voices (stage "prints" #(prints/build! args))
         synced (stage "sync" #(sync/build! args))
         logged (stage "shots" #(shots/build! args))
+        described (stage "photos" #(photos/build! args))
         facts (stage "probe" #(probe/build! args))
         english (stage "translations" #(translations/build! args))]
     (array-map :index (out/home-path path home)
@@ -116,6 +118,7 @@
                :prints (or voices "none: media_meta has no prints folder")
                :sync (or synced "none: media_meta has no sync folder")
                :shots (or logged "none: media_meta has no shots folder")
+               :photos (or described "none: media_meta has no photos folder")
                :probe (or facts "none: media_meta has no probe folder")
                :translations (or english "none: media_meta has no translations folder"))))
 
@@ -161,6 +164,7 @@
      {:source "prints" :dir (p "prints") :published (fs/exists? (p "prints" prints/marker))}
      {:source "sync" :dir (p "sync") :published (fs/exists? (p "sync" sync/marker))}
      {:source "shots" :dir (p "shots" shots/version) :published (fs/exists? (p "shots" shots/marker))}
+     {:source "photos" :dir (p "photos") :published (fs/exists? (p "photos" photos/marker))}
      {:source "probe" :dir (p "probe" (probe/version-in (p "probe"))) :published (fs/exists? (p "probe" probe/marker))}
      {:source "translations" :dir (p "translations") :published (fs/exists? (p "translations" translations/marker))}]))
 
@@ -249,6 +253,7 @@
       (= "prints" source) (str (:voices v) " voices, " (:faces v) " faces")
       (= "sync" source) (str (:days v) " days, " (:pairs v) " pairs")
       (= "shots" source) (str (:shots v) " shots in " (:clips v) " clips")
+      (= "photos" source) (str (:described v) " photos described")
       (= "probe" source) (str (:files v) " files: " (:video v) " video, " (:audio v) " audio")
       (= "translations" source) (str (:lines v) " lines in " (:files v) " files, into English")
       :else "")))

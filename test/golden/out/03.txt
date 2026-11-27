@@ -41,6 +41,7 @@
   "shots": 5,
   "skipped": 1
  },
+ "photos": "none: media_meta has no photos folder",
  "probe": {
   "version": "v1",
   "files": 5,

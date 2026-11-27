@@ -48,6 +48,7 @@
       (is (= "just now" (:age st)))
       (is (= [["transcripts" "ok" "4 files"] ["frames" "ok" "7 frames in 3 files"] ["people" "ok" "3 people, 6 names"]
               ["prints" "ok" "3 voices, 4 faces"] ["sync" "ok" "1 days, 1 pairs"] ["shots" "ok" "5 shots in 3 clips"]
+              ["photos" "none" "none: media_meta has no photos folder"]
               ["probe" "ok" "5 files: 4 video, 1 audio"]
               ["translations" "none" "none: media_meta has no translations folder"]]
              (mapv (juxt :source :state :holds) (:sources st)))))
@@ -124,4 +125,4 @@
     (is (str/starts-with? out "{") "stdout is still the one answer")
     (is (= "{\"stage\":\"transcripts\",\"state\":\"start\"}" (first lines)))
     (is (= "{\"stage\":\"translations\",\"state\":\"done\"}" (last lines)))
-    (is (= 16 (count lines)))))
+    (is (= 18 (count lines)))))

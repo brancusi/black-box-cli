@@ -1,6 +1,6 @@
 ---
 name: blackbox
-description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, who is heard or seen, and what shot it (camera, slow motion, frame rate, resolution) — build selects as a review page (watch, read along, select, import into Resolve), make rough cuts (edits) that play straight away, online an edit in DaVinci Resolve from the camera originals with the recorders synced, and pull full-size stills. Use when asked to find footage, moments, quotes, shots, b-roll, a person or a clip; to build or pull selects, sound bites or options; to cut, play or show something; to read a transcript; to "online" an edit or take it to Resolve; for stills; or "teach me about Black Box", a tutorial, what Black Box can do or what's new.
+description: Search the studio's footage archive with the `blackbox` command — what was said (transcripts, English and Italian), what's in the picture, what happens in each shot, who is heard or seen, and what shot it (camera, slow motion, frame rate, resolution) — build selects as a review page (watch, read along, select, import into Resolve), make rough cuts (edits) that play straight away, online an edit in DaVinci Resolve from the camera originals with the recorders synced, and pull full-size stills, from the footage and from the photos (photo cameras' and phones', raw too). Use when asked to find footage, photos, moments, quotes, shots, b-roll, a person or a clip; to build or pull selects, sound bites or options; to cut, play or show something; to read a transcript; to "online" an edit or take it to Resolve; for stills, photos, a poster frame or pictures to print; or "teach me about Black Box", a tutorial, what Black Box can do or what's new.
 ---
 <!-- Installed by `blackbox setup agent` and replaced when it runs again. Delete this line to keep your own edits. -->
 
@@ -21,7 +21,8 @@ an error, 2 a command line to fix (the valid flags are listed).
 | "build me selects / a selects review of …", "pull sound bites and b-roll of …", "show me options for …" | find clips, then `blackbox review new - --open` (Selects review, below) |
 | "cut me …", "make an edit / a rough cut / a string-out of …", "play / show me …" | find clips, then `blackbox edl new - --play` (Rough cuts) |
 | "online this", "put it in Resolve", "go to source" | `blackbox online <edit id>` |
-| a still for print or the web | `blackbox still new …`, then `still show <id> --wait` in the background |
+| a still for print or the web, a poster frame, "pull stills of …" | find them with `look` (photos and video frames together, unless they say which), then `blackbox still new …` and `still show <id> --wait` in the background (Stills, below) |
+| "photos of …", "what did we shoot on the A7C", "the best photos from …" | `blackbox photos <words>` or `look <words> --photos` (Photos, below) |
 | "slow motion from the FX3", "only 4K", "Osmo footage", "shot at 60" | the filters on `footage`, `look`, `shots`, `search` (Find by camera, below) |
 | "where is this picture from?" | `blackbox source <picture>` |
 | "update Black Box's CLI", "get the latest blackbox" | `blackbox update` |
@@ -141,16 +142,38 @@ when the user needs certainty.
 
 ## Find what's in the picture
 
+The picture index holds the footage's frames **and the photos** (a photo camera's or a phone's: raw ARW and DNG,
+JPEG, HEIC, TIFF), side by side. Each row's `kind` says which: `video` (a frame, with its time) or `photo` (the
+whole picture, no time). Search both by default; narrow only when asked: `--photos` for only photos, `--video`
+for only footage.
+
 - `blackbox look two people at a table --month 2026-09 --per-clip 2` — describe what a camera sees. Black Box
   (the app) turns the words into the search; the first `look` on a Mac may download its model once (0.9 GB).
-- `blackbox like k7f3q2ab.f12` — frames that look like one you found, from other clips.
+- `blackbox like k7f3q2ab.f12` — frames and photos that look like one you found, from other clips.
 - `blackbox frame k7f3q2ab.f12` — that frame as a JPEG; read the file to see it yourself. `frame` also takes a
   line id (the picture where it starts), a shot id or a file with `--at 1:23.5`. A recorder has no picture: for
   its lines `frame` shows a camera heard with it (`picture` says which), or says `audio-only` when none was.
 - `--open` writes a page of the frames and opens it in the user's browser (`--html` writes it only and prints
   a quoted `open "…"` line).
 
-Frame ids look like `k7f3q2ab.f12`: the clip, then the frame.
+Frame ids look like `k7f3q2ab.f12`: the clip, then the frame. A photo's is its one frame, `k7f3q2ab.f1`.
+
+## Photos
+
+Photos are first-class: everything that takes a frame id takes a photo's. Black Box also describes photos on the
+mini (what's in it, subjects, setting, framing, tags, the picture's quality and how well it would print, 1 to 5,
+with the camera, lens and size); not every month is described yet.
+
+- `blackbox photos --month 2026-11` lists the photos in scope, newest first, with camera, size, print score and
+  description; `blackbox photos sculpture beach dusk` searches the descriptions (any word; `--all` for every one).
+  `--camera a7c` (make, model or lens), `--min-print 4` (for a poster or a print), `--day`, `--path`.
+  `--fields all` adds when it was taken, subjects, setting, tags, issues and why it would print.
+- Words only find described photos: `photos` says how many are (`described` of `in_scope`). For the rest, or for
+  what the picture looks like, `blackbox look <words> --photos`.
+- `blackbox frame <photo id>` (or `frame DSC01234.ARW`, its file name) shows it as a JPEG with what Black Box says
+  of it. Read the JPEG before choosing.
+- `blackbox still new <photo id>` gets the photo itself, developed full size from the original on the mini (raw
+  too), in the house look (Stills, below).
 
 **The original of a copy:** given a screenshot, a thumbnail, a crop or a picture someone sent,
 `blackbox source ~/Desktop/screenshot.png` finds the photo or the clip and moment it came from (Black Box 0.43.0 or
@@ -180,12 +203,14 @@ shot's frame before relying on its description, and say "logged as" rather than 
 
 ## Stills to publish: from the originals, full size and graded
 
-`frame` is for looking: it comes from the proxy (960×540 at most), ungraded. For a picture to publish (a website,
-print, a press kit), find the moment with `search`, `look` and `frame`, then ask for it from the original:
+A still is a frame of the footage **or a photo**: "pull stills of the kiln" means both, unless the user says only
+photos or only video (then `look … --photos` or `--video`). `frame` is for looking: it comes from the proxy (960×540
+at most), ungraded. For a picture to publish (a website, print, a press kit, a poster), find it with `search`,
+`look`, `photos` and `frame`, then ask for it from the original:
 
 1. `blackbox still new k7f3q2ab.f12 C5274.MP4@40=unloading k7f3q2ab.41=quote` takes frame ids, line ids (where
-   the line starts) and file@time, several at once; `=name` names the file (default: the original's name and
-   time). `--look neutral` (the default, the house look: gentle and slightly warm), `filmic` (neutral with a film
+   the line starts), photo ids and file@time, several at once; `=name` names the file (default: the original's
+   name and time; a photo's, its name). `--look neutral` (the default, the house look: gentle and slightly warm), `filmic` (neutral with a film
    curve, cool shadows, warm highlights and fine grain), `rec709` (the camera maker's conversion only) or `log`
    (ungraded, for a colourist); `--tiff` adds a 16-bit TIFF beside each JPEG.
    A look never guesses a white balance: a shot that looks too warm or cool was shot that way. Look at the
@@ -195,8 +220,10 @@ print, a press kit), find the moment with `search`, `look` and `frame`, then ask
    `--out <folder>` also copies each still there when it's done (never over a file already there), e.g. your
    project's media inbox.
 2. The studio's Mac mini renders each frame from the original camera file at its own resolution (4K and up) and
-   Black Box brings the files back to this Mac. It takes minutes, not seconds; `still new` answers at once with
-   an id.
+   Black Box brings the files back to this Mac. A photo is developed whole from its original at its own size (a
+   raw ARW or DNG developed by Apple's raw engine, lens corrected; `log` is a flat rendering for a colourist; a
+   JPEG, HEIC or TIFF is already graded: `rec709` gives it back as it is). It takes seconds to minutes; `still new`
+   answers at once with an id.
 3. Run `blackbox still show <id> --wait` **in the background** (your shell tool's background mode): it asks again
    every few seconds and exits when every still is done or failed (or after `--timeout`, 60 minutes), so you're
    told when it finishes. Its output has each still's path (and `copied`, its copy in `--out`). Without `--wait`,

@@ -25,8 +25,9 @@
   "google/siglip2-base-patch16-256-5s")
 
 (def schema-version
-  "Bumped whenever the tables change: an index of another version is rebuilt from scratch."
-  1)
+  "Bumped whenever the tables change: an index of another version is rebuilt from scratch (the vectors files are
+  kept: they're named by their content)."
+  2)
 
 (def marker
   "The file that marks media_meta's embeddings folder as published by Black Box."
@@ -48,6 +49,7 @@ CREATE TABLE frame_files (
   duration      REAL,
   proxy_rel     TEXT,
   proxy_size    INTEGER,
+  kind          TEXT NOT NULL,        -- photo (one picture: a photo camera's or a phone's) or video
   model         TEXT,                 -- the producer's model repo, checked against look's query
   dim           INTEGER NOT NULL,
   count         INTEGER NOT NULL,
@@ -133,6 +135,12 @@ CREATE TABLE frame_items (
        (remove (fn [{:keys [rel]}] (some #(str/starts-with? % ".") (str/split rel #"/"))))
        (sort-by :rel)))
 
+(defn photo-proxy?
+  "Whether a proxy is a picture, not a movie: a photo's (a JPEG). A time-lapse made from a folder of photos has a
+  movie for its proxy: it's video."
+  [proxy-rel]
+  (boolean (re-find #"(?i)\.(jpe?g|png|tiff?|heic)$" (str proxy-rel))))
+
 (defn- file-row
   "The index's row for frames file `doc` found at `rel`, with its items and float32 vectors, or nil when it isn't a
   frames file of `label` for that original."
@@ -151,6 +159,8 @@ CREATE TABLE frame_items (
        :source_name (:name source) :source_sha256 (:sha256 source) :start_tc (:start_timecode source)
        :rate (some-> (:rate source) str) :duration (:duration source)
        :proxy_rel (:rel proxy) :proxy_size (:size proxy) :model (get-in producer [:model :repo])
+       ;; by its proxy first: a time-lapse from a folder of photos has a movie for one, and is video
+       :kind (if (if (:rel proxy) (photo-proxy? (:rel proxy)) (= "photo" (:kind source))) "photo" "video")
        :dim dim :count (count items)
        :items (mapv (fn [{:keys [n t pts frame]}] {:n n :t t :pts (or pts t) :frame frame}) items)
        :vectors (f16->f32-bytes vec-bytes)})))
@@ -160,9 +170,9 @@ CREATE TABLE frame_items (
 (def ^:private insert-sql
   "BEGIN;
 INSERT INTO frame_files (rel, clip, json_sha256, json_size, json_mtime, source_name, source_sha256, start_tc, rate,
-                         duration, proxy_rel, proxy_size, model, dim, count)
+                         duration, proxy_rel, proxy_size, kind, model, dim, count)
   SELECT d->>'rel', d->>'clip', d->>'json_sha256', d->>'json_size', d->>'json_mtime', d->>'source_name',
-         d->>'source_sha256', d->>'start_tc', d->>'rate', d->>'duration', d->>'proxy_rel', d->>'proxy_size',
+         d->>'source_sha256', d->>'start_tc', d->>'rate', d->>'duration', d->>'proxy_rel', d->>'proxy_size', d->>'kind',
          d->>'model', d->>'dim', d->>'count'
   FROM (SELECT value AS d FROM json_each(:docs));
 INSERT INTO frame_items (file_id, n, t, pts, frame)

@@ -62,6 +62,7 @@
   (let [parts (cond-> (vec (concat day month))
                 path (conj (str "path~" path))
                 video (conj "video only")
+                (:photos opts) (conj "photos only")
                 true (into (probe/words opts)))]
     (if (seq parts) (str/join ", " parts) "everything")))
 

@@ -14,6 +14,7 @@
    [black-box-cli.ids :as ids]
    [black-box-cli.index :as index]
    [black-box-cli.out :as out]
+   [black-box-cli.photos :as photos]
    [black-box-cli.picture :as picture]
    [black-box-cli.preview :as preview]
    [black-box-cli.shots :as shots]
@@ -72,7 +73,25 @@
         {:keys [file n t pts]} (frames/lookup db id)]
     {:id (frames/frame-id (:clip file) n) :t t :seek pts :rel (:rel file) :clip (:clip file)
      :name (:source_name file) :sha256 (:source_sha256 file) :duration (:duration file) :tc (frame-tc file t)
-     :file file}))
+     :file file :kind (:kind file)}))
+
+(defn- photo-by-name
+  "The photo `what` names (its file name, or the end of its path), as its frame in the picture index: its frame id,
+  nil when no photo has that name, or error.code ambiguous (a camera's names repeat on every card)."
+  [{:keys [home] :as ctx} what]
+  (let [{:keys [db]} (frames/require-index! (:index (index/paths ctx)) home)
+        q (str/trim what)
+        rows (db/query db "SELECT f.clip, f.rel, i.n FROM frame_files f JOIN frame_items i ON i.file_id = f.id
+                           WHERE f.kind = 'photo' AND (f.source_name = :q OR f.rel = :q OR f.rel LIKE :end)
+                           ORDER BY f.rel LIMIT 6;"
+                       {:q q :end (str "%/" q)})]
+    (cond
+      (empty? rows) nil
+      (next rows) (out/fail! "ambiguous" (str "'" what "' names " (if (< (count rows) 6) (count rows) "several")
+                                              " photos: give its id")
+                             {:problems (mapv #(str (frames/frame-id (:clip %) (:n %)) "  " (:rel %)) rows)
+                              :help ["Run `blackbox frame <id>` for one of them"]})
+      :else (frames/frame-id (:clip (first rows)) (:n (first rows))))))
 
 (defn transcript-of
   "The transcript of the original at `rel` (its clock, name and sha256), or nil."
@@ -107,7 +126,12 @@
     :frame (frame-target ctx what)
     :shot (shot-target ctx path what)
     :line (line-target path what)
-    (file-target path opts what)))
+    (try (file-target path opts what)
+         (catch clojure.lang.ExceptionInfo e
+           ;; no transcript by that name: a photo, by its file name?
+           (if-let [id (and (= "not-found" (:code (out/error-of e))) (not (:at opts)) (photo-by-name ctx what))]
+             (frame-target ctx id)
+             (throw e))))))
 
 (defn frame-cmd
   "`blackbox frame <line id|frame id|shot id|file> [--at T]`."
@@ -119,6 +143,8 @@
             (out/fail! "usage" "--at is for a file; a line, frame or shot id has its own time"
                        {:help ["Run `blackbox frame <file> --at <time>` for any moment of a file"]}))
         {:keys [id t seek rel clip name file sha256] :as target} (target ctx path opts what)
+        photo? (= "photo" (:kind target))
+        described (when photo? (let [d (photos/of path [rel] [sha256])] (or (d rel) (d sha256))))
         proxy (or (if file (frame-proxy meta file) (archive/proxy-of meta rel))
                   (out/fail! "no-proxy" (str "no proxy for " rel " in media_meta")
                              {:help ["Proxies come from the Mac mini; a clip without one has no pictures here"]}))
@@ -143,7 +169,20 @@
         faces (who/faces-at path pic-rel pic-t)
         shot (shots/at path pic-rel pic-t)]
     [(apply array-map (concat (when id [:id id])
-                              [:file name :rel rel :at (tc/hms t) :tc (:tc target)]
+                              (if photo?
+                                [:file name :kind "photo" :rel rel]
+                                [:file name :rel rel :at (tc/hms t) :tc (:tc target)])
+                              (when photo?
+                                [:photo (if described
+                                          (array-map :taken (:taken_at described)
+                                                     :camera (photos/camera-words described)
+                                                     :size (photos/size-words described)
+                                                     :description (:description described)
+                                                     :subjects (not-empty (str/join ", " (photos/tags described :subjects)))
+                                                     :print (when (:print_score described)
+                                                              (str (:print_score described) " of 5: " (:print_why described)))
+                                                     :issues (or (not-empty (str/join ", " (photos/tags described :issues))) "none"))
+                                          "not described yet (Black Box describes photos on the mini, a month at a time)")])
                               (when cam [:picture (array-map :camera (:camera cam) :rel pic-rel :at (tc/hms pic-t)
                                                              :why "a recorder has no picture: a camera heard with it")])
                               [:jpeg (out/home-path jpeg home)]
@@ -152,10 +191,13 @@
                               (when changed?
                                 [:warning "the proxy has changed since it was embedded; this may not be the same frame"])))
      (cond-> [(str "Run `open " (out/shell-quoted jpeg) "` to see it")]
+       photo? (conj (str "Run `blackbox still new " id "` for the photo itself, developed full size from the original"))
+       (and (not photo?) (#{:frame :line :shot :file} kind))
+       (conj (str "Run `blackbox still new " (or id (str what "@" (tc/hms t))) "` for this frame full size, from the original"))
        (= :frame kind) (conj (str "Run `blackbox like " id "` for frames that look like it"))
        (= :line kind) (conj (str "Run `blackbox line " id "` for what was said around it"))
        (= :shot kind) (conj (str "Run `echo '" id "' | blackbox edl new - --title <title> --play` to play its best moment"))
-       (= :file kind) (conj (str "Run `blackbox frame " what " --at <time>` for another moment"))
+       (and (= :file kind) (not photo?)) (conj (str "Run `blackbox frame " what " --at <time>` for another moment"))
        (seq faces) (conj (str "Run `blackbox whose " (:id (first faces)) "` for who a face may be")))]))
 
 ;; ------------------------------------------------------------------------------------------------ look, like
@@ -212,7 +254,12 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
 (defn- search
   "`look` and `like`: every frame in scope scored against `q`, the best shown."
   [{:keys [meta home env opts] :as ctx} {:keys [db bin rows dim]} files q query exclude]
-  (let [scope-files (filterv #(archive/in-scope? opts (:rel %)) files)
+  (when (and (:photos opts) (:video opts))
+    (out/fail! "usage" "--photos and --video leave nothing: give one, or neither for both"
+               {:help ["Run `blackbox look --help`"]}))
+  (let [scope-files (filterv #(and (archive/in-scope? opts (:rel %) (= "video" (:kind %)))
+                                   (or (not (:photos opts)) (= "photo" (:kind %))))
+                             files)
         m (frames/read-floats bin)
         _ (when (not= (alength m) (* rows dim))
             (out/fail! "index-error" "the picture index's vectors don't match it" {:help ["Run `blackbox index --rebuild`"]}))
@@ -229,26 +276,33 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
                         (shots/at-each (:index (index/paths ctx))
                                        (map (fn [[r _ f]] [(:rel f) (:t (items [(:id f) (inc (- r (:first_row f)))]))])
                                             hits)))
+        described (photos/of (:index (index/paths ctx)) (keep (fn [[_ _ f]] (when (= "photo" (:kind f)) (:rel f))) hits)
+                             (keep (fn [[_ _ f]] (when (= "photo" (:kind f)) (:source_sha256 f))) hits))
         rows (mapv (fn [[r s f]]
                      (let [n (inc (- r (:first_row f)))
                            {:keys [t frame]} (items [(:id f) n])
-                           shot (shot-of [(:id f) r])]
+                           shot (shot-of [(:id f) r])
+                           photo? (= "photo" (:kind f))
+                           d (when photo? (or (described (:rel f)) (described (:source_sha256 f))))]
                        (apply array-map
                               (concat
                                [:id (frames/frame-id (:clip f) n)
                                 :day (archive/day-of (:rel f))
                                 :file (:source_name f)
-                                :at (tc/hms t)
-                                :tc (frame-tc f t)
+                                :kind (:kind f)
+                                :at (if photo? "" (tc/hms t))
+                                :tc (if photo? "" (frame-tc f t))
                                 :score (tc/round-to s 4)]
                                (when logged
                                  [:shot (:id shot) :camera (:camera shot) :action (:action shot)])
-                               [:rel (:rel f)
+                               [:photo (if d (out/cut (:description d) (:full opts)) "")
+                                :rel (:rel f)
                                 :seconds t
                                 :frame frame
                                 :proxy (some-> (frame-proxy meta f) (out/home-path home))]))))
                    hits)
-        shown (mapv #(out/pick % (cond-> [:id :day :file :at :tc :score] logged (conj :camera :action)) opts) rows)
+        shown (mapv #(out/pick % (cond-> [:id :day :file :kind :at :tc :score] logged (conj :camera :action)) opts)
+                    rows)
         page (when (and (seq rows) (or (:html opts) (:open opts)))
                (let [cache (:frames (index/paths ctx))
                      jpegs (vec (pmap (fn [[r _ f]]
@@ -268,13 +322,16 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
      (if (seq shown)
        (cond-> []
          (and page (not (:open opts))) (conj (str "Run `open " (out/shell-quoted page) "` to see the page"))
-         true (conj (str "Run `blackbox frame " (:id (first shown) "<id>") "` for a frame as a JPEG")
+         true (conj (str "Run `blackbox frame " (:id (first shown) "<id>") "` for a frame (or photo) as a JPEG")
                     "Run `blackbox like <id>` for frames that look like it"
-                    "Run `blackbox transcript <file>` for what was said there"))
+                    (str "Run `blackbox still new <id>…` for full-size stills from the originals (a photo's raw too)"))
+         (some #(= "video" (:kind %)) rows) (conj "Run `blackbox transcript <file>` for what was said there")
+         (and (not (:photos opts)) (not (:video opts))) (conj "Add `--photos` or `--video` for only photos or only video"))
        ["Run `blackbox footage` for what's in the archive, or widen the scope"])]))
 
 (defn- files-of [db]
-  (db/query db "SELECT id, rel, clip, source_name, start_tc, rate, proxy_rel, proxy_size, model, first_row, count
+  (db/query db "SELECT id, rel, clip, source_name, source_sha256, start_tc, rate, proxy_rel, proxy_size, kind, model,
+                       first_row, count
                 FROM frame_files ORDER BY rel;"))
 
 (defn look-cmd
@@ -298,7 +355,8 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
           q (float-array dim)]
       (System/arraycopy m (* row dim) q 0 dim)
       (search ctx idx (files-of db) q
-              (str (frames/frame-id (:clip file) n) " (" (:source_name file) " at " (tc/hms t) ")")
+              (str (frames/frame-id (:clip file) n) " (" (:source_name file)
+                   (if (= "photo" (:kind file)) ", a photo" (str " at " (tc/hms t))) ")")
               (:id file)))))
 
 ;; ------------------------------------------------------------------------------------------------ shots
@@ -405,3 +463,88 @@ figcaption{padding:6px 2px}span,small{color:#9a978f}.none{aspect-ratio:16/9;back
                   (str "Run `blackbox frame " id "` for its best moment as a JPEG")]
            (> total (count rows)) (conj (str "Run the same with `--limit " (min total (* 3 (:limit opts))) "` for more"))
            true (conj "Add `--fields all` for why it's the best moment, the clip's summary and tags, timecode and proxy"))]))))
+
+;; ------------------------------------------------------------------------------------------------ photos
+
+(defn- photos-in
+  "Every photo in the picture index in the scope flags of `opts`, newest day first: [{:id :rel :sha256 :name :proxy_rel}]."
+  [db opts]
+  (->> (db/query db "SELECT f.rel, f.clip, f.source_name, f.source_sha256, f.proxy_rel, i.n FROM frame_files f
+                     JOIN frame_items i ON i.file_id = f.id AND i.n = 1 WHERE f.kind = 'photo';")
+       (filter #(archive/in-scope? (dissoc opts :video) (:rel %)))
+       (map (fn [r] {:id (frames/frame-id (:clip r) (:n r)) :rel (:rel r) :sha256 (:source_sha256 r)
+                     :name (:source_name r) :proxy_rel (:proxy_rel r)}))
+       (sort-by (juxt #(archive/day-of (:rel %)) :rel) #(compare %2 %1))))
+
+(defn- photo-row
+  "Every field a photo can show, in order: `p` its picture-index row, `d` its description (or nil)."
+  [{:keys [meta home]} p d full]
+  (array-map :id (:id p)
+             :day (archive/day-of (:rel p))
+             :file (:name p)
+             :camera (or (some-> d photos/camera-words) "")
+             :size (or (some-> d photos/size-words) "")
+             :print (or (:print_score d) "")
+             :description (if d (out/cut (:description d) full) "not described yet")
+             :taken (or (:taken_at d) "")
+             :subjects (if d (str/join ", " (photos/tags d :subjects)) "")
+             :setting (or (:setting d) "")
+             :framing (or (:framing d) "")
+             :tags (if d (str/join ", " (photos/tags d :tags)) "")
+             :issues (if d (str/join ", " (photos/tags d :issues)) "")
+             :print_why (or (:print_why d) "")
+             :sequence (or (:sequence d) "")
+             :rel (:rel p)
+             :proxy (or (some-> (:proxy_rel p) (#(fs/path meta "proxies" %)) (#(when (fs/exists? %) (out/home-path % home))))
+                        "")))
+
+(defn photos-cmd
+  "`blackbox photos [words…]`: the photos, a photo camera's or a phone's: every one in scope, newest first, or those
+  whose description has the words. Each id is the photo's frame in the picture index, for `frame`, `like` and
+  `still new`."
+  [{:keys [home opts args] :as ctx}]
+  (let [path (index/require-index! ctx)
+        {:keys [db]} (frames/require-index! (:index (index/paths ctx)) home)
+        terms (vec (remove str/blank? (:words args)))
+        all (photos-in db opts)
+        by-rel (into {} (map (juxt :rel identity)) all)
+        by-sha (into {} (map (juxt :sha256 identity)) (filter :sha256 all))
+        described (photos/of path (map :rel all) (map :sha256 all))
+        desc-of (fn [p] (or (described (:rel p)) (described (:sha256 p))))
+        min-print (:min-print opts)
+        camera (some-> (:camera opts) str/lower-case str/trim)
+        keep? (fn [p] (let [d (desc-of p)]
+                        (and (or (nil? min-print) (and d (:print_score d) (>= (:print_score d) min-print)))
+                             (or (nil? camera) (and d (str/includes? (str/lower-case (str (photos/camera-words d))) camera))))))
+        hits (if (seq terms)
+               (->> (photos/search path {:q (archive/fts-query terms (:all opts))})
+                    (keep (fn [d] (or (by-rel (:rel d)) (by-sha (:sha256 d)))))
+                    distinct)
+               all)
+        hits (filterv keep? hits)
+        shown (mapv #(out/pick (photo-row ctx % (desc-of %) (:full opts))
+                               [:id :day :file :camera :size :print :description] opts)
+                    (take (:limit opts) hits))
+        n-described (count (filter desc-of all))
+        head (array-map :query (if (seq terms) (str/join " " terms) "every photo in scope")
+                        :scope (str (archive/scope-words (dissoc opts :video))
+                                    (when camera (str ", camera~" camera))
+                                    (when min-print (str ", print " min-print "+")))
+                        :in_scope (count all)
+                        :described n-described)]
+    (if (empty? shown)
+      [(merge head (array-map :count 0 :total 0 :result (if (seq terms) "no described photo matches" "no photos in scope")))
+       (cond-> []
+         (seq terms) (conj (str "Run `blackbox look " (str/join " " terms) " --photos` to search every photo's picture"
+                                " (only " n-described " of " (count all) " are described)"))
+         true (conj "Loosen the scope, or try other words (any word matches unless --all)"))]
+      [(apply array-map (concat (mapcat identity head) [:count (count shown) :total (count hits) :photos shown]))
+       (cond-> [(str "Run `blackbox frame " (:id (first shown)) "` to see one")
+                (str "Run `blackbox still new " (:id (first shown)) "…` for the photos themselves, developed full size")
+                "Run `blackbox like <id> --photos` for photos that look like one"]
+         (and (seq terms) (< n-described (count all)))
+         (conj (str "Only " n-described " of " (count all) " photos in scope are described: `blackbox look "
+                    (str/join " " terms) " --photos` searches every photo's picture"))
+         (> (count hits) (count shown)) (conj (str "Run the same with `--limit " (min (count hits) (* 3 (:limit opts)))
+                                                   "` for more"))
+         true (conj "Add `--fields all` for when it was taken, subjects, setting, tags, issues and why it would print"))])))

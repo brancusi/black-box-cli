@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Photos stand beside the footage. The picture index keeps each file's kind (`photo`: a photo camera's or a phone's,
+  raw ARW and DNG, JPEG, HEIC, TIFF; or `video`), and `look` and `like` show it on every row; they search both, or
+  only photos with `--photos`, only footage with `--video`. A photo has no time (`at` and `tc` empty).
+- `blackbox photos [words…]`: every photo in scope, newest first, or those whose description has the words, with the
+  camera, size, how well it would print (1 to 5) and the description; `--camera`, `--min-print`, `--day`, `--month`,
+  `--path`, `--fields all`. The descriptions are Black Box's (`photos/`, blackbox.photos/1), read into the index;
+  `photos` says how many in scope are described, and `look … --photos` searches every photo's picture.
+- `frame` shows a photo (it said "no frame": ffmpeg seeking in a JPEG proxy writes nothing), with what Black Box
+  says of it; it also takes a photo's file name. `still new` takes a photo: the mini develops it whole from its
+  original at full size (a raw too, lens corrected), named by itself (`DSC01234.jpg`).
 - Into Resolve with a colon in the edit's title: Resolve turns down a timeline, bin or project named with any of
   `: / \ ? * " < > |` (it answered nothing, and the import stopped with "Resolve couldn't create the timeline"). Each
   name now goes in with a colon as a dash and the rest as spaces (`Credits: Mara` → `Credits - Mara`).

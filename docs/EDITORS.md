@@ -114,10 +114,12 @@ Describe a shot in words, or point at a frame and find others like it, across ev
 - `blackbox like k7f3q2ab.f12`: frames that look like this one
 - `blackbox frame k7f3q2ab.f12`: that frame as a picture
 - `blackbox look boat at sea --open`: a page of the frames in your browser
+- `blackbox look boat at sea --photos`: only the photos (--video: only the footage)
 
 **Tips:**
 
 - Picture search needs the Black Box app open; the first search on a Mac downloads its model once (0.9 GB).
+- The photos are searched with the footage: a photo camera's and a phone's, raw too.
 
 <a id="shots"></a>
 
@@ -269,15 +271,17 @@ Give it a screenshot, a thumbnail or a crop someone sent, and it finds the clip 
 
 ## Stills for print and the web
 
-Full-resolution, graded stills rendered from the camera originals by the mini, for a website, press or print.
+Full-resolution, graded stills rendered from the camera originals by the mini, for a website, press or print: a frame of the footage, or a photo developed from its raw.
 
 **Ask:**
 
 - *Give me a full-res still of this frame for the website*
 - *Three stills from the kiln scene, filmic look, with TIFFs, in my Downloads*
+- *The best photos of the sculpture for a poster, and pull the top three*
 
 **Behind it:**
 
+- `blackbox photos sculpture --min-print 4`: the photos, by what's in them and how well they'd print
 - `blackbox still new k7f3q2ab.f12 --look filmic --tiff --out ~/Downloads`: ask the mini for the still
 - `blackbox still show 20261124T080000Z-kiln --wait`: waits until the stills are back, with their paths
 - `blackbox still list`: every request and where it stands

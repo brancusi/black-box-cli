@@ -19,6 +19,7 @@ Files Dropbox keeps online-only are skipped unread and counted (`skipped`), neve
 | `people/` | names per clip: voices by speaker label, faces by face track (`media-mgmt.people/1`) | `registry/<stamp>.json` names `assignments/<stamp>.jsonl`; only the newest registry is read, and its assignments must match its `assignments_sha256` |
 | `prints/` | voice and face prints, float32 (`media-mgmt.prints/1`) | `<model>/<rel>.<stamp>.prints.json`; only the newest stamp of each (model, rel) is read |
 | `shots/` | what happens in each shot of a clip (`blackbox.shots/1`), by a model from the proxy with its sound | `<model label>/<prompt version>/<rel>.shots.json`; the CLI reads `gemini-3.1-pro/v1`; marker `.blackbox-shots-root`; never redone in place |
+| `photos/` | what's in each photo (`blackbox.photos/1`), by a model from the photo's proxy, with the camera's facts | `<model label>/<prompt version>/<rel>.photo.json`; the CLI reads every version, the newest per photo; marker `.blackbox-photos-root`; never redone in place (Black Box's docs/photos.md) |
 | `translations/` | the English of each line said in another language, per transcript (`media-mgmt.translation/1`) | `<label>/v<N>/<rel>.<transcript file sha256[:12]>.en.json`; marker `.media-mgmt-translations-root`; a line gets English only from a translation of the transcript file the index holds (its sha256); of several, the highest N, then the newest |
 | `probe/` | each original's camera or recorder, rates, slow motion, resolution, codec and bitrate, from its own metadata (`media-mgmt.probe/1`) | `v<N>/<rel>.<sha256[:12]>.json`; each original from the newest N that has it (a new version republishes everything over minutes, the old stays as it was); marker `.media-mgmt-probe-root`; written once, a changed original gets a new file beside the old one (the CLI keeps the newest per rel) |
 | `sync/` | which recorder files were heard with each camera file, and the offset (`media-mgmt.sync/1`) | `<YYYY>/<MM>/<DD>.<stamp>.sync.jsonl`; only the newest stamp of each day is read; a pair joins on (rel, sha256) |
@@ -114,13 +115,25 @@ date folders give `day` and `month`.
 
 One per clip: the proxy's SHA-256, the original's, the frame rule (a frame every 5 s), and per frame its time
 (`pts`) and a float16 vector (768 values, base64). Text queries are embedded by SigLIP 2's text half (Core ML, in
-Black Box); image vectors are float32-exact before storage.
+Black Box); image vectors are float32-exact before storage. A photo (`source.kind` `photo`) has one frame at 0 and a
+JPEG proxy; the CLI's index keeps each file's `kind` (photo when its proxy is a picture, video otherwise: a
+time-lapse made from a folder of photos has a movie proxy). Frames are made once per content, so a photo copied to
+two folders is in the index once, at one of its paths.
+
+### Photo description JSON (`blackbox.photos/1`)
+
+`{schema, photo: {rel, sha256, kind, taken_at, make, camera, lens, focal_mm, f_number, exposure_s, iso, width,
+height, megapixels, print_in_at_300dpi, timelapse?: {sequence, index, frames, every, interval_s}}, proxy: {rel,
+sha256}, description, subjects [], setting, framing, tags [], quality: {focus, motion_blur, exposure, noise, issues
+[]}, print: {score, why}, orientation, producer}`. Read into `photos.sqlite` with a full-text table over the
+description, subjects, setting, framing and tags. A photo's id is its frame in the picture index (`<clip>.f1`); its
+description is found by its rel, or by its sha256 for a copy at another path.
 
 ## What the CLI writes (on this Mac only)
 
 | What | Where (docs/DESIGN.md, decision 3) | Rule |
 |---|---|---|
-| The index (cache) | `<local>/search/transcripts.sqlite`; beside it the frames, names (`people.sqlite`), prints (`prints.sqlite`) and their vectors files, the sync map (`sync.sqlite`) and the shot logs (`shots.sqlite`) | rebuilt from `media_meta`; replaced only by rename of a new one |
+| The index (cache) | `<local>/search/transcripts.sqlite`; beside it the frames, names (`people.sqlite`), prints (`prints.sqlite`) and their vectors files, the sync map (`sync.sqlite`) the shot logs (`shots.sqlite`) and the photo descriptions (`photos.sqlite`) | rebuilt from `media_meta`; replaced only by rename of a new one |
 | The last build's record | `<local>/search/indexed.json`: `{schema: "black-box-cli.indexed/1", at, took_s, cli, result}` (`result` is what `index` printed); `.index.lock` beside it while a build runs (the builder's process id) | replaced by rename; the lock is removed after, and taken over when its process has gone |
 | Cuts | `<local>/cuts/<UTC stamp>-<slug>/`: `cut.mpv.edl`, `cut.edl`, `cut.srt`, `cut.json`, `cut.html`; `build.json` once `edl build` has sent it | a new folder each time, files created new |
 | Frames for `frame` | a temp folder | never in `media_meta` |
@@ -157,7 +170,8 @@ waits for it, then builds. `BLACKBOX_REFRESH=never` turns refreshing off (for an
 --rebuild`), `stale` (files pending, or no record), `incomplete` (files Dropbox keeps online-only, which the index
 can't read), or `ok`, in that order. A source's `state` is `none` (Black Box hasn't published it), `unknown` (no
 record), `stale`, `incomplete` or `ok`; `holds` is in words. `blackbox index --progress` writes JSON lines on
-stderr: `{"stage", "state": "start"|"done"}` for each of transcripts, frames, people, prints, sync and shots, and
+stderr: `{"stage", "state": "start"|"done"}` for each of transcripts, frames, people, prints, sync, shots, photos,
+probe and translations, and
 `{"stage", "done", "total"}` every 250 files of transcripts and frames.
 
 ### `cut.json`
@@ -204,7 +218,13 @@ when `<name>.*` is in the folder (Black Box writes `<name>.jpg.part`, checks its
 request gives the same bytes. Flags include `dji_profile_assumed_normal` and `sony_gamma_<name>`; `input` also
 `sony-<gamma>`, `applelog-bt2020`, `p3-sdr`. JPEG about q95 with an sRGB profile; TIFF 16-bit Rec.709 with a
 profile. HDR is tone-mapped to SDR in `neutral` and `rec709`, left alone in `log`. Names are
-`[A-Za-z0-9][A-Za-z0-9._-]*`, default `<original's name without extension>_<t>s`.
+`[A-Za-z0-9][A-Za-z0-9._-]*`, default `<original's name without extension>_<t>s` (a photo's: its name alone).
+
+A photo goes the same way (Black Box's engine, 2026-11-27, any Black Box that sends stills): its `sha256`, `t` 0
+(ignored). Its item answers `source_kind: "photo"`, `input` `raw-linear-bt709` (ARW, DNG) or `photo-srgb` (JPEG,
+HEIC, TIFF), `developer`, and its own size, upright. A raw is developed linear at the camera's exposure and white
+balance, lens corrected (flag `lens_corrected`); `log` is a flat S-Log3 rendering; a JPEG, HEIC or TIFF is taken as
+graded (`rec709` gives it back as it is).
 
 `still new --out <folder>` keeps the folder in `request.json` (`out`); each time `still show` sees a still done, it
 copies its files there, each created new (a `.part` renamed into place). A file already there with the same bytes
