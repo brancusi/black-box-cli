@@ -67,12 +67,13 @@
                [rel [(:width d) (:height d)]]))))
 
 (defn- ranked
-  "One picture's confirmed matches, best original first: by `tier`, then larger, then as Black Box found them. The
-  first is `source`, the rest `version`s of it."
+  "One picture's confirmed matches, best original first: by `tier`, then larger, then by more matching points (of two
+  frames of a burst, the one holding all of the picture), then as Black Box found them. The first is `source`, the
+  rest `version`s of it."
   [rows]
   (->> rows
        (map-indexed vector)
-       (sort-by (fn [[i r]] [(tier (:rel r)) (- (or (:pixels r) 0)) i]))
+       (sort-by (fn [[i r]] [(tier (:rel r)) (- (or (:pixels r) 0)) (- (or (:points r) 0)) i]))
        (map-indexed (fn [j [_ r]] (-> r (assoc :match (if (zero? j) "source" "version")) (dissoc :pixels))))))
 
 (defn- hit-row

@@ -77,6 +77,15 @@
         "a raw before its JPEG, though the JPEG matched closer")
     (is (= "P0002.ARW" (:best (first (:pictures out)))))))
 
+(deftest of-two-frames-of-a-burst-the-one-with-more-points
+  (let [{:keys [pic run]} (runner)
+        part (hit {:rel "media/2026/11/18/images/camb/P0001.ARW" :kind "photo" :at "" :t 0 :diff 0.01 :points 200})
+        whole (hit {:rel "media/2026/11/18/images/camb/P0003.ARW" :kind "photo" :at "" :t 0 :diff 0.04 :points 400})
+        {:keys [app]} (fake-black-box (json/generate-string {:query "x" :size [10 10] :checked 40 :seconds 7.0
+                                                             :matches [part whole] :similar []})
+                                      0)]
+    (is (= ["P0003.ARW" "P0001.ARW"] (map :file (:matches (run app "source" pic)))))))
+
 (deftest nothing-confirmed-says-so
   (let [{:keys [pic run]} (runner)
         {:keys [app]} (fake-black-box (json/generate-string {:query "x" :size [10 10] :checked 60 :seconds 6.0
