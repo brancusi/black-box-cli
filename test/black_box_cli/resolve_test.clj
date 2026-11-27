@@ -84,8 +84,9 @@
         (is (= ["new-project" "Kiln" "23.976" true] ((juxt :into :timeline :fps :proxies) plan)))
         (is (= (str "Kiln (" (:id out) ")") (:project plan)))
         (is (= {:source_path "/nowhere/media/2026/09/16/src/fx3/C5274.MP4" :video true :in_frame 216 :out_frame 779
-                :record_frame 0}
-               (dissoc (first (:clips plan)) :proxy)))
+                :record_frame 0 :tc "03:06:51:08" :tc_fps (/ 24000.0 1001)}
+               (dissoc (first (:clips plan)) :proxy))
+            "where the file starts, for Resolve to find it by its path")
         (is (= 563 (:record_frame (second (:clips plan)))) "placed by frame, a clip starts where the frames before it end")
         (testing "what's said goes on the subtitle track, timed from the same frames"
           (let [srt (slurp (:subtitles plan))
@@ -138,7 +139,7 @@
         (is (= [1 0] (map :recorders (:cut out))) "the second clip is outside the overlap")
         (is (str/starts-with? (:synced_audio out) "1 recorder clip from 1 recorder"))
         (is (= [{:source_path "/nowhere/media/2026/09/16/audio/DJI_01.WAV" :in_s 5.8 :out_s 12.8
-                 :in_frame 139 :out_frame 306 :record_frame 0 :clip_frame 0 :track 1}]
+                 :in_frame 139 :out_frame 306 :record_frame 0 :clip_frame 0 :track 1 :tc nil :tc_fps (/ 24000.0 1001)}]
                (:audio plan))
             "recorder time = camera time + offset_s, the clip's own length, at the clip's place")))
     (testing "--no-audio"
@@ -161,13 +162,21 @@
 (deftest originals-already-in-the-project-are-used-where-they-are
   (testing "Resolve finds the camera clips in any bin, each checked by its path: an exact path or the same media/ path,
             never a file name alone; the recorders come from the Black Box bin, the project is never walked"
-    (let [{:keys [exit out err]} (process/sh "python3" "test/black_box_cli/resolve_build_check.py"
-                                             "src/black_box_cli/resolve_build.py")]
+    (let [dir (str (fs/create-temp-dir))
+          {:keys [exit out err]} (process/sh "python3" "test/black_box_cli/resolve_build_check.py"
+                                             "src/black_box_cli/resolve_build.py" dir)]
       (is (zero? exit) err)
       (is (= {"in_our_bin" {"2026/09/16/audio/REC01.WAV" "an earlier cut"}
               "asked_in_our_bin" 1
               "by_resolve" {"2026/09/16/fx3/C0001.MP4" ["Editor media" "/Volumes/Video/media/2026/09/16/fx3/C0001.MP4"]
-                            "2026/09/17/fx3/C0002.MP4" ["Editor media" "/Volumes/Video-1/media/2026/09/17/fx3/C0002.MP4"]}
-              "probe_deleted" 1}
+                            "2026/09/17/fx3/C0002.MP4" ["Editor media" "/Volumes/Video-1/media/2026/09/17/fx3/C0002.MP4"]
+                            "2026/09/18/audio/REC02 b's.WAV" ["Sound" "/Volumes/Video/media/2026/09/18/audio/REC02 b's.WAV"]}
+              "probe_deleted" 1
+              "shown_after" "the editor's own"
+              "xml_written" true
+              "xml_has_format" true
+              "xml_quoted" true}
              (json/parse-string out))
-          "C0003 Resolve matched by its name to another card's file: not taken, it's imported"))))
+          (str "C0001 is taken by its path over another card's of the same name; C0003 Resolve matched by its name to "
+               "another card's file: not taken, it's imported; the recorder in a bin's own bin is found; the editor's "
+               "timeline is back on screen")))))

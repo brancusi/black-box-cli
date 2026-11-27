@@ -1,9 +1,9 @@
 """Build a cut as a new timeline in DaVinci Resolve on this Mac: black-box-cli's `online` runs this with
-Resolve's own Python and a plan (JSON) it wrote. It imports the originals by path into a Media Pool folder of their
-own, links their proxies, and imports cut.edl as a new timeline that links only to those clips. It never deletes,
-renames or changes anything that was there before; the one thing it may delete is a timeline it made itself a moment
-ago, when the EDL linked to the wrong clips, before appending them instead. Each step goes into <plan>-steps.log
-beside the plan as it starts, so a crash says where.
+Resolve's own Python and a plan (JSON) it wrote. It finds the originals already in the project by their paths, imports
+the rest into a Media Pool folder of their own, links their proxies, and places each clip on a new timeline at its own
+frame. It never deletes, renames or changes anything that was there before; the one thing it deletes is a timeline it
+made itself a moment ago (the probe that finds the originals, or a timeline that came out wrong). Each step goes into
+<plan>-steps.log beside the plan as it starts, so a crash says where.
 
     ResolvePython resolve_build.py plan.json
 
@@ -14,9 +14,11 @@ import importlib.machinery
 import importlib.util
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import time
+from xml.sax.saxutils import escape
 
 LIB = "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so"
 APP = "DaVinci Resolve"
@@ -155,24 +157,64 @@ def in_our_bin(ours, paths):
     return found
 
 
-def found_by_resolve(media_pool, ours, edl, paths, name):
-    """The originals Resolve finds for the cut's EDL anywhere in the project: {path: item}. A project can hold tens of
-    thousands of clips, on a network database where each question about one is a trip to the server, so the project is
-    never walked from here: Resolve matches each of the EDL's events to a clip, by its name and timecode in every bin,
-    in one call. Each clip it chose is then checked by its path, so a camera's name repeated on another card is never
-    taken. The timeline it makes for this is this run's own, seconds old, and deleted."""
+def xml_rate(fps):
+    f = float(fps or 25)
+    base = max(1, round(f))
+    return f"<rate><timebase>{base}</timebase><ntsc>{'TRUE' if abs(f - base) > 0.001 else 'FALSE'}</ntsc></rate>"
+
+
+def probe_xml(originals):
+    """An FCP 7 XML with one frame of each original ({path, tc, fps, video}), by its path and its start timecode.
+    Resolve links such a clip to the Media Pool clip at that path when one is in the bins it's given, whatever other
+    clip has its name (an EDL names only the clip, so Resolve took the first with the name: a camera's name repeated
+    on another card); with neither, it may take one by name and timecode, which the paths then turn down. Tried on
+    21.2: without the sequence's <format>, or the file's <timecode>, Resolve links nothing."""
+    def item(i, o):
+        r, kind = xml_rate(o.get("fps")), ("video" if o["video"] else "audio")
+        name, tc = escape(os.path.basename(o["path"])), o.get("tc") or "00:00:00:00"
+        return (f'<clipitem id="probe {kind} {i}"><name>{name}</name><duration>2</duration>{r}<start>{i}</start>'
+                f'<end>{i + 1}</end><enabled>TRUE</enabled><in>0</in><out>1</out><file id="file {kind} {i}">'
+                f'<duration>2</duration>{r}<name>{name}</name>'
+                f'<pathurl>{escape(pathlib.Path(o["path"]).as_uri())}</pathurl><timecode><string>{escape(tc)}</string>'
+                f'<displayformat>{"DF" if ";" in tc else "NDF"}</displayformat>{r}</timecode>'
+                f'<media><{kind}><duration>2</duration></{kind}></media></file></clipitem>')
+    video = "".join(item(i, o) for i, o in enumerate(o for o in originals if o["video"]))
+    audio = "".join(item(i, o) for i, o in enumerate(o for o in originals if not o["video"]))
+    r = xml_rate(originals[0].get("fps"))
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE xmeml>\n<xmeml version="5"><sequence>'
+            f'<name>probe</name><duration>{len(originals)}</duration>{r}<media><video><track>{video}</track>'
+            f'<format><samplecharacteristics><width>1920</width><height>1080</height>{r}</samplecharacteristics>'
+            f'</format></video><audio><track>{audio}</track></audio></media></sequence></xmeml>\n')
+
+
+def found_by_resolve(project, media_pool, ours, xml, originals, name):
+    """The originals Resolve finds anywhere in the project: {path: item}. A project can hold tens of thousands of
+    clips, on a network database where each question about one is a trip to the server, so its clips are never walked
+    from here: Resolve is handed `originals` as an XML of paths (probe_xml, written new at `xml`) with every bin, and
+    links each to its clip in one call. Each clip it chose is checked by its path all the same. The timeline it makes
+    for this is this run's own, seconds old: the editor's timeline is put back on screen at once, and the probe
+    deleted."""
+    with open(xml, "x", encoding="utf-8") as f:
+        f.write(probe_xml(originals))
+    bins = list(walk(media_pool.GetRootFolder()))  # bins, not clips: an XML's clips are looked for in these only
+    shown = project.GetCurrentTimeline()
     media_pool.SetCurrentFolder(ours)
-    timeline = media_pool.ImportTimelineFromFile(edl, {"timelineName": name, "importSourceClips": False,
-                                                       "sourceClipsFolders": [media_pool.GetRootFolder()]})
+    timeline = media_pool.ImportTimelineFromFile(xml, {"timelineName": name, "importSourceClips": False,
+                                                       "sourceClipsFolders": bins})
     if timeline is None:
         return {}
+    if shown is not None:
+        project.SetCurrentTimeline(shown)
+    paths = [o["path"] for o in originals]
     keys, found = by_media_key(paths), {}
     try:
-        for t in timeline.GetItemListInTrack("video", 1) or []:
-            item = t.GetMediaPoolItem()
-            p = original_of(file_path(item), paths, keys) if item else None
-            if p and p not in found:
-                found[p] = item
+        for kind in ("video", "audio"):
+            for n in range(1, (timeline.GetTrackCount(kind) or 0) + 1):
+                for t in timeline.GetItemListInTrack(kind, n) or []:
+                    item = t.GetMediaPoolItem()
+                    p = original_of(file_path(item), paths, keys) if item else None
+                    if p and p not in found:
+                        found[p] = item
     finally:
         media_pool.DeleteTimelines([timeline])
     return found
@@ -236,6 +278,10 @@ def main(plan_path):
         STEP["log"] = log
     audio = plan.get("audio") or []
     paths = list(dict.fromkeys([c["source_path"] for c in plan["clips"]] + [a["source_path"] for a in audio]))
+    originals = {}
+    for o in plan["clips"] + audio:
+        originals.setdefault(o["source_path"], {"path": o["source_path"], "tc": o.get("tc"), "fps": o.get("tc_fps"),
+                                                "video": bool(o.get("video"))})
     if not any(os.path.exists(p) for p in paths):
         # Before Resolve is touched, so no project is made for nothing.
         raise Fail("no-originals", "none of the originals is on this Mac (is the NAS mounted?)")
@@ -310,9 +356,11 @@ def main(plan_path):
     have = in_our_bin(ours, paths)
     mine = {item.GetMediaId() for item in have.values()}
     theirs = set()
-    if plan.get("edl") and os.path.isfile(plan["edl"]) and any(c["video"] for c in plan["clips"]):
-        step("asking Resolve to find the cut's clips in the project")
-        for p, item in found_by_resolve(media_pool, ours, plan["edl"], paths,
+    rest = [originals[p] for p in paths if p not in have]
+    if rest:
+        step(f"asking Resolve to find {len(rest)} originals in the project by their paths")
+        xml = (plan_path[:-len("-plan.json")] if plan_path.endswith("-plan.json") else plan_path) + "-probe.xml"
+        for p, item in found_by_resolve(project, media_pool, ours, xml, rest,
                                         unique(plan["timeline"] + " (finding clips)", timeline_names(project))).items():
             have[p] = item
             if item.GetMediaId() not in mine:
@@ -358,76 +406,66 @@ def main(plan_path):
         if subtitle_item is None:
             subtitles_note = "Resolve didn't import the subtitles"
     edl_note = None
-    if subtitle_item is not None or plan.get("by_frames"):
-        # Subtitles first, on the empty timeline: Resolve appends a subtitle clip at the timeline's end, keeping each
-        # line's time from there (and crashes if given frames for one), so only an empty timeline puts them at its
-        # start. Then each clip goes down at its own frame, as the EDL would have put it; a missing one leaves its gap.
-        # A cut with a clip that has no timecode (nothing said in it) is placed this way too, with or without lines.
-        method = "subtitles" if subtitle_item is not None else "frames"
-        step(f"creating the timeline {name}")
-        media_pool.SetCurrentFolder(ours)  # the timeline in the Black Box bin itself
-        timeline = media_pool.CreateEmptyTimeline(name)
-        media_pool.SetCurrentFolder(folder)
-        if timeline is None:
-            raise Fail("resolve-failed", f"Resolve couldn't create the timeline {name}")
-        project.SetCurrentTimeline(timeline)
-        if subtitle_item is not None:
-            if timeline.GetTrackCount("subtitle") == 0:
-                timeline.AddTrack("subtitle")
-            step("placing the subtitles")
-            media_pool.AppendToTimeline([{"mediaPoolItem": subtitle_item, "trackIndex": 1}])
-            subtitles_placed = len(timeline.GetItemListInTrack("subtitle", 1) or [])
-            # The words as they were said, for a track above, hidden: an editor turns it on to cut a line said in
-            # another language where it's said. Resolve's scripting can fill only one subtitle track: every subtitle
-            # clip is appended to the track that took the first, at the timeline's end, whatever track is asked for
-            # (tried on 21.1: trackIndex, a locked or disabled track 1, a track inserted below, a duplicated timeline,
-            # ImportIntoTimeline, an FCPXML with captions; again on 21.2.0.6, where a recordFrame for a subtitle clip
-            # still crashes Resolve). So the track is made, named and hidden, and the words wait
-            # in the Subtitles bin for the editor to drag onto it at the timeline's start, where they snap into place.
-            if spoken and os.path.isfile(spoken) and subtitles_placed:
-                step("importing the words as spoken")
-                spoken_item = import_subtitle(media_pool, folder, ours, spoken)
-                if spoken_item is None:
-                    spoken_note = "Resolve didn't import the words as spoken"
-                else:
-                    while timeline.GetTrackCount("subtitle") < 2:
-                        timeline.AddTrack("subtitle")
-                    timeline.SetTrackName("subtitle", 1, "Subtitles")
-                    timeline.SetTrackName("subtitle", 2, "As spoken")
-                    timeline.SetTrackEnable("subtitle", 2, False)
-                    spoken_bin = spoken_item.GetName()
-                    spoken_note = ("the words as spoken are in the Subtitles bin as " + spoken_item.GetName() +
-                                   ": drag them onto ST2 (As spoken, hidden) at the timeline's start")
-        start = timeline.GetStartFrame()
-        step("placing the clips")
-        for c in plan["clips"]:
-            if c["source_path"] in have:
-                media_pool.AppendToTimeline([{"mediaPoolItem": have[c["source_path"]], "startFrame": c["in_frame"],
-                                              "endFrame": c["out_frame"], "recordFrame": start + c["record_frame"]}])
-    else:
-        method = "edl"
-        step(f"importing the EDL as the timeline {name}")
-        media_pool.SetCurrentFolder(ours)  # the timeline in the Black Box bin itself
-        timeline = media_pool.ImportTimelineFromFile(plan["edl"], {"timelineName": name, "importSourceClips": False,
-                                                                   "sourceClipsFolders": [root]})
-        media_pool.SetCurrentFolder(folder)
+    # Each clip goes down at its own frame, from the very clips found above by their paths: never by importing the
+    # EDL, which Resolve links by name and timecode (a same-named clip from another card showed first, then was
+    # replaced). Subtitles first, on the empty timeline: Resolve appends a subtitle clip at the timeline's end, keeping
+    # each line's time from there (and crashes if given frames for one), so only an empty timeline puts them at its
+    # start. A missing clip leaves its gap.
+    method = "subtitles" if subtitle_item is not None else "frames"
+    step(f"creating the timeline {name}")
+    media_pool.SetCurrentFolder(ours)  # the timeline in the Black Box bin itself
+    timeline = media_pool.CreateEmptyTimeline(name)
+    media_pool.SetCurrentFolder(folder)
+    if timeline is None:
+        raise Fail("resolve-failed", f"Resolve couldn't create the timeline {name}")
+    project.SetCurrentTimeline(timeline)
+    if subtitle_item is not None:
+        if timeline.GetTrackCount("subtitle") == 0:
+            timeline.AddTrack("subtitle")
+        step("placing the subtitles")
+        media_pool.AppendToTimeline([{"mediaPoolItem": subtitle_item, "trackIndex": 1}])
+        subtitles_placed = len(timeline.GetItemListInTrack("subtitle", 1) or [])
+        # The words as they were said, for a track above, hidden: an editor turns it on to cut a line said in
+        # another language where it's said. Resolve's scripting can fill only one subtitle track: every subtitle
+        # clip is appended to the track that took the first, at the timeline's end, whatever track is asked for
+        # (tried on 21.1: trackIndex, a locked or disabled track 1, a track inserted below, a duplicated timeline,
+        # ImportIntoTimeline, an FCPXML with captions; again on 21.2.0.6, where a recordFrame for a subtitle clip
+        # still crashes Resolve). So the track is made, named and hidden, and the words wait
+        # in the Subtitles bin for the editor to drag onto it at the timeline's start, where they snap into place.
+        if spoken and os.path.isfile(spoken) and subtitles_placed:
+            step("importing the words as spoken")
+            spoken_item = import_subtitle(media_pool, folder, ours, spoken)
+            if spoken_item is None:
+                spoken_note = "Resolve didn't import the words as spoken"
+            else:
+                while timeline.GetTrackCount("subtitle") < 2:
+                    timeline.AddTrack("subtitle")
+                timeline.SetTrackName("subtitle", 1, "Subtitles")
+                timeline.SetTrackName("subtitle", 2, "As spoken")
+                timeline.SetTrackEnable("subtitle", 2, False)
+                spoken_bin = spoken_item.GetName()
+                spoken_note = ("the words as spoken are in the Subtitles bin as " + spoken_item.GetName() +
+                               ": drag them onto ST2 (As spoken, hidden) at the timeline's start")
+    start = timeline.GetStartFrame()
+    step("placing the clips")
+    for c in plan["clips"]:
+        if c["source_path"] in have:
+            media_pool.AppendToTimeline([{"mediaPoolItem": have[c["source_path"]], "startFrame": c["in_frame"],
+                                          "endFrame": c["out_frame"], "recordFrame": start + c["record_frame"]}])
     placed = timeline.GetItemListInTrack("video", 1) if timeline else []
     placed = placed or []
     ok = (timeline is not None and len(placed) == len([c for c in clips if c["video"]])
           and all(file_path(t.GetMediaPoolItem()) == c["source_path"]
                   for t, c in zip(placed, [c for c in clips if c["video"]])))
-    if not ok and method == "frames":
-        raise Fail("resolve-failed", f"Resolve placed {len(placed)} of {len([c for c in clips if c['video']])} "
-                                     f"clips on the timeline {name}")
     if not ok and method == "subtitles":
         if timeline is not None:
             media_pool.DeleteTimelines([timeline])  # this run's own, seconds old, and wrong
         raise Fail("resolve-failed", f"Resolve placed {len(placed)} of {len([c for c in clips if c['video']])} "
                                      f"clips on the timeline {name}; run it again with --no-subtitles")
     if not ok:
-        # The EDL didn't link every event to its own original: put the clips down by frame instead. The timeline it
-        # made is this run's own, seconds old, and wrong; nothing else is ever deleted.
-        edl_note = f"the EDL linked {len(placed)} of {len(clips)} clips"
+        # Resolve didn't put every clip at its frame: put them down one after another instead. The timeline is this
+        # run's own, seconds old, and wrong; nothing else is ever deleted.
+        edl_note = f"Resolve placed {len(placed)} of {len([c for c in clips if c['video']])} clips at their frames"
         if timeline is not None:
             media_pool.DeleteTimelines([timeline])
         media_pool.SetCurrentFolder(ours)  # the timeline in the Black Box bin itself
@@ -443,7 +481,7 @@ def main(plan_path):
     project.SetCurrentTimeline(timeline)
     step("placing the recorders")
     audio_placed = place_audio(media_pool, timeline, [a for a in audio if a["source_path"] in have], have,
-                               "record_frame" if method == "edl" else "clip_frame")
+                               "clip_frame")
     if plan.get("page"):
         resolve.OpenPage(plan["page"])
     step("saving the project")

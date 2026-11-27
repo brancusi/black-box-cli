@@ -82,7 +82,7 @@
         strong (remove (fn [[_ _ _ p]] (< (:confidence p) min-confidence)) found)
         tracks (zipmap (sort (distinct (map (fn [[_ _ _ p]] (device (:recorder_rel p))) strong))) (iterate inc 1))
         audio (vec (for [[i s record-s p] strong
-                         :let [t (db/one index-path (str "SELECT rel, source_path FROM transcripts "
+                         :let [t (db/one index-path (str "SELECT rel, source_path, start_tc, rate FROM transcripts "
                                                          "WHERE rel = :rel AND source_sha256 = :sha LIMIT 1;")
                                          {:rel (:recorder_rel p) :sha (:recorder_sha256 p)})
                                in (sync/recorder-time p (:start s))]]
@@ -94,7 +94,9 @@
                                 :end (tc/round-to (+ in (- (:end s) (:start s))) 3)
                                 :record_s (tc/round-to record-s 3)
                                 :track (tracks (device (:recorder_rel p)))
-                                :confidence (:confidence p))))
+                                :confidence (:confidence p)
+                                :start_tc (:start_tc t)
+                                :rate (:rate t))))
         warnings (vec (for [[i s _ p] weak]
                         (str "clip " (inc i) " (" (:source_name s) "): " (fs/file-name (:recorder_rel p))
                              " left out, a weak sync match (confidence " (:confidence p) ")")))]
@@ -145,15 +147,16 @@
                :proxies (boolean proxies)
                :subtitles (some-> subtitles str)
                :subtitles_spoken (some-> spoken str) ; the words as said, a second track above, hidden
-               ;; a clip without timecode (no transcript) can't be found by the EDL's: place them all by frame
-               :by_frames (boolean (some #(nil? (:clock_kind %)) segments))
                :clips (mapv (fn [s [in out] record]
                               (array-map :source_path (original s originals)
                                          :proxy (when (video? s) (:play_path s))
                                          :video (boolean (video? s))
                                          :in_frame in
                                          :out_frame out
-                                         :record_frame record))
+                                         :record_frame record
+                                         ;; where the file starts, for Resolve to find it by its path (the probe)
+                                         :tc (:start_tc s)
+                                         :tc_fps (tc/rate-value (or (tc/parse-rate (:rate s)) rate))))
                             segments frames records)
                :audio (let [fps (tc/rate-value rate)
                             f #(long (Math/rint (* % fps)))]
@@ -168,7 +171,9 @@
                                                            (- (f (:end a)) (f (:start a)))))
                                            :record_frame (f (:record_s a))
                                            :clip_frame (get records (dec (:clip a)) (f (:record_s a)))
-                                           :track (:track a)))
+                                           :track (:track a)
+                                           :tc (:start_tc a)
+                                           :tc_fps (tc/rate-value (or (tc/parse-rate (:rate a)) rate))))
                               audio)))))
 
 (def subtitle-languages

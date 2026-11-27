@@ -121,8 +121,8 @@
       (let [res (run "" "online" (:id out) "--into" "new-project")
             plan (json/parse-string (slurp (str (fs/path dir "plan.json"))) true)]
         (is (= 0 (:exit res)))
-        (is (true? (:by_frames plan)))
-        (is (= "frames (a clip has no timecode)" (-> res :resolve :by)))
+        (is (= "frames" (-> res :resolve :by)))
+        (is (nil? (:tc (first (:clips plan)))) "no timecode: Resolve is asked to find it by its path at 00:00:00:00")
         (is (= [0 120] ((juxt :in_frame :out_frame) (first (:clips plan))))
             "1 s to 3 s with the handles (0 s to 5 s), at the file's own 23.976")))
     (testing "shots of it can be cut too"

@@ -172,7 +172,7 @@
     :about (str "Each clip goes back from its proxy to the camera original (the same timecode) and gets its pre- and\n"
                 "post-roll, clamped to the file. The edit's folder gets an EDL for it (online-<time>.edl), and Resolve\n"
                 "on this Mac (started if it isn't running) imports the originals into a Media Pool folder\n"
-                "\"Black Box/<id>\", links their proxies and imports the EDL as a new timeline, ready to grade. If the\n"
+                "\"Black Box/<id>\", links their proxies and places each clip on a new timeline, ready to grade. If the\n"
                 "EDL doesn't link every clip to its original, the clips are placed by frame instead. Nothing in Resolve\n"
                 "is changed or deleted; a name already taken gets a number. A cut list is saved as an edit first, as\n"
                 "`edl new` saves it. Resolve must allow scripts: Preferences → System → General → External scripting\n"

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Into Resolve without the wrong clips flashing up: to find the originals already in the project, the import handed
+  Resolve the edit's EDL, which names only each clip, so Resolve took the first clip with the name (a camera's C0001
+  from another card, another month) and showed it until the real timeline replaced it. Resolve is now handed the
+  originals' paths and start timecodes (an XML, written beside the plan as `-probe.xml`) with every bin, finds each at
+  its path, and the editor's timeline is back on screen at once; it isn't asked at all when the Black Box bin already
+  holds every original. The recorders are found this way too, in any bin. The timeline is then always built clip by
+  clip at each one's frame, never by importing the EDL. Tried on Resolve 21.2 with two same-named clips.
+
 ## 0.1.45 (2026-11-25)
 
 - Subclips in a review: `a` adds a clip's in and out to the import as a subclip, and again for every other part,

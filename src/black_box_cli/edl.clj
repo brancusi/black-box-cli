@@ -486,7 +486,7 @@
                                              :by (case (:method res)
                                                    "edl" "the EDL, imported"
                                                    "subtitles" "frames, placed after the subtitles"
-                                                   "frames" "frames (a clip has no timecode)"
+                                                   "frames" "frames"
                                                    "frames, appended")
                                              :originals_imported (:imported res)
                                              :originals_reused (:reused res)
@@ -508,7 +508,7 @@
                          :cut rows]))
          (cond-> [(str "The timeline \"" (:timeline res) "\" is open in Resolve, in the project \"" (:project res) "\"")]
            (= "append" (:method res))
-           (conj (str (:edl_note res) ", so the clips were placed by frame instead (the same ins and outs)"))
+           (conj (str (:edl_note res) ", so they were placed one after another instead (the same ins and outs)"))
            (:subtitles_note res)
            (conj (str (:subtitles_note res) ": the timeline was built without them; " (some-> srt fs/file-name)
                       " in the edit's folder has them (File → Import → Subtitle)"))
