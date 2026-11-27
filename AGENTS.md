@@ -76,7 +76,9 @@ The footage is irreplaceable. When a rule and a request conflict, stop and ask t
 - `test/black_box_cli/`: tests; `test/fixtures/media_meta/` is an invented `media_meta`; `test/golden/` is what
   the CLI prints for it, step by step (`steps.json`).
 - `src/black_box_cli/tutorial_voice/`: the animated tutorial's narration, made by `bb narrate` (dev/narrate.clj,
-  ElevenLabs on a development Mac) from the lines in `tutorial`; the CLI only copies it beside the page.
+  ElevenLabs on a development Mac) from the lines in `tutorial`; the CLI only copies it beside the page. Lessons and
+  the featured (`tutorial/news`) change only when the owner asks for a tutorial of something, never for each release.
+- `resources/black_box_cli/CHANGELOG.md`: a link to `CHANGELOG.md`, so the jar carries the release notes.
 - `dev/`: the REPL (`user.clj` tiny, `dev.clj` the workbench, `fiddle.clj` to play). Only `bb nrepl` loads it.
 - `skills/blackbox/SKILL.md`: the Agent Skill the CLI installs for users (`blackbox setup agent`).
 
@@ -132,7 +134,8 @@ checks (`cmd+shift+b` runs test, lint and fmt).
   `~/.local/bin/blackbox` it didn't write alone. If Black Box's launcher is there, remove it first.
 - `deps.edn` exists only so bbin can load the checkout. Tasks and the REPL stay in `bb.edn`.
 - **A change:** run the checks, add a line under the unreleased version in `CHANGELOG.md`, commit.
-- **A release:** add what's new to `tutorial/news` (then `bb narrate`), commit, then `bb release X.Y.Z "summary"`
+- **A release:** the CHANGELOG's Unreleased lines are its notes (the tutorial's What's new shows them). Then
+  `bb release X.Y.Z "summary"`
   (`--dry-run` checks first). It dates the CHANGELOG, sets the version, runs the checks, commits, tags, builds
   `blackbox-cli.jar`, its `.sha256` and the manifest `blackbox-cli.json`, pushes, publishes them on GitHub and checks
   the download, all from this Mac, and signs the manifest with the release key in this Mac's keychain (`bb

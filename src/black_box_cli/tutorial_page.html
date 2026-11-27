@@ -132,6 +132,11 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
 .ver-block { margin-bottom: 20px; }
 .ver-block h3 { margin: 0 0 8px; display: flex; align-items: baseline; gap: 8px; font: 800 18px/22px var(--brand); letter-spacing: -.03em; }
 .ver-block h3 small { color: var(--faint); font: 400 12px var(--mono); letter-spacing: 0; }
+.notes { margin: 0 0 14px; padding-left: 18px; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.notes li { margin-bottom: 6px; }
+.notes.latest { color: var(--ink); }
+.notes code { font: 11.5px var(--mono); color: var(--faint); }
+.featured-head { margin: 18px 0 8px; }
 .news { background: var(--ground); border: 1px solid var(--line); padding: 10px 12px; margin-bottom: -1px; }
 .news.latest { box-shadow: inset 3px 0 0 var(--mustard); }
 .news b { display: block; }
@@ -231,10 +236,10 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
       <button id="mute" title="Sound on or off (m)">🔊 sound</button>
       <span class="time"><span class="now" id="now"></span> · <span id="clock"></span></span>
       <span class="grow"></span>
-      <span class="seg" id="modes"><button data-mode="all" class="on">Everything</button><button data-mode="new">What's new</button></span>
+      <span class="seg" id="modes"><button data-mode="all" class="on">Everything</button><button data-mode="new">Featured</button></span>
       <span class="seg" id="speeds"><button data-s="1" class="on">1×</button><button data-s="1.5">1.5×</button><button data-s="2">2×</button></span>
     </div>
-    <div class="hint"><kbd>space</kbd> play or pause · <kbd>←</kbd> <kbd>→</kbd> previous or next · <kbd>m</kbd> sound · <kbd>n</kbd> what's new · click a lesson on the right to jump there. You never type these commands: say what you want, and your agent runs them.</div>
+    <div class="hint"><kbd>space</kbd> play or pause · <kbd>←</kbd> <kbd>→</kbd> previous or next · <kbd>m</kbd> sound · <kbd>n</kbd> featured · click a lesson on the right to jump there. You never type these commands: say what you want, and your agent runs them.</div>
   </section>
   <aside class="side">
     <nav class="tabs" id="tabs">
@@ -827,7 +832,11 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
   });
   commands("");
 
-  $("pane-new").innerHTML = `<button class="playnew" id="playnew">▶ Play what's new in v${esc(LATEST.version)}</button>` +
+  const inline = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+  $("pane-new").innerHTML = D.releases.map((v, vi) => `
+      <div class="ver-block"><h3>${v.version === "unreleased" ? "Not released yet" : "v" + esc(v.version)} <small>${esc(v.date || "")}</small></h3>
+      <ul class="notes${vi === 0 ? " latest" : ""}">${v.notes.map((n) => `<li>${inline(n)}</li>`).join("")}</ul></div>`).join("") +
+    `<h3 class="featured-head">Featured</h3><button class="playnew" id="playnew">▶ Play the featured, from v${esc(LATEST.version)}</button>` +
     D.news.map((v, vi) => `
       <div class="ver-block"><h3>v${esc(v.version)} <small>${v.date ? esc(v.date) : "this version"}</small></h3>
       ${v.items.map((it) => `<div class="news${vi === 0 ? " latest" : ""}"><b>${esc(it.title)}</b><p>${esc(it.what)}</p>
@@ -838,7 +847,7 @@ kbd { display: inline-grid; place-items: center; min-width: 18px; height: 18px; 
     const s = e.target.closest("[data-lesson]"); if (s) jumpTo(s.dataset.lesson);
   });
   $("ver").textContent = "tutorial · v" + D.version;
-  $("newpill").textContent = `✦ What's new in v${LATEST.version}`;
+  $("newpill").textContent = `✦ Featured from v${LATEST.version}`;
   $("newpill").addEventListener("click", () => { playlist("new"); tab("new"); setPlaying(true); });
 
   playlist(location.hash === "#new" ? "new" : "all");

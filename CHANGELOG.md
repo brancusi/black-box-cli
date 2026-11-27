@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The tutorial's What's new is the release notes: every release's lines from this file (the jar carries it), in
+  `blackbox tutorial new` and the animated page's What's new tab. The animated, narrated parts are now the featured,
+  made only when asked for, not for every release.
 - Photos stand beside the footage. The picture index keeps each file's kind (`photo`: a photo camera's or a phone's,
   raw ARW and DNG, JPEG, HEIC, TIFF; or `video`), and `look` and `like` show it on every row; they search both, or
   only photos with `--photos`, only footage with `--video`. A photo has no time (`at` and `tc` empty).

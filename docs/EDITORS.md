@@ -6,7 +6,7 @@ Black Box knows every clip the studio has filmed: what was said, what's in the p
 
 You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, ask it: "teach me about Black Box" (it plays an animated tutorial in your browser) or "give me the Black Box tutorial". The commands are shown so you can see what it does for you.
 
-**What's new in 0.1.45:** Subclips; The review server keeps up ([more](#whats-new))
+**Featured, from 0.1.45:** Subclips; The review server keeps up ([more](#featured)). Every release's notes: [CHANGELOG.md](../CHANGELOG.md).
 
 1. [Start here: what's in the archive](#start)
 2. [Find what was said](#said)
@@ -292,9 +292,9 @@ Full-resolution, graded stills rendered from the camera originals by the mini, f
 - It takes minutes; your agent tells you when they're ready.
 - Too warm or too cool? Ask it to balance on something white in the shot.
 
-<a id="whats-new"></a>
+<a id="featured"></a>
 
-## What's new
+## Featured
 
 ### 0.1.45 (2026-11-25)
 

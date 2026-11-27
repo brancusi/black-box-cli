@@ -56,12 +56,17 @@
 
 (defn- version-vec [v] (mapv parse-long (str/split v #"\.")))
 
-(deftest whats-new-keeps-up
-  (testing "each release has its news (add it to tutorial/news with the CHANGELOG line)"
-    (is (>= (compare (version-vec (:version (first tutorial/news))) (version-vec version/version)) 0)))
-  (is (every? (set (map :id tutorial/lessons)) (map :lesson (mapcat :items tutorial/news))))
+(deftest whats-new-is-the-release-notes
+  (testing "every release is in the notes, read from CHANGELOG.md on the classpath (the jar carries it)"
+    (let [notes (tutorial/release-notes)]
+      (is (some #(= version/version (:version %)) notes))
+      (is (every? (fn [{:keys [version notes]}] (and (or (= "unreleased" version) (version-vec version)) (seq notes)))
+                  (take 5 notes)))))
+  (testing "the featured are made only when asked for, and name real lessons"
+    (is (every? (set (map :id tutorial/lessons)) (map :lesson (mapcat :items tutorial/news)))))
   (let [out (run "tutorial" "new")]
-    (is (= (map :version tutorial/news) (map :version (:news out))))))
+    (is (= (map :version (take 3 (tutorial/release-notes))) (map :version (:releases out))))
+    (is (= (:version (first tutorial/news)) (get-in out [:featured :version])))))
 
 (deftest the-animated-page
   (let [local (str (fs/create-temp-dir {:prefix "bbcli-local-"}))

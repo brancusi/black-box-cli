@@ -143,9 +143,6 @@
   (let [changelog (slurp "CHANGELOG.md")
         [_ unreleased] (re-find #"(?s)## Unreleased\n(.*?)(?=\n## |\z)" changelog)]
     (when (str/blank? unreleased) (fail "CHANGELOG.md has nothing under ## Unreleased"))
-    (let [news (second (re-find #"(?s)\(def news.*?:version \"([^\"]+)\"" (slurp "src/black_box_cli/tutorial.clj")))]
-      (when (not= news version)
-        (fail "the tutorial's news starts at " news ": add what's new in " version " to tutorial/news, then `bb narrate`")))
     changelog))
 
 (defn- published!

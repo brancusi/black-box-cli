@@ -253,9 +253,9 @@
     :lessons ["stills" "source"]}])
 
 (def news
-  "What changed for editors, newest first: :version, :date (nil until it's released), and :items, each {:title :what
-  :lesson :run}. A release adds its entry here and in CHANGELOG.md (a test checks the version has one); `blackbox
-  tutorial new` and the animated tutorial's What's new show it."
+  "The featured: new parts made into the animated tutorial, newest first: :version, :date, and :items, each {:title
+  :what :lesson :run}. Added only when the owner asks for a tutorial of something (then `bb narrate`), never for each
+  release: every release is in the release notes (CHANGELOG.md, `release-notes`), which What's new shows."
   [{:version "0.1.45" :date "2026-11-25"
     :items [{:title "Subclips" :lesson "review" :run "blackbox review open kiln"
              :what "Mark an in and out and press a to add it to the import, and again for every other part, from the same clip as often as you like. Only a subclip's × at the top takes it out; s no longer selects."}
@@ -431,11 +431,32 @@
                                  (remove #(#{"--format" "--fields" "--full" "--help"} (:flag %)) flags))
                     :examples (vec examples)))))
 
+(defn- notes-of
+  "One CHANGELOG section's body as its notes: each `- ` item, its lines joined."
+  [body]
+  (->> (str/split-lines body)
+       (reduce (fn [acc line]
+                 (cond
+                   (str/starts-with? line "- ") (conj acc (subs line 2))
+                   (and (seq acc) (not (str/blank? line))) (conj (pop acc) (str (peek acc) " " (str/trim line)))
+                   :else acc))
+               [])))
+
+(defn release-notes
+  "The release notes, newest first, from CHANGELOG.md (shipped in the jar beside the code): each {:version :date
+  :notes}. Unreleased changes, in a checkout, come first as version \"unreleased\" with no date."
+  []
+  (if-let [r (io/resource "black_box_cli/CHANGELOG.md")]
+    (vec (for [[_ head body] (re-seq #"(?m)^## (.+)\n([\s\S]*?)(?=^## |\z)" (slurp r))
+               :let [[_ v d] (re-find #"^(\S+)(?: \((.+)\))?" (str/trim head))]]
+           (array-map :version (if (= "Unreleased" v) "unreleased" v) :date d :notes (notes-of body))))
+    []))
+
 (defn page-data
   "What the animated tutorial page is made from."
   []
-  {:version version/version :intro intro :lessons lessons :workflows workflows :news news :commands (command-rows)
-   :narration (narration-data)})
+  {:version version/version :intro intro :lessons lessons :workflows workflows :news news
+   :releases (vec (take 12 (release-notes))) :commands (command-rows) :narration (narration-data)})
 
 (defn page
   "The animated tutorial: tutorial_page.html with its data in it (`</` and the JS line separators escaped, so nothing in
@@ -493,15 +514,17 @@
       (let [path (write-page! ctx)]
         (when (:open opts) (tools/spawn! ["/usr/bin/open" path]))
         [(array-map :tutorial path :opened (boolean (:open opts)) :lessons (count lessons)
-                    :commands (count (command-rows)) :whats_new (:version (first news)))
+                    :commands (count (command-rows)) :whats_new (:version (first (release-notes))))
          (cond-> []
            (not (:open opts)) (conj (str "Run `open " (out/shell-quoted path) "` to show it"))
            true (conj "Run `blackbox tutorial new` for what's new, in words"))])
 
       (= "new" want)
-      [(array-map :version version/version :news (mapv news-out news))
-       ["Run `blackbox tutorial <lesson>` for a lesson named in an item"
-        "Run `blackbox tutorial --open` to see it animated"]]
+      [(array-map :version version/version
+                  :releases (vec (take 3 (release-notes)))
+                  :featured (news-out (first news)))
+       ["Run `blackbox tutorial <lesson>` for a lesson named in a featured item"
+        "Run `blackbox tutorial --open` to see the featured animated, and every release's notes"]]
 
       (nil? want)
       [(array-map :tutorial intro
@@ -534,8 +557,9 @@
        "You don't need to learn the commands: say what you want, as in the examples below. To be taught by your agent, "
        "ask it: \"teach me about Black Box\" (it plays an animated tutorial in your browser) or \"give me the Black Box "
        "tutorial\". The commands are shown so you can see what it does for you.\n\n"
-       "**What's new in " (:version (first news)) ":** "
-       (str/join "; " (map :title (:items (first news)))) " ([more](#whats-new))\n\n"
+       "**Featured, from " (:version (first news)) ":** "
+       (str/join "; " (map :title (:items (first news)))) " ([more](#featured)). Every release's notes: "
+       "[CHANGELOG.md](../CHANGELOG.md).\n\n"
        (str/join "\n" (map-indexed (fn [i {:keys [id title]}] (str (inc i) ". [" title "](#" id ")")) lessons))
        "\n"
        (apply str
@@ -544,7 +568,7 @@
                      "**Ask:**\n\n" (apply str (map #(str "- *" % "*\n") ask)) "\n"
                      "**Behind it:**\n\n" (apply str (map (fn [[run does]] (str "- `" run "`: " does "\n")) runs))
                      (when (seq tips) (str "\n**Tips:**\n\n" (apply str (map #(str "- " % "\n") tips)))))))
-       "\n<a id=\"whats-new\"></a>\n\n## What's new\n"
+       "\n<a id=\"featured\"></a>\n\n## Featured\n"
        (apply str
               (for [{:keys [version date items]} news]
                 (str "\n### " version (if date (str " (" date ")") " (this version)") "\n\n"
